@@ -67,7 +67,6 @@ games:
     rounds: 1  # 1局，所有队伍在同一世界
     estimated_time: 10  # 游戏时长：10分钟
     description: "在有限的时间里，尽可能多和快地收集宾果所要求的物品"
-    max_players_per_world: 16  # 所有队伍同一世界
     
   - id: "parkour_chase"
     name: "跑酷追击"
@@ -78,7 +77,6 @@ games:
     
   - id: "battle_box"
     name: "斗战方框"
-    english_name: "Battle Box"
     rounds: 8  # 随机匹配8轮（不重复）
     estimated_time: 8  # 每局1分钟
     description: "在有限的空间内与对手决斗，击杀对手并通过填满场地中央的羊毛方框来取得胜利"
