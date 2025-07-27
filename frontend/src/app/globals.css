@@ -111,3 +111,30 @@ body {
     color: inherit;
   }
 }
+
+/* 弹幕消息滑入动画 */
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* 优化滚动性能 */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+  scroll-behavior: smooth;
+}
+
+.dark .custom-scrollbar {
+  scrollbar-color: #6b7280 #374151;
+}

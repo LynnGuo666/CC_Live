@@ -17,7 +17,9 @@ BASE_URL = "http://localhost:8000"
 API_ENDPOINTS = {
     "global_event": f"{BASE_URL}/api/game/event",
     "global_score": f"{BASE_URL}/api/game/score", 
-    "vote_event": f"{BASE_URL}/api/vote/event"
+    "vote_event": f"{BASE_URL}/api/vote/event",
+    "game_event": f"{BASE_URL}/api",
+    "initialize": f"{BASE_URL}/api"
 }
 
 # 锦标赛配置
@@ -119,53 +121,38 @@ class TournamentSimulator:
         print("✅ 全局分数已初始化")
     
     async def simulate_round(self, round_config: Dict):
-        """模拟完整轮次"""
+        """模拟完整轮次（包含投票）"""
         round_num = round_config.get("round", round_config.get("final_round", 0))
         multiplier = round_config["multiplier"]
-        games = round_config["games"]
-        total_games = len(games)
+        available_games = round_config["games"]
         
-        print(f"\n🎮 第{round_num}轮开始 (积分权重: {multiplier}x)")
-        print(f"📋 游戏列表: {', '.join(games)} (共{total_games}场)")
+        print(f"\n🗳️ 第{round_num}轮投票开始 (积分权重: {multiplier}x)")
+        print(f"📋 候选游戏: {', '.join(available_games)}")
         
         self.current_round = round_num
         
-        # 发送轮次开始事件
-        await self.send_global_event("halfing", games[0], round_num)
-        await asyncio.sleep(1)
+        # 1. 模拟投票
+        chosen_game = await self.simulate_voting(available_games, round_num)
+        print(f"🎉 投票结束！本轮游戏: {chosen_game}")
+        await asyncio.sleep(2) # 等待前端展示投票结果
         
-        # 依次模拟每个游戏
-        for game_index, game_id in enumerate(games, 1):
-            print(f"\n🎯 第{round_num}轮 - 第{game_index}/{total_games}场: {game_id}")
-            await self.simulate_game(game_id, round_num, multiplier, game_index, total_games)
-            
-            # 游戏间隔
-            if game_index < total_games:
-                print(f"⏳ 准备下一场游戏...")
-                await asyncio.sleep(1)
+        # 2. 模拟选定的游戏
+        print(f"\n🎯 第{round_num}轮 - 开始游戏: {chosen_game}")
+        await self.simulate_game(chosen_game, round_num, multiplier)
         
         print(f"✅ 第{round_num}轮完成！")
-        await self.send_global_event("halfing", "break", round_num)
+        await self.send_global_event("halfing", "intermission", round_num)
     
-    async def simulate_game(self, game_type: str, round_num: int, multiplier: float, game_index: int = 1, total_games: int = 1):
+    async def simulate_game(self, game_type: str, round_num: int, multiplier: float):
         """模拟单个游戏"""
-        game_id = f"{game_type}_round{round_num}"
-        print(f"\n🎲 开始游戏: {game_id}")
+        game_id = game_type  # 直接使用游戏名称作为ID
+        print(f"\n🎲 开始游戏: {game_id} (第{round_num}轮)")
         
         # 万能替补：为每个游戏随机分配玩家到队伍
         team_players = self.assign_players_to_teams(game_type)
         
-        # 发送游戏开始事件（包含轮次进度）
-        await self.send_global_event_with_progress("gaming", game_type, round_num, game_index, total_games)
-        
-        # 检查是否是多轮次游戏，如果是则发送Round_Start事件
-        if self.is_multi_round_game(game_type):
-            await self.send_game_event(game_id, {
-                "event": "Round_Start",
-                "player": "",
-                "team": "",
-                "lore": ""
-            })
+        # 发送游戏开始事件
+        await self.send_global_event("gaming", game_type, round_num)
         
         # 模拟具体游戏事件
         if game_type == "bingo_speed":
@@ -186,27 +173,35 @@ class TournamentSimulator:
         # 发送最终分数（模拟游戏服务器POST数据）
         await self.send_final_scores(game_id, team_players, multiplier)
         
-        # 检查是否是多轮次游戏，如果是则发送Round_Over事件
-        if self.is_multi_round_game(game_type):
-            await self.send_game_event(game_id, {
-                "event": "Round_Over",
-                "player": "",
-                "team": "",
-                "lore": ""
-            })
-        
         print(f"✅ 游戏 {game_id} 结束")
     
-    def is_multi_round_game(self, game_type: str) -> bool:
-        """判断游戏是否是多轮次游戏"""
-        multi_round_games = {
-            "battle_box",     # 斗战方框 - 多个小回合
-            "tnt_spleef",     # TNT飞跃 - 多轮生存
-            "sky_brawl",      # 空岛战争 - 多轮战斗
-            "hot_cod"         # 烫手鳕鱼 - 多轮传递
-        }
-        return game_type in multi_round_games
-    
+    async def simulate_voting(self, games: List[str], round_num: int) -> str:
+        """模拟投票过程"""
+        # 发送全局事件：进入投票状态
+        await self.send_global_event("voting", "voting", round_num)
+        
+        # 生成模拟投票数据
+        vote_data = []
+        for game in games:
+            vote_data.append({
+                "game": game,
+                "ticket": random.randint(10, 100)
+            })
+        
+        # 发送投票事件
+        try:
+            async with self.session.post(API_ENDPOINTS["vote_event"], json=vote_data) as response:
+                if response.status == 200:
+                    print(f"🗳️  投票数据已发送: {vote_data}")
+                else:
+                    print(f"❌ 投票事件发送失败: {response.status}")
+        except Exception as e:
+            print(f"❌ 投票事件发送异常: {e}")
+            
+        # 选出票数最高的游戏
+        chosen_game = max(vote_data, key=lambda x: x["ticket"])["game"]
+        return chosen_game
+
     def assign_players_to_teams(self, game_type: str) -> Dict[str, List[str]]:
         """万能替补：为游戏随机分配玩家到队伍"""
         team_players = {}
@@ -563,26 +558,6 @@ class TournamentSimulator:
                     print(f"❌ 事件发送失败: {response.status}")
         except Exception as e:
             print(f"❌ 事件发送异常: {e}")
-    
-    async def send_global_event_with_progress(self, status: str, game_name: str, round_num: int, game_index: int = 1, total_games: int = 1):
-        """发送包含轮次进度的全局事件"""
-        event_data = {
-            "status": status,
-            "game": {
-                "name": game_name,
-                "round": round_num,
-                "game_index": game_index,
-                "total_games": total_games
-            }
-        }
-        
-        try:
-            async with self.session.post(API_ENDPOINTS["global_event"], json=event_data) as response:
-                if response.status == 200:
-                    progress_info = f" ({game_index}/{total_games})" if total_games > 1 else ""
-                    print(f"📡 全局事件发送成功: {status} - 第{round_num}轮 {game_name}{progress_info}")
-        except Exception as e:
-            print(f"❌ 全局事件发送失败: {e}")
     
     async def send_global_event(self, status: str, game_name: str, round_num: int):
         """发送全局事件"""
