@@ -26,11 +26,11 @@ app.add_middleware(
     allow_headers=["*"],  # 允许所有请求头
 )
 
-# 包含游戏相关的路由
-app.include_router(game_routes.router, tags=["游戏事件"])
-
-# 包含全局相关的路由
+# 首先包含全局相关的路由（更具体的路径）
 app.include_router(global_routes.router, tags=["全局事件"])
+
+# 然后包含游戏相关的路由（更通用的路径模式）
+app.include_router(game_routes.router, tags=["游戏事件"])
 
 
 @app.get("/")

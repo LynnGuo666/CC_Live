@@ -2,7 +2,6 @@ tournament:
   name: "S2CC锦标赛"
   description: "6个小游戏 + 1个最终对决游戏"
   estimated_duration: 180  # 预估总时长(分钟)
-  voting_enabled: false  # 禁用游戏投票，选手在游戏服务器进行
   
 # 积分权重配置：越晚的轮次积分权重越高
 round_multipliers:
@@ -63,9 +62,8 @@ teams:
     color: "#D3D3D3"
 
 games:
-  - id: "bingo_speed"
+  - id: "bingo"
     name: "宾果时速"
-    english_name: "Bingo But Fast"
     rounds: 1  # 1局，所有队伍在同一世界
     estimated_time: 10  # 游戏时长：10分钟
     description: "在有限的时间里，尽可能多和快地收集宾果所要求的物品"
@@ -73,7 +71,6 @@ games:
     
   - id: "parkour_chase"
     name: "跑酷追击"
-    english_name: "Parkour Tag"
     rounds: 8  # 随机匹配8轮（不重复）
     estimated_time: 8  # 每局1分钟，总时长约8分钟
     description: "在跑酷的竞技场中，抓住所有对手，或者尽可能在对手的追击下存活更长时间"
@@ -87,7 +84,7 @@ games:
     description: "在有限的空间内与对手决斗，击杀对手并通过填满场地中央的羊毛方框来取得胜利"
     match_type: "team_vs_team"
     
-  - id: "tnt_spleef"
+  - id: "tntrun"
     name: "TNT飞跃"
     english_name: "TNT Spleef"
     rounds: 3  # 3局
@@ -95,7 +92,7 @@ games:
     description: "踩中的方块会消失！尽量比其他玩家活得更久"
     players_per_arena: 4  # 每个场地4人（来自不同队伍）
     
-  - id: "sky_brawl"
+  - id: "skywars"
     name: "空岛乱斗"
     english_name: "Sky Brawl"
     rounds: 1  # 1局，所有玩家在同一场地
@@ -121,7 +118,6 @@ games:
     
   - id: "dodging_bolt"
     name: "躲避箭"
-    english_name: "Dodging Bolt"
     rounds: 5  # 五局三胜
     estimated_time: 15  # 不限时，预估15分钟
     description: "最终对决：躲闪对手的射击，通过命中淘汰对手"
@@ -131,22 +127,22 @@ schedule:
   # 游戏轮次安排
   rounds:
     - round: 1
-      games: ["bingo_speed", "parkour_chase", "battle_box"]
+      games: ["bingo", "parkour_chase", "battle_box"]
       multiplier: 1.0  # 积分权重
     - round: 2
-      games: ["tnt_spleef", "sky_brawl", "hot_cod"]
+      games: ["tntrun", "skywars", "hot_cod"]
       multiplier: 1.5
     - round: 3
-      games: ["bingo_speed", "parkour_chase", "battle_box"]
+      games: ["bingo", "parkour_chase", "battle_box"]
       multiplier: 1.5
     - round: 4
-      games: ["tnt_spleef", "sky_brawl", "hot_cod"]
+      games: ["tntrun", "skywars", "hot_cod"]
       multiplier: 2.0
     - round: 5
-      games: ["bingo_speed", "parkour_chase"]
+      games: ["bingo", "parkour_chase"]
       multiplier: 2.0
     - round: 6
-      games: ["tnt_spleef", "hot_cod"]
+      games: ["tntrun", "hot_cod"]
       multiplier: 2.5
     - final_round:
       games: ["dodging_bolt"]
@@ -154,7 +150,7 @@ schedule:
 
 scoring:
   # 每个游戏的详细积分规则
-  bingo_speed:
+  bingo:
     # 宾果时速积分规则
     team_placement:  # 队伍获取物品排名积分
       1: 60   # 第一个获取物品的队伍
@@ -184,7 +180,7 @@ scoring:
     win: 40           # 取得胜利的队伍每人积分
     draw: 15          # 平局时双方每人积分
     
-  tnt_spleef:
+  tntrun:
     # TNT飞跃积分规则
     survival: 4       # 每有一名玩家在你之前坠落积分
     placement_bonus:  # 存活时间最长的前三名额外积分
@@ -192,7 +188,7 @@ scoring:
       2: 70          # 第二名
       3: 30          # 第三名
       
-  sky_brawl:
+  skywars:
     # 空岛乱斗积分规则
     survival: 10      # 每有1名玩家在你之前阵亡积分
     team_elimination: 2  # 每有1支队伍在你存活时全队出局积分
@@ -229,7 +225,7 @@ scoring:
 
 event_types:
   # 每个游戏的事件类型定义
-  bingo_speed:
+  bingo:
     - event: "Item_Found"
       description: "找到物品"
       lore_field: "物品ID (例如: diamond)"
@@ -275,7 +271,7 @@ event_types:
       lore_field: "无"
       player_field: "无"
       
-  tnt_spleef:
+  tntrun:
     - event: "Round_Start"
       description: "回合开始"
       lore_field: "无"
@@ -291,7 +287,7 @@ event_types:
       player_field: "无"
       score_impact: "placement_bonus"
       
-  sky_brawl:
+  skywars:
     - event: "Round_Start"
       description: "回合开始"
       lore_field: "无"
