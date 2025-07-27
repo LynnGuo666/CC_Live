@@ -67,7 +67,7 @@ if __name__ == "__main__":
     print("正在启动 CC Live 游戏API服务...")
     print("访问 http://localhost:8000/docs 查看API文档")
     uvicorn.run(
-        app, 
+        "main:app",      # 使用模块导入字符串格式
         host="0.0.0.0",  # 监听所有网络接口
         port=8000,       # 监听端口
         reload=True      # 开发模式，文件改动时自动重载
