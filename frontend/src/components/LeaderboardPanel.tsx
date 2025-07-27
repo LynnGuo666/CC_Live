@@ -91,8 +91,8 @@ export default function LeaderboardPanel({ leaderboard, scores }: LeaderboardPan
 
   if (!enhancedLeaderboard) {
     return (
-      <div className="bg-gray-800 rounded-lg p-6 h-full">
-        <div className="text-center text-gray-400">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 h-full">
+        <div className="text-center text-gray-600 dark:text-gray-400">
           <Trophy className="w-12 h-12 mx-auto mb-2 opacity-50" />
           <p>积分榜加载中...</p>
         </div>
@@ -101,21 +101,21 @@ export default function LeaderboardPanel({ leaderboard, scores }: LeaderboardPan
   }
 
   return (
-    <div className="bg-gray-800 rounded-lg p-6 h-full flex flex-col">
+    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 h-full flex flex-col">
       {/* 标题和切换按钮 */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-white flex items-center">
-          <Trophy className="w-6 h-6 mr-2 text-yellow-400" />
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
+          <Trophy className="w-6 h-6 mr-2 text-yellow-500 dark:text-yellow-400" />
           积分榜
         </h2>
         
-        <div className="flex bg-gray-700 rounded-lg p-1">
+        <div className="flex bg-gray-200 dark:bg-gray-700 rounded-lg p-1">
           <button
             onClick={() => setActiveTab('teams')}
             className={`px-3 py-1 rounded text-sm transition-colors ${
               activeTab === 'teams'
                 ? 'bg-blue-600 text-white'
-                : 'text-gray-400 hover:text-white'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
             <Users className="w-4 h-4 inline mr-1" />
@@ -126,7 +126,7 @@ export default function LeaderboardPanel({ leaderboard, scores }: LeaderboardPan
             className={`px-3 py-1 rounded text-sm transition-colors ${
               activeTab === 'players'
                 ? 'bg-blue-600 text-white'
-                : 'text-gray-400 hover:text-white'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
             <TrendingUp className="w-4 h-4 inline mr-1" />

@@ -137,14 +137,14 @@ export default function ChatSection({ isConnected, viewerCount }: ChatSectionPro
   const emojis = ['😀', '😂', '😍', '🤔', '😎', '🔥', '💪', '👏', '❤️', '⚡']
 
   return (
-    <div className="bg-gray-800 rounded-lg p-6 h-full flex flex-col">
+    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 h-full flex flex-col">
       {/* 标题 */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-white flex items-center">
-          <MessageCircle className="w-6 h-6 mr-2 text-green-400" />
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
+          <MessageCircle className="w-6 h-6 mr-2 text-green-500 dark:text-green-400" />
           弹幕聊天
         </h2>
-        <div className="flex items-center space-x-2 text-sm text-gray-400">
+        <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
           <Users className="w-4 h-4" />
           <span>{viewerCount}</span>
         </div>
@@ -152,11 +152,11 @@ export default function ChatSection({ isConnected, viewerCount }: ChatSectionPro
 
       {/* 用户名输入 */}
       {!username && (
-        <div className="mb-4 p-3 bg-gray-700 rounded-lg">
+        <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
           <input
             type="text"
             placeholder="输入昵称开始聊天..."
-            className="w-full bg-transparent text-white placeholder-gray-400 outline-none"
+            className="w-full bg-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 outline-none"
             onKeyPress={(e) => {
               if (e.key === 'Enter') {
                 setUsername(e.currentTarget.value)

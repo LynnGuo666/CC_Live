@@ -89,7 +89,7 @@ export default function LiveEventFeed({ events, scores }: LiveEventFeedProps) {
   }, [events])
 
   return (
-    <div className="bg-gray-800 rounded-lg p-6 h-full flex flex-col">
+    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 h-full flex flex-col">
       {/* 标题 */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold text-white flex items-center">
@@ -116,13 +116,13 @@ export default function LiveEventFeed({ events, scores }: LiveEventFeedProps) {
             events.map((event, index) => (
               <div
                 key={`${event.timestamp}-${index}`}
-                className="bg-gray-700 rounded-lg p-4 hover:bg-gray-600 transition-all duration-300 event-enter"
+                className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-300 event-enter"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-start space-x-3 flex-1">
                     {/* 事件图标 */}
-                    <div className={`p-2 rounded-full bg-gray-600 ${eventColors[event.event] || 'text-gray-400'}`}>
+                    <div className={`p-2 rounded-full bg-gray-200 dark:bg-gray-600 ${eventColors[event.event] || 'text-gray-600 dark:text-gray-400'}`}>
                       {eventIcons[event.event] || <Activity className="w-4 h-4" />}
                     </div>
 

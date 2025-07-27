@@ -124,17 +124,31 @@ class TournamentSimulator:
         round_num = round_config.get("round", round_config.get("final_round", 0))
         multiplier = round_config["multiplier"]
         games = round_config["games"]
+        total_games = len(games)
         
         print(f"\n🎮 第{round_num}轮开始 (积分权重: {multiplier}x)")
-        print(f"📋 游戏列表: {', '.join(games)}")
+        print(f"📋 游戏列表: {', '.join(games)} (共{total_games}场)")
         
         self.current_round = round_num
         
-        for game_id in games:
-            await self.simulate_game(game_id, round_num, multiplier)
-            await asyncio.sleep(1)  # 游戏间隔
+        # 发送轮次开始事件
+        await self.send_global_event("halfing", games[0], round_num)
+        await asyncio.sleep(1)
+        
+        # 依次模拟每个游戏
+        for game_index, game_id in enumerate(games, 1):
+            print(f"\n🎯 第{round_num}轮 - 第{game_index}/{total_games}场: {game_id}")
+            await self.simulate_game(game_id, round_num, multiplier, game_index, total_games)
+            
+            # 游戏间隔
+            if game_index < total_games:
+                print(f"⏳ 准备下一场游戏...")
+                await asyncio.sleep(1)
+        
+        print(f"✅ 第{round_num}轮完成！")
+        await self.send_global_event("halfing", "break", round_num)
     
-    async def simulate_game(self, game_type: str, round_num: int, multiplier: float):
+    async def simulate_game(self, game_type: str, round_num: int, multiplier: float, game_index: int = 1, total_games: int = 1):
         """模拟单个游戏"""
         game_id = f"{game_type}_round{round_num}"
         print(f"\n🎲 开始游戏: {game_id}")
@@ -145,8 +159,8 @@ class TournamentSimulator:
         # 初始化游戏
         await self.initialize_game(game_id, team_players, round_num)
         
-        # 发送游戏开始事件
-        await self.send_global_event("gaming", game_type, round_num)
+        # 发送游戏开始事件（包含轮次进度）
+        await self.send_global_event_with_progress("gaming", game_type, round_num, game_index, total_games)
         
         # 模拟具体游戏事件
         if game_type == "bingo_speed":
@@ -525,6 +539,26 @@ class TournamentSimulator:
                     print(f"❌ 事件发送失败: {response.status}")
         except Exception as e:
             print(f"❌ 事件发送异常: {e}")
+    
+    async def send_global_event_with_progress(self, status: str, game_name: str, round_num: int, game_index: int = 1, total_games: int = 1):
+        """发送包含轮次进度的全局事件"""
+        event_data = {
+            "status": status,
+            "game": {
+                "name": game_name,
+                "round": round_num,
+                "game_index": game_index,
+                "total_games": total_games
+            }
+        }
+        
+        try:
+            async with self.session.post(API_ENDPOINTS["global_event"], json=event_data) as response:
+                if response.status == 200:
+                    progress_info = f" ({game_index}/{total_games})" if total_games > 1 else ""
+                    print(f"📡 全局事件发送成功: {status} - 第{round_num}轮 {game_name}{progress_info}")
+        except Exception as e:
+            print(f"❌ 全局事件发送失败: {e}")
     
     async def send_global_event(self, status: str, game_name: str, round_num: int):
         """发送全局事件"""

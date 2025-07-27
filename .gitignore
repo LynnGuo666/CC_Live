@@ -4,3 +4,4 @@ __pycache__/
 /frontend/.next/cache/
 /.next/cache/
 /frontend/.next/static/
+*.db

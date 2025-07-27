@@ -8,6 +8,8 @@ interface GameStatus {
   game: {
     name: string
     round: number
+    game_index?: number
+    total_games?: number
   }
 }
 
@@ -47,6 +49,9 @@ export default function TournamentHeader({
   const currentStatus = gameStatus?.status || tournament?.status || 'setting'
   const currentGame = gameStatus?.game?.name || tournament?.current_game || '待定'
   const currentRound = gameStatus?.game?.round || tournament?.current_round || 1
+  const gameIndex = gameStatus?.game?.game_index || 1
+  const totalGames = gameStatus?.game?.total_games || 1
+  const roundProgress = totalGames > 1 ? `${gameIndex}/${totalGames}` : ''
 
   return (
     <div className="bg-gray-100 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700 px-6 py-4">
@@ -60,55 +65,43 @@ export default function TournamentHeader({
                 {tournament?.name || 'Minecraft锦标赛'}
               </h1>
               <p className="text-gray-600 dark:text-gray-400 text-sm">
-                实时直播 · 第{currentRound}轮
+                实时直播 · 第{currentRound}轮{roundProgress && ` (${roundProgress})`}
               </p>
             </div>
           </div>
 
           <div className="flex items-center space-x-6">
-            {/* 主题切换按钮 */}
-            <ThemeToggle />
-            
+            {/* 当前游戏 */}
+            <div className="flex items-center space-x-3">
+              <Gamepad2 className="w-5 h-5 text-blue-500 dark:text-blue-400" />
+              <div>
+                <span className="text-gray-600 dark:text-gray-400 text-sm">当前游戏</span>
+                <div className="text-gray-900 dark:text-white font-semibold">{currentGame}</div>
+              </div>
+            </div>
+
+            {/* 游戏状态 */}
+            <div className="flex items-center space-x-3">
+              <div className={`w-3 h-3 rounded-full ${statusColors[currentStatus as keyof typeof statusColors]} ${
+                currentStatus === 'gaming' ? 'game-status-gaming' : ''
+              }`} />
+              <div>
+                <span className="text-gray-600 dark:text-gray-400 text-sm">状态</span>
+                <div className="text-gray-900 dark:text-white font-semibold">
+                  {statusText[currentStatus as keyof typeof statusText]}
+                </div>
+              </div>
+            </div>
+
             {/* 在线观看人数 */}
             <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
               <Users className="w-5 h-5" />
               <span className="text-lg font-semibold">{viewerCount}</span>
               <span className="text-sm">在线观看</span>
             </div>
-          </div>
-        </div>
 
-        {/* 游戏状态行 */}
-        <div className="flex items-center space-x-6">
-          {/* 当前游戏 */}
-          <div className="flex items-center space-x-3">
-            <Gamepad2 className="w-5 h-5 text-blue-500 dark:text-blue-400" />
-            <div>
-              <span className="text-gray-600 dark:text-gray-400 text-sm">当前游戏</span>
-              <div className="text-gray-900 dark:text-white font-semibold">{currentGame}</div>
-            </div>
-          </div>
-
-          {/* 游戏状态 */}
-          <div className="flex items-center space-x-3">
-            <div className={`w-3 h-3 rounded-full ${statusColors[currentStatus as keyof typeof statusColors]} ${
-              currentStatus === 'gaming' ? 'game-status-gaming' : ''
-            }`} />
-            <div>
-              <span className="text-gray-600 dark:text-gray-400 text-sm">状态</span>
-              <div className="text-gray-900 dark:text-white font-semibold">
-                {statusText[currentStatus as keyof typeof statusText]}
-              </div>
-            </div>
-          </div>
-
-          {/* 预估剩余时间 */}
-          <div className="flex items-center space-x-3">
-            <Clock className="w-5 h-5 text-green-500 dark:text-green-400" />
-            <div>
-              <span className="text-gray-600 dark:text-gray-400 text-sm">预估剩余时间</span>
-              <div className="text-gray-900 dark:text-white font-semibold">15:30</div>
-            </div>
+            {/* 主题切换按钮 */}
+            <ThemeToggle />
           </div>
         </div>
       </div>
