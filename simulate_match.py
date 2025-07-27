@@ -13,12 +13,23 @@ from typing import List, Dict
 class TournamentSimulator:
     def __init__(self, base_url="http://localhost:8000"):
         self.base_url = base_url
-        self.teams = ["RED", "BLUE", "GREEN", "YELLOW"]
+        self.teams = [
+            "RED", "ORANGE", "BLUE", "GREEN", "YELLOW", "CYAN",
+            "PURPLE", "WHITE", "PINK", "BROWN", "LIGHT_BLUE", "LIGHT_GRAY"
+        ]
         self.players = {
-            "RED": ["Venti_Lynn", "RedPlayer2", "RedPlayer3", "RedPlayer4"],
-            "BLUE": ["BluePlayer1", "BluePlayer2", "BluePlayer3", "BluePlayer4"],
-            "GREEN": ["GreenPlayer1", "GreenPlayer2", "GreenPlayer3", "GreenPlayer4"],
-            "YELLOW": ["YellowPlayer1", "YellowPlayer2", "YellowPlayer3", "YellowPlayer4"]
+            "RED": ["Aut_moon_white", "lao_dan", "sXKYYYY", "gdgfty"],
+            "ORANGE": ["YK_yuki", "Tenacity__", "Stlinosuke", "Tamakochika"],
+            "BLUE": ["AnTooLot_254890", "gumorsir", "ATRI_QWQ", "TianyaOVO"],
+            "GREEN": ["StarsYu", "wsouls", "PeaceYoooooo", "ATSmok"],
+            "YELLOW": ["Thunder50BMG", "LgdandLgm", "AchilliesPRIDE", "Q_Official"],
+            "CYAN": ["laffeyDD724", "Kevin_Lestek", "Morton_y", "Livefaster"],
+            "PURPLE": ["BaggyPark", "Nock_ZZC", "Wise_Starx", "gengER"],
+            "WHITE": ["goob233", "XiuRanYing", "Needle_Python", "long_zhi_zi"],
+            "PINK": ["Ning_meng_Cat", "MingMo777", "xiaoyuanxyz", "GreenHandkignt1"],
+            "BROWN": ["zRenox", "Forest_Silence", "logicalkeys", "wei_xin"],
+            "LIGHT_BLUE": ["xiaoheng66666", "K4ver", "xiaoyao04", "Venti_Lynn"],
+            "LIGHT_GRAY": ["Frozen_Rinn", "BlankChips", "ji_mo_run", "LazyOrz"]
         }
         
         # 宾果时速物品列表

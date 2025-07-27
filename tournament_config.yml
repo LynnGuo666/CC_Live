@@ -156,7 +156,7 @@ schedule:
     - round: 5
       games: ["bingo_speed", "parkour_chase"]
     - round: 6
-      games: ["tntrun", "hot_cod"]
+      games: ["tntrun", "sky_battle", "hot_cod"]
     - final_round:
       games: ["escape_warrior"]
 
