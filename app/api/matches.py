@@ -1,3 +1,22 @@
+"""
+比赛数据查询API模块
+
+功能:
+- 提供比赛数据的查询接口
+- 支持获取比赛详情、事件列表、玩家分数等
+- 为前端提供实时数据展示支持
+
+API端点:
+- GET /{match_id} - 获取比赛详情
+- GET /{match_id}/events - 获取比赛事件列表  
+- GET /{match_id}/player-scores - 获取玩家分数
+- GET /{match_id}/leaderboard - 获取排行榜
+- GET /{match_id}/team-stats - 获取团队统计
+- GET /{match_id}/status - 获取比赛状态
+- GET /{match_id}/comments - 获取比赛评论
+- GET / - 获取所有比赛列表
+"""
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -5,6 +24,7 @@ from app.core.database import get_db
 from app.models.tournament_models import TournamentMatch, GameEvent, PlayerScore, MatchLeaderboard, TeamStat, Comment
 from typing import List
 
+# 创建比赛查询API路由器
 router = APIRouter()
 
 
@@ -186,7 +206,7 @@ async def get_comments(
 async def list_matches(db: AsyncSession = Depends(get_db)):
     """获取所有比赛列表"""
     result = await db.execute(
-        select(TournamentMatch).order_by(TournamentMatch.created_at.desc())
+        select(TournamentMatch).order_by(TournamentMatch.start_time.desc())
     )
     matches = result.scalars().all()
     

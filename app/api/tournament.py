@@ -1,6 +1,21 @@
 """
 锦标赛管理API
 支持多阶段比赛、投票环节等功能
+
+主要功能:
+- 创建和管理锦标赛
+- 管理比赛阶段（游戏、投票、休息）
+- 处理投票系统
+- 实时推送锦标赛状态更新
+
+API端点:
+- POST /tournaments - 创建锦标赛
+- GET /tournaments - 获取锦标赛列表
+- GET /tournaments/{id} - 获取锦标赛详情
+- POST /tournaments/{id}/stages - 添加阶段
+- POST /tournaments/{id}/stages/{stage_id}/start - 开始阶段
+- POST /voting-sessions - 创建投票会话
+- POST /votes - 投票
 """
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -16,10 +31,11 @@ from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel
 
+# 创建锦标赛API路由器
 router = APIRouter()
 
 
-# Pydantic 模型
+# Pydantic 数据模型 - 用于API请求验证
 class TournamentCreate(BaseModel):
     id: str
     title: str

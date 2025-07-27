@@ -1,3 +1,24 @@
+"""
+WebSocket实时通信API模块
+
+功能:
+- 提供WebSocket连接管理
+- 实时推送比赛数据更新
+- 处理用户评论和聊天功能
+- 支持多客户端同时连接
+
+WebSocket端点:
+- /live/{match_id} - 连接到指定比赛的实时直播
+- /health - WebSocket健康检查
+
+消息类型:
+- connection_established - 连接建立
+- game_event - 游戏事件更新
+- score_update - 分数更新  
+- leaderboard_update - 排行榜更新
+- chat_message - 聊天消息
+"""
+
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -7,6 +28,7 @@ from app.schemas.schemas import CommentCreate
 from app.services.websocket_manager import websocket_manager
 import json
 
+# 创建WebSocket通信路由器
 router = APIRouter()
 
 

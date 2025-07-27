@@ -26,7 +26,7 @@ from app.schemas.schemas import (
 from app.services.websocket_manager import websocket_manager
 from datetime import datetime
 
-# 创建API路由器
+# 创建API路由器 - 处理游戏服务器数据接收
 router = APIRouter()
 
 
