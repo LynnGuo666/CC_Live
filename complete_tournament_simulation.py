@@ -80,7 +80,28 @@ class TournamentSimulator:
         self.team_scores = {team: 0 for team in TEAMS}
         self.player_scores = {player: 0 for player in PLAYER_POOL}
         self.current_round = 1
+        self.rosters, self.player_to_official_team = self._create_fixed_rosters()
         
+    def _create_fixed_rosters(self):
+        """创建固定的队伍名单和玩家到队伍的映射"""
+        print("📋 创建固定队伍名单...")
+        rosters = {team: [] for team in TEAMS}
+        player_to_team_map = {}
+        player_pool = PLAYER_POOL.copy()
+        random.shuffle(player_pool)
+        
+        players_per_team = 2
+        
+        for team in TEAMS:
+            for _ in range(players_per_team):
+                if player_pool:
+                    player = player_pool.pop()
+                    rosters[team].append(player)
+                    player_to_team_map[player] = team
+        
+        print("✅ 固定队伍名单及玩家映射创建完成。")
+        return rosters, player_to_team_map
+
     async def start_simulation(self):
         """开始完整的锦标赛模拟"""
         print("=" * 80)
@@ -102,8 +123,9 @@ class TournamentSimulator:
             # 执行所有轮次
             for round_config in TOURNAMENT_SCHEDULE:
                 await self.simulate_round(round_config)
-                await self.display_leaderboard()
-                await asyncio.sleep(2)  # 轮次间隔
+                await self.update_global_scores() # 每轮结束后更新全局分数
+                print("-" * 80)
+                await asyncio.sleep(5)  # 轮次间隔，留出时间查看前端变化
             
             # 最终结果
             await self.announce_final_results()
@@ -141,7 +163,7 @@ class TournamentSimulator:
         await self.simulate_game(chosen_game, round_num, multiplier)
         
         print(f"✅ 第{round_num}轮完成！")
-        await self.send_global_event("halfing", "intermission", round_num)
+        await self.send_global_event("halfing")
     
     async def simulate_game(self, game_type: str, round_num: int, multiplier: float):
         """模拟单个游戏"""
@@ -177,8 +199,8 @@ class TournamentSimulator:
     
     async def simulate_voting(self, games: List[str], round_num: int) -> str:
         """模拟投票过程"""
-        # 发送全局事件：进入投票状态
-        await self.send_global_event("voting", "voting", round_num)
+        # 发送全局事件：进入投票状态（没有具体游戏信息）
+        await self.send_global_event("voting")
         
         # 生成模拟投票数据
         vote_data = []
@@ -188,9 +210,15 @@ class TournamentSimulator:
                 "ticket": random.randint(10, 100)
             })
         
+        # 构建符合新API格式的投票请求
+        vote_request = {
+            "votes": vote_data,
+            "time": 60  # 60秒倒计时
+        }
+        
         # 发送投票事件
         try:
-            async with self.session.post(API_ENDPOINTS["vote_event"], json=vote_data) as response:
+            async with self.session.post(API_ENDPOINTS["vote_event"], json=vote_request) as response:
                 if response.status == 200:
                     print(f"🗳️  投票数据已发送: {vote_data}")
                 else:
@@ -559,20 +587,24 @@ class TournamentSimulator:
         except Exception as e:
             print(f"❌ 事件发送异常: {e}")
     
-    async def send_global_event(self, status: str, game_name: str, round_num: int):
+    async def send_global_event(self, status: str, game_name: str = None, round_num: int = None):
         """发送全局事件"""
         event_data = {
-            "status": status,
-            "game": {
+            "status": status
+        }
+        
+        # 只有在提供了game_name时才包含game信息
+        if game_name and round_num is not None:
+            event_data["game"] = {
                 "name": game_name,
                 "round": round_num
             }
-        }
         
         try:
             async with self.session.post(API_ENDPOINTS["global_event"], json=event_data) as response:
                 if response.status == 200:
-                    print(f"📡 全局事件发送成功: {status} - {game_name}")
+                    game_info = f" - {game_name}" if game_name else ""
+                    print(f"📡 全局事件发送成功: {status}{game_info}")
         except Exception as e:
             print(f"❌ 全局事件发送失败: {e}")
     
@@ -596,76 +628,71 @@ class TournamentSimulator:
             print(f"❌ 游戏初始化失败: {e}")
     
     async def send_final_scores(self, game_id: str, team_players: Dict, multiplier: float):
-        """发送游戏最终分数（模拟游戏服务器POST）"""
-        url = f"{API_ENDPOINTS['game_event']}/{game_id}/score"
+        """发送游戏最终分数并根据官方队伍归属更新内部积分"""
+        url = f"{BASE_URL}/api/{game_id}/score"
         
-        # 生成模拟分数数据
         score_data = []
-        for team, players in team_players.items():
+        for team, players in team_players.items(): # team is the temporary team for this game
             for player in players:
-                # 随机生成基础分数，会被自动应用权重
                 base_score = random.randint(10, 100)
+                final_score = int(base_score * multiplier)
+                
+                # 更新玩家个人总分
+                self.player_scores[player] += final_score
+                
+                # 查找玩家的官方队伍并更新队伍总分
+                official_team = self.player_to_official_team.get(player)
+                if official_team:
+                    self.team_scores[official_team] += final_score
+                else:
+                    print(f"⚠️ 警告：玩家 {player} 没有找到官方队伍归属！")
+
+                # 游戏内分数API仍然使用本场比赛的临时队伍
                 score_data.append({
                     "player": player,
                     "team": team,
-                    "score": base_score
+                    "score": base_score # 发送基础分，后端处理权重
                 })
         
         try:
             async with self.session.post(url, json=score_data) as response:
                 if response.status == 200:
-                    result = await response.json()
-                    print(f"📊 分数发送成功，权重{multiplier}x已应用")
-                    
-                    # 显示分数对比（如果有）
-                    comparison = result.get("score_comparison", {})
-                    if comparison:
-                        print("  🔍 预测vs实际分数对比已更新")
+                    print(f"📊 游戏内分数发送成功，后端将应用 {multiplier}x 权重")
+                else:
+                    print(f"❌ 游戏内分数发送失败: {response.status}")
         except Exception as e:
-            print(f"❌ 分数发送失败: {e}")
-    
+            print(f"❌ 游戏内分数发送异常: {e}")
+
     async def update_global_scores(self):
-        """更新全局分数排行榜"""
-        # 生成模拟的全局分数数据
-        global_scores = []
-        for team in TEAMS[:6]:  # 只显示前6个队伍
-            team_total = random.randint(100, 500)
-            player_scores = []
+        """使用内部累积的分数和固定名单更新全局排行榜"""
+        print("\n🔄 更新全局积分榜...")
+        
+        global_scores_payload = []
+        
+        for team, players in self.rosters.items():
+            team_total = self.team_scores.get(team, 0)
             
-            # 为该队伍分配分数
-            for i, player in enumerate(PLAYER_POOL[TEAMS.index(team)*2:(TEAMS.index(team)+1)*2]):
-                player_score = random.randint(50, 150)
-                player_scores.append({
+            player_scores_list = []
+            for player in players:
+                player_scores_list.append({
                     "player": player,
-                    "score": player_score
+                    "score": self.player_scores.get(player, 0)
                 })
-            
-            global_scores.append({
+
+            global_scores_payload.append({
                 "team": team,
                 "total_score": team_total,
-                "scores": player_scores
+                "scores": player_scores_list
             })
-        
+            
         try:
-            async with self.session.post(API_ENDPOINTS["global_score"], json=global_scores) as response:
+            async with self.session.post(API_ENDPOINTS["global_score"], json=global_scores_payload) as response:
                 if response.status == 200:
-                    print("📊 全局分数更新成功")
+                    print("✅ 全局积分榜已成功推送到服务器！")
+                else:
+                    print(f"❌ 全局分数更新失败: {response.status}, {await response.text()}")
         except Exception as e:
-            print(f"❌ 全局分数更新失败: {e}")
-    
-    async def display_leaderboard(self):
-        """显示当前排行榜"""
-        print("\n🏆 当前排行榜")
-        print("-" * 50)
-        
-        # 模拟排行榜显示
-        sorted_teams = sorted(TEAMS[:8], key=lambda x: random.randint(100, 1000), reverse=True)
-        
-        for i, team in enumerate(sorted_teams[:5], 1):
-            score = random.randint(200, 800)
-            print(f"  {i}. {team}队: {score}分")
-        
-        print("-" * 50)
+            print(f"❌ 全局分数更新异常: {e}")
     
     async def announce_final_results(self):
         """宣布最终结果"""

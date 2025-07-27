@@ -119,3 +119,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
+def get_db_session():
+    """直接获取数据库会话，用于非依赖注入场景"""
+    return SessionLocal()

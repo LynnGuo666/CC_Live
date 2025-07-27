@@ -67,6 +67,9 @@ async def create_game_event(
         "predicted_scores": prediction_result.get("total_predicted_scores", {})
     })
     
+    # 更新积分榜数据
+    await manager.update_leaderboard_from_database()
+    
     return {
         "status": "success", 
         "message": "Event recorded",
@@ -138,6 +141,9 @@ async def update_game_scores(
             "multiplier": round_multiplier
         }
     })
+    
+    # 更新积分榜数据
+    await manager.update_leaderboard_from_database()
     
     return {
         "status": "success", 
@@ -264,6 +270,9 @@ async def update_global_scores(
         ]
     })
     
+    # 更新积分榜数据
+    await manager.update_leaderboard_from_database()
+    
     return {"status": "success", "message": "Global scores updated"}
 
 @router.post("/game/event")
@@ -283,32 +292,42 @@ async def create_global_event(
     # 查找或创建锦标赛记录
     tournament = db.query(Tournament).first()
     if not tournament:
+        current_game = event_data.game.name if event_data.game else ""
+        current_round = event_data.game.round if event_data.game else 1
         tournament = Tournament(
             name="Minecraft Tournament",
             status=event_data.status,
-            current_game=event_data.game.name,
-            current_round=event_data.game.round
+            current_game=current_game,
+            current_round=current_round
         )
         db.add(tournament)
     else:
         # 更新锦标赛状态
         tournament.status = event_data.status
-        tournament.current_game = event_data.game.name
-        tournament.current_round = event_data.game.round
+        if event_data.game:
+            tournament.current_game = event_data.game.name
+            tournament.current_round = event_data.game.round
     
     db.commit()
     
-    # 获取当前轮次的积分权重信息
-    round_multiplier = config.get_round_multiplier(event_data.game.round)
+    # 获取当前轮次的积分权重信息（如果有game信息）
+    round_multiplier = 1.0
+    if event_data.game:
+        round_multiplier = config.get_round_multiplier(event_data.game.round)
     
     # 通过WebSocket广播全局事件
-    await manager.broadcast_global_event({
+    broadcast_data = {
         "status": event_data.status,
-        "game": {
+        "round_multiplier": round_multiplier
+    }
+    
+    # 如果有game信息，则包含在广播中
+    if event_data.game:
+        broadcast_data["game"] = {
             "name": event_data.game.name,
             "round": event_data.game.round
-        },
-        "round_multiplier": round_multiplier
-    })
+        }
+    
+    await manager.broadcast_global_event(broadcast_data)
     
     return {"status": "success", "message": "Global event updated"}

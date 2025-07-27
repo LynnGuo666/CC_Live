@@ -14,33 +14,37 @@ interface GameEvent {
   predicted_scores?: Record<string, number>
 }
 
-interface ScoreUpdate {
-  game_id?: string
-  player: string
-  team: string
-  score: number
-}
-
-interface GameStatus {
+interface Tournament {
+  id: number
+  name: string
   status: string
-  game: {
-    name: string
-    round: number
-  }
+  current_game: string
+  current_round: number
 }
 
-interface VoteData {
-  game: string
-  ticket: number
+interface Leaderboard {
+  teams: Array<{ name: string; score: number }>
+  players: Array<{ name: string; score: number; team: string }>
+}
+
+interface VotingData {
+  active: boolean
+  time_remaining: number
+  votes: Array<{ game: string; ticket: number }>
+}
+
+interface TournamentData {
+  tournament: Tournament
+  leaderboard: Leaderboard
+  current_game_events: GameEvent[]
+  scores: Record<string, number>
+  voting: VotingData
+  viewer_count: number
 }
 
 export function useWebSocket(url: string) {
   const [isConnected, setIsConnected] = useState(false)
-  const [events, setEvents] = useState<GameEvent[]>([])
-  const [scores, setScores] = useState<Record<string, number>>({})
-  const [gameStatus, setGameStatus] = useState<GameStatus | null>(null)
-  const [viewerCount, setViewerCount] = useState(0)
-  const [votingData, setVotingData] = useState<VoteData[]>([])
+  const [tournamentData, setTournamentData] = useState<TournamentData | null>(null)
   
   const ws = useRef<WebSocket | null>(null)
   const reconnectTimer = useRef<NodeJS.Timeout | null>(null)
@@ -59,52 +63,8 @@ export function useWebSocket(url: string) {
 
       ws.current.onmessage = (event) => {
         try {
-          const data = JSON.parse(event.data)
-          
-          switch (data.type) {
-            case 'game_event':
-              setEvents(prev => [
-                {
-                  ...data.data,
-                  timestamp: data.data.timestamp || new Date().toISOString()
-                },
-                ...prev.slice(0, 49) // 保持最新50条
-              ])
-              
-              // 更新分数预测
-              if (data.data.score_predictions) {
-                setScores(prev => ({
-                  ...prev,
-                  ...data.data.score_predictions
-                }))
-              }
-              break
-
-            case 'score_update':
-              if (data.data.scores) {
-                const newScores: Record<string, number> = {}
-                data.data.scores.forEach((score: ScoreUpdate) => {
-                  newScores[score.player] = score.score
-                })
-                setScores(prev => ({ ...prev, ...newScores }))
-              }
-              break
-
-            case 'global_event':
-              setGameStatus(data.data)
-              break
-
-            case 'vote_event':
-              setVotingData(data.data)
-              break
-
-            case 'viewer_count':
-              setViewerCount(data.count)
-              break
-
-            default:
-              console.log('Unknown message type:', data.type)
-          }
+          const data: TournamentData = JSON.parse(event.data)
+          setTournamentData(data)
         } catch (error) {
           console.error('Error parsing WebSocket message:', error)
         }
@@ -154,11 +114,21 @@ export function useWebSocket(url: string) {
 
   return {
     isConnected,
-    events,
-    scores,
-    gameStatus,
-    viewerCount,
-    votingData,
+    tournamentData,
+    // 提供兼容的属性以减少前端组件改动
+    tournament: tournamentData?.tournament || null,
+    leaderboard: tournamentData?.leaderboard || null,
+    events: tournamentData?.current_game_events || [],
+    scores: tournamentData?.scores || {},
+    gameStatus: tournamentData?.tournament ? {
+      status: tournamentData.tournament.status,
+      game: tournamentData.tournament.current_game ? {
+        name: tournamentData.tournament.current_game,
+        round: tournamentData.tournament.current_round
+      } : undefined
+    } : null,
+    viewerCount: tournamentData?.viewer_count || 0,
+    votingData: tournamentData?.voting || null,
     sendMessage
   }
 }

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useWebSocket } from '@/hooks/useWebSocket'
-import { useTournamentData } from '@/hooks/useTournamentData'
 import TournamentHeader from '@/components/TournamentHeader'
 import LeaderboardPanel from '@/components/LeaderboardPanel'
 import LiveEventFeed from '@/components/LiveEventFeed'
@@ -11,9 +10,10 @@ import GameDisplay from '@/components/GameDisplay'
 import VotingInterface from '@/components/VotingInterface'
 
 export default function Home() {
-  const { tournament, leaderboard, isLoading, refreshData } = useTournamentData()
   const { 
     isConnected, 
+    tournament,
+    leaderboard,
     events, 
     scores, 
     gameStatus, 
@@ -23,12 +23,22 @@ export default function Home() {
 
   const [showVoting, setShowVoting] = useState(false)
 
-  // 不再需要定时刷新，因为使用WebSocket实时更新
+  // 根据投票状态显示/隐藏投票界面
+  useEffect(() => {
+    if (votingData?.active) {
+      setShowVoting(true)
+    } else {
+      setShowVoting(false)
+    }
+  }, [votingData])
 
-  if (isLoading) {
+  // 显示加载状态直到WebSocket连接并收到数据
+  if (!isConnected || !tournament) {
     return (
       <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-gray-900 dark:text-white text-xl">加载中...</div>
+        <div className="text-gray-900 dark:text-white text-xl">
+          {!isConnected ? '连接中...' : '加载数据中...'}
+        </div>
       </div>
     )
   }

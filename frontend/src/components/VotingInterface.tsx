@@ -3,14 +3,15 @@
 import { useState } from 'react'
 import { Vote, Trophy, Clock, BarChart3 } from 'lucide-react'
 
-interface VoteData {
-  game: string
-  ticket: number
+interface VotingData {
+  active: boolean
+  time_remaining: number
+  votes: Array<{ game: string; ticket: number }>
 }
 
 interface VotingInterfaceProps {
-  votingData: VoteData[]
-  readOnlyMode?: boolean  // 新增只读模式参数
+  votingData: VotingData | null
+  readOnlyMode?: boolean
 }
 
 const gameDisplayNames: Record<string, string> = {
@@ -37,11 +38,22 @@ export default function VotingInterface({ votingData, readOnlyMode = false }: Vo
   const [selectedGame, setSelectedGame] = useState<string>('')
   const [hasVoted, setHasVoted] = useState(false)
 
+  // 如果没有投票数据或投票未激活，显示等待状态
+  if (!votingData || !votingData.active || !votingData.votes) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
+        <div className="text-center text-gray-500 dark:text-gray-400">
+          {!votingData?.active ? '投票未开始' : '等待投票数据...'}
+        </div>
+      </div>
+    )
+  }
+
   // 计算总票数
-  const totalVotes = votingData.reduce((sum, vote) => sum + vote.ticket, 0)
+  const totalVotes = votingData.votes.reduce((sum, vote) => sum + vote.ticket, 0)
 
   // 对投票数据进行排序
-  const sortedVotingData = [...votingData].sort((a, b) => b.ticket - a.ticket)
+  const sortedVotingData = [...votingData.votes].sort((a, b) => b.ticket - a.ticket)
 
   const handleVote = () => {
     if (!selectedGame) return
@@ -80,6 +92,10 @@ export default function VotingInterface({ votingData, readOnlyMode = false }: Vo
           {readOnlyMode ? '投票结果展示' : '游戏投票'}
         </h2>
         <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
+          <div className="flex items-center space-x-1">
+            <Clock className="w-4 h-4" />
+            <span>剩余 {votingData.time_remaining}s</span>
+          </div>
           <div className="flex items-center space-x-1">
             <BarChart3 className="w-4 h-4" />
             <span>总票数: {totalVotes}</span>

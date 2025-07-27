@@ -148,9 +148,9 @@ export default function ChatSection({ isConnected, viewerCount }: ChatSectionPro
   const emojis = ['😀', '😂', '😍', '🤔', '😎', '🔥', '💪', '👏', '❤️', '⚡']
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 h-full flex flex-col">
+    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 h-full flex flex-col max-h-screen">
       {/* 标题 */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
           <MessageCircle className="w-6 h-6 mr-2 text-green-500 dark:text-green-400" />
           弹幕聊天
@@ -163,7 +163,7 @@ export default function ChatSection({ isConnected, viewerCount }: ChatSectionPro
 
       {/* 用户名输入 */}
       {!username && (
-        <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
+        <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg flex-shrink-0">
           <input
             type="text"
             placeholder="输入昵称开始聊天..."
@@ -178,10 +178,11 @@ export default function ChatSection({ isConnected, viewerCount }: ChatSectionPro
       )}
 
       {/* 消息列表 */}
-      <div className="flex-1 overflow-hidden mb-4">
+      <div className="flex-1 overflow-hidden mb-4 min-h-0">
         <div 
           ref={containerRef}
           className="h-full overflow-y-auto custom-scrollbar space-y-2"
+          style={{ maxHeight: 'calc(100vh - 400px)' }}
         >
           {messages.map((message) => (
             <div
@@ -209,7 +210,7 @@ export default function ChatSection({ isConnected, viewerCount }: ChatSectionPro
 
       {/* 输入区域 */}
       {username && (
-        <div className="space-y-3">
+        <div className="space-y-3 flex-shrink-0">
           {/* 表情选择器 */}
           {showEmojiPicker && (
             <div className="bg-gray-200 dark:bg-gray-700 rounded-lg p-2">

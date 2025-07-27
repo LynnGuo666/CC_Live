@@ -28,11 +28,15 @@ class GameInfo(BaseModel):
 
 class GlobalEventRequest(BaseModel):
     status: str
-    game: GameInfo
+    game: Optional[GameInfo] = None
 
 class VoteEventRequest(BaseModel):
     game: str
     ticket: int
+
+class VoteEventWithTime(BaseModel):
+    votes: List[VoteEventRequest]
+    time: int = 60  # 默认60秒倒计时
 
 class PlayerResponse(BaseModel):
     id: str

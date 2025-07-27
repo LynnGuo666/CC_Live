@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Optional
 from fastapi import WebSocket
 import json
 import asyncio
@@ -6,66 +6,64 @@ import asyncio
 class WebSocketManager:
     """
     WebSocket连接管理器
-    负责管理所有WebSocket连接，实现实时消息广播功能
-    支持游戏事件、分数更新、投票数据等多种消息类型的广播
+    负责管理所有WebSocket连接，统一发送完整的比赛数据
+    所有数据通过单一的WebSocket端点传递，不使用REST API
     """
     def __init__(self):
         """初始化WebSocket管理器"""
-        self.active_connections: List[WebSocket] = []  # 活跃的WebSocket连接列表
-        self.connection_count = 0  # 当前连接数量
+        self.active_connections: List[WebSocket] = []
+        self.connection_count = 0
+        
+        # 存储完整的比赛状态数据
+        self.tournament_data = {
+            "tournament": {
+                "id": 1,
+                "name": "S2CC锦标赛", 
+                "status": "setting",
+                "current_game": "",
+                "current_round": 1
+            },
+            "leaderboard": {
+                "teams": [],
+                "players": []
+            },
+            "current_game_events": [],
+            "scores": {},
+            "voting": {
+                "active": False,
+                "time_remaining": 0,
+                "votes": []
+            },
+            "viewer_count": 0
+        }
 
     async def connect(self, websocket: WebSocket):
-        """
-        接受新的WebSocket连接
+        """接受新的WebSocket连接并发送完整数据"""
+        self.active_connections.append(websocket)
+        self.connection_count += 1
+        self.tournament_data["viewer_count"] = self.connection_count
         
-        Args:
-            websocket: WebSocket连接实例
-        """
-        # 注意：不要在这里调用accept()，因为在websocket端点中已经调用过了
-        self.active_connections.append(websocket)  # 添加到活跃连接列表
-        self.connection_count += 1  # 增加连接计数
-        await self.broadcast_viewer_count()  # 广播新的观看人数
+        # 立即发送完整的当前状态给新连接
+        await self.send_complete_data()
 
     def disconnect(self, websocket: WebSocket):
-        """
-        断开WebSocket连接
-        
-        Args:
-            websocket: 要断开的WebSocket连接实例
-        """
-        self.active_connections.remove(websocket)  # 从活跃连接列表移除
-        self.connection_count -= 1  # 减少连接计数
-        asyncio.create_task(self.broadcast_viewer_count())  # 异步广播新的观看人数
+        """断开WebSocket连接"""
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
+            self.connection_count -= 1
+            self.tournament_data["viewer_count"] = self.connection_count
+            asyncio.create_task(self.send_complete_data())
 
-    async def send_personal_message(self, message: str, websocket: WebSocket):
-        """
-        向指定WebSocket连接发送个人消息
-        
-        Args:
-            message: 要发送的消息内容
-            websocket: 目标WebSocket连接
-        """
-        await websocket.send_text(message)
-
-    async def broadcast(self, message: Dict):
-        """
-        向所有活跃连接广播消息
-        自动处理断开的连接，确保消息传递的可靠性
-        
-        Args:
-            message: 要广播的消息字典
-        """
+    async def send_complete_data(self):
+        """发送完整的比赛数据给所有连接"""
         if self.active_connections:
-            # 将消息字典转换为JSON字符串，支持中文字符
-            message_str = json.dumps(message, ensure_ascii=False, default=str)
-            disconnected = []  # 记录断开的连接
+            message_str = json.dumps(self.tournament_data, ensure_ascii=False, default=str)
+            disconnected = []
             
-            # 遍历所有活跃连接发送消息
             for connection in self.active_connections:
                 try:
                     await connection.send_text(message_str)
                 except:
-                    # 发送失败，标记为断开连接
                     disconnected.append(connection)
             
             # 清理断开的连接
@@ -73,70 +71,123 @@ class WebSocketManager:
                 if connection in self.active_connections:
                     self.active_connections.remove(connection)
                     self.connection_count -= 1
+            
+            # 如果清理了连接，更新观看人数
+            if disconnected:
+                self.tournament_data["viewer_count"] = self.connection_count
 
-    async def broadcast_viewer_count(self):
-        """
-        广播当前观看人数
-        当有新用户连接或断开时调用
-        """
-        await self.broadcast({
-            "type": "viewer_count",
-            "count": self.connection_count
-        })
-
-    async def broadcast_game_event(self, game_id: str, event_data: Dict):
-        """
-        广播游戏事件
-        包含玩家击杀、物品获取、游戏状态变更等事件
+    async def update_tournament_status(self, status: str, game_name: str = None, round_num: int = None):
+        """更新锦标赛状态"""
+        self.tournament_data["tournament"]["status"] = status
+        if game_name:
+            self.tournament_data["tournament"]["current_game"] = game_name
+        if round_num:
+            self.tournament_data["tournament"]["current_round"] = round_num
         
-        Args:
-            game_id: 游戏标识符
-            event_data: 事件数据（玩家、队伍、事件类型、分数预测等）
-        """
-        await self.broadcast({
-            "type": "game_event",
-            "game_id": game_id,
-            "data": event_data
-        })
+        await self.send_complete_data()
+
+    async def update_leaderboard(self, teams_data: List[Dict], players_data: List[Dict]):
+        """更新积分榜"""
+        self.tournament_data["leaderboard"]["teams"] = teams_data
+        self.tournament_data["leaderboard"]["players"] = players_data
+        await self.send_complete_data()
+
+    async def add_game_event(self, event_data: Dict):
+        """添加游戏事件"""
+        self.tournament_data["current_game_events"].insert(0, event_data)
+        # 只保留最新50条事件
+        self.tournament_data["current_game_events"] = self.tournament_data["current_game_events"][:50]
+        await self.send_complete_data()
+
+    async def update_scores(self, scores_data: Dict):
+        """更新分数数据"""
+        self.tournament_data["scores"].update(scores_data)
+        await self.send_complete_data()
+
+    async def initialize_from_database(self):
+        """从数据库初始化完整数据"""
+        from app.core.database import get_db_session, Tournament, Team, Player
+        
+        db = get_db_session()
+        try:
+            # 获取锦标赛信息
+            tournament = db.query(Tournament).first()
+            if tournament:
+                self.tournament_data["tournament"] = {
+                    "id": tournament.id,
+                    "name": tournament.name,
+                    "status": tournament.status,
+                    "current_game": tournament.current_game or "",
+                    "current_round": tournament.current_round
+                }
+            
+            # 获取队伍排行榜
+            teams = db.query(Team).order_by(Team.total_score.desc()).all()
+            self.tournament_data["leaderboard"]["teams"] = [
+                {"name": team.name, "score": team.total_score} for team in teams
+            ]
+            
+            # 获取玩家排行榜
+            players = db.query(Player).order_by(Player.total_score.desc()).all()
+            self.tournament_data["leaderboard"]["players"] = [
+                {"name": player.name, "score": player.total_score, "team": ""} for player in players
+            ]
+            
+        finally:
+            db.close()
+
+    async def update_leaderboard_from_database(self):
+        """从数据库更新积分榜"""
+        await self.initialize_from_database()
+        await self.send_complete_data()
+
+    async def update_voting(self, voting_data: Dict):
+        """更新投票数据"""
+        self.tournament_data["voting"] = voting_data
+        await self.send_complete_data()
+
+    # 保留旧方法以兼容现有代码
+    async def broadcast_game_event(self, game_id: str, event_data: Dict):
+        """兼容方法：添加游戏事件"""
+        event_data["game_id"] = game_id
+        await self.add_game_event(event_data)
 
     async def broadcast_score_update(self, data: Dict):
-        """
-        广播分数更新
-        包含加权分数、积分对比、排行榜变化等信息
-        
-        Args:
-            data: 分数数据（原始分数、加权分数、轮次权重等）
-        """
-        await self.broadcast({
-            "type": "score_update",
-            "data": data
-        })
+        """兼容方法：更新分数"""
+        if "scores" in data:
+            scores = {}
+            for score in data["scores"]:
+                # 处理不同的数据结构
+                if isinstance(score, dict) and "player" in score:
+                    # 优先使用 weighted_score，然后是 score
+                    if "weighted_score" in score:
+                        scores[score["player"]] = score["weighted_score"]
+                    elif "score" in score:
+                        scores[score["player"]] = score["score"]
+                    # 兼容旧的数据结构
+                    elif hasattr(score, 'score'):
+                        scores[score["player"]] = getattr(score, 'score')
+            await self.update_scores(scores)
+        else:
+            # 如果没有scores字段，只更新其他数据
+            await self.send_complete_data()
 
     async def broadcast_global_event(self, data: Dict):
-        """
-        广播全局事件
-        包含游戏状态变更、轮次切换、锦标赛进度等信息
-        
-        Args:
-            data: 全局事件数据（状态、当前游戏、轮次权重等）
-        """
-        await self.broadcast({
-            "type": "global_event",
-            "data": data
-        })
+        """兼容方法：更新全局状态"""
+        status = data.get("status")
+        game_info = data.get("game")
+        game_name = game_info.get("name") if game_info else None
+        round_num = game_info.get("round") if game_info else None
+        await self.update_tournament_status(status, game_name, round_num)
 
     async def broadcast_vote_event(self, data: Dict):
-        """
-        广播投票事件
-        包含投票结果、票数变化等信息（只读展示用）
-        
-        Args:
-            data: 投票数据（游戏名称、票数、投票状态等）
-        """
-        await self.broadcast({
-            "type": "vote_event",
-            "data": data
-        })
+        """兼容方法：更新投票"""
+        voting_data = {
+            "active": True,
+            "time_remaining": data.get("time", 60),
+            "votes": data.get("votes", [])
+        }
+        await self.update_voting(voting_data)
 
 # 全局WebSocket管理器实例
 # 在整个应用中共享使用，确保所有连接的统一管理
