@@ -61,11 +61,12 @@ export default function Home() {
 
           {/* 中间：游戏内容区域 */}
           <div className="col-span-6 flex flex-col">
-            {/* 投票界面 */}
+            {/* 投票展示界面 - 只读模式 */}
             {showVoting && (
               <div className="mb-4">
                 <VotingInterface 
                   votingData={votingData}
+                  readOnlyMode={true}  // 设置为只读模式
                 />
               </div>
             )}

@@ -2,80 +2,65 @@ tournament:
   name: "S2CC锦标赛"
   description: "6个小游戏 + 1个最终对决游戏"
   estimated_duration: 180  # 预估总时长(分钟)
-  voting_enabled: true  # 启用游戏投票
+  voting_enabled: false  # 禁用游戏投票，选手在游戏服务器进行
+  
+# 积分权重配置：越晚的轮次积分权重越高
+round_multipliers:
+  1: 1.0    # 第1轮：积分×1.0
+  2: 1.5    # 第2轮：积分×1.5  
+  3: 1.5    # 第3轮：积分×1.5
+  4: 2.0    # 第4轮：积分×2.0
+  5: 2.0    # 第5轮：积分×2.0
+  6: 2.5    # 第6轮：积分×2.5
   
 teams:
   - id: "RED"
     name: "红队"
     color: "#FF0000"
-    members: ["Aut_moon_white", "lao_dan", "sXKYYYY", "gdgfty"]
-    final_result: "躲避箭亚军，积分第二名"
     
   - id: "ORANGE" 
     name: "橙队"
     color: "#FFA500"
-    members: ["YK_yuki", "Tenacity__", "Stlinosuke", "Tamakochika"]
-    final_result: "积分第三名"
     
   - id: "BLUE"
     name: "蓝队"
     color: "#0000FF"
-    members: ["AnTooLot_254890", "gumorsir", "ATRI_QWQ", "TianyaOVO"]
-    final_result: "积分第十一名"
     
   - id: "GREEN"
     name: "绿队"
     color: "#00FF00"
-    members: ["StarsYu", "wsouls", "PeaceYoooooo", "ATSmok"]
-    final_result: "积分第七名"
     
   - id: "YELLOW"
     name: "黄队"
     color: "#FFFF00"
-    members: ["Thunder50BMG", "LgdandLgm", "AchilliesPRIDE", "Q_Official"]
-    final_result: "积分第六名"
     
   - id: "CYAN"
     name: "青队"
     color: "#00FFFF"
-    members: ["laffeyDD724", "Kevin_Lestek", "Morton_y", "Livefaster"]
-    final_result: "积分第十二名"
     
   - id: "PURPLE"
     name: "紫队"
     color: "#800080"
-    members: ["BaggyPark", "Nock_ZZC", "Wise_Starx", "gengER"]
-    final_result: "积分第九名"
     
   - id: "WHITE"
     name: "白队"
     color: "#FFFFFF"
-    members: ["goob233", "XiuRanYing", "Needle_Python", "long_zhi_zi"]
-    final_result: "躲避箭冠军，积分第一名"
     
   - id: "PINK"
     name: "粉红队"
     color: "#FFC0CB"
-    members: ["Ning_meng_Cat", "MingMo777", "xiaoyuanxyz", "GreenHandkignt1"]
-    final_result: "积分第八名"
     
   - id: "BROWN"
     name: "棕队"
     color: "#A52A2A"
-    members: ["zRenox", "Forest_Silence", "logicalkeys", "wei_xin"]
-    final_result: "积分第四名"
     
   - id: "LIGHT_BLUE"
     name: "淡蓝队"
     color: "#ADD8E6"
-    members: ["xiaoheng66666", "K4ver", "xiaoyao04", "Venti_Lynn"]
-    final_result: "积分第五名"
     
   - id: "LIGHT_GRAY"
     name: "淡灰队"
     color: "#D3D3D3"
-    members: ["Frozen_Rinn", "BlankChips", "ji_mo_run", "LazyOrz"]
-    final_result: "积分第十名"
 
 games:
   - id: "bingo_speed"
@@ -147,18 +132,25 @@ schedule:
   rounds:
     - round: 1
       games: ["bingo_speed", "parkour_chase", "battle_box"]
+      multiplier: 1.0  # 积分权重
     - round: 2
-      games: ["tntrun", "sky_battle", "hot_cod"]
+      games: ["tnt_spleef", "sky_brawl", "hot_cod"]
+      multiplier: 1.5
     - round: 3
       games: ["bingo_speed", "parkour_chase", "battle_box"]
+      multiplier: 1.5
     - round: 4
-      games: ["tntrun", "sky_battle", "hot_cod"]
+      games: ["tnt_spleef", "sky_brawl", "hot_cod"]
+      multiplier: 2.0
     - round: 5
       games: ["bingo_speed", "parkour_chase"]
+      multiplier: 2.0
     - round: 6
-      games: ["tntrun", "sky_battle", "hot_cod"]
+      games: ["tnt_spleef", "hot_cod"]
+      multiplier: 2.5
     - final_round:
-      games: ["escape_warrior"]
+      games: ["dodging_bolt"]
+      multiplier: 3.0  # 最终对决权重更高
 
 scoring:
   # 每个游戏的详细积分规则

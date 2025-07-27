@@ -5,6 +5,7 @@ router = APIRouter()
 
 @router.websocket("/live")
 async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
     await manager.connect(websocket)
     try:
         while True:

@@ -10,6 +10,7 @@ interface VoteData {
 
 interface VotingInterfaceProps {
   votingData: VoteData[]
+  readOnlyMode?: boolean  // 新增只读模式参数
 }
 
 const gameDisplayNames: Record<string, string> = {
@@ -32,7 +33,7 @@ const gameDescriptions: Record<string, string> = {
   '跑路战士': '跑酷与技巧挑战'
 }
 
-export default function VotingInterface({ votingData }: VotingInterfaceProps) {
+export default function VotingInterface({ votingData, readOnlyMode = false }: VotingInterfaceProps) {
   const [selectedGame, setSelectedGame] = useState<string>('')
   const [hasVoted, setHasVoted] = useState(false)
 
@@ -76,7 +77,7 @@ export default function VotingInterface({ votingData }: VotingInterfaceProps) {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-white flex items-center">
           <Vote className="w-6 h-6 mr-2 text-blue-400" />
-          游戏投票
+          {readOnlyMode ? '投票结果展示' : '游戏投票'}
         </h2>
         <div className="flex items-center space-x-4 text-sm text-gray-400">
           <div className="flex items-center space-x-1">
@@ -90,51 +91,53 @@ export default function VotingInterface({ votingData }: VotingInterfaceProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* 投票选项 */}
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-white mb-4">选择下一个游戏</h3>
-          
-          {Object.keys(gameDisplayNames).map((game) => (
-            <button
-              key={game}
-              onClick={() => !hasVoted && setSelectedGame(game)}
-              disabled={hasVoted}
-              className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                selectedGame === game
-                  ? 'border-blue-500 bg-blue-900/30'
-                  : 'border-gray-600 bg-gray-700 hover:border-gray-500 hover:bg-gray-600'
-              } ${hasVoted ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-semibold text-white">{game}</div>
-                  <div className="text-sm text-gray-400 mt-1">
-                    {gameDescriptions[game]}
+      <div className={`grid ${readOnlyMode ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'} gap-6`}>
+        {/* 投票选项 - 只读模式下隐藏 */}
+        {!readOnlyMode && (
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-white mb-4">选择下一个游戏</h3>
+            
+            {Object.keys(gameDisplayNames).map((game) => (
+              <button
+                key={game}
+                onClick={() => !hasVoted && setSelectedGame(game)}
+                disabled={hasVoted}
+                className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                  selectedGame === game
+                    ? 'border-blue-500 bg-blue-900/30'
+                    : 'border-gray-600 bg-gray-700 hover:border-gray-500 hover:bg-gray-600'
+                } ${hasVoted ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-semibold text-white">{game}</div>
+                    <div className="text-sm text-gray-400 mt-1">
+                      {gameDescriptions[game]}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {gameDisplayNames[game]}
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {gameDisplayNames[game]}
-                  </div>
+                  {selectedGame === game && (
+                    <Trophy className="w-5 h-5 text-blue-400" />
+                  )}
                 </div>
-                {selectedGame === game && (
-                  <Trophy className="w-5 h-5 text-blue-400" />
-                )}
-              </div>
-            </button>
-          ))}
+              </button>
+            ))}
 
-          <button
-            onClick={handleVote}
-            disabled={!selectedGame || hasVoted}
-            className={`w-full py-3 rounded-lg font-semibold transition-all ${
-              !selectedGame || hasVoted
-                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
-            }`}
-          >
-            {hasVoted ? '投票成功!' : '投票'}
-          </button>
-        </div>
+            <button
+              onClick={handleVote}
+              disabled={!selectedGame || hasVoted}
+              className={`w-full py-3 rounded-lg font-semibold transition-all ${
+                !selectedGame || hasVoted
+                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
+            >
+              {hasVoted ? '投票成功!' : '投票'}
+            </button>
+          </div>
+        )}
 
         {/* 投票结果 */}
         <div className="space-y-3">

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.core.database import get_db
-from app.models.database import Tournament, Team, Player, Game, GameEvent
+from app.core.database import Tournament, Team, Player, Game, GameEvent
 from app.schemas.schemas import TournamentResponse, TeamResponse, PlayerResponse, GameEventResponse
 
 router = APIRouter()
@@ -26,16 +26,8 @@ async def get_tournament_info(db: Session = Depends(get_db)):
     team_responses = []
     
     for team in teams:
-        players = db.query(Player).filter(Player.team_id == team.id).all()
-        player_responses = [
-            PlayerResponse(
-                id=player.id,
-                name=player.name,
-                score=player.score,
-                team_id=player.team_id
-            )
-            for player in players
-        ]
+        # Players are associated through GameParticipation, not directly with teams
+        player_responses = []
         
         team_responses.append(TeamResponse(
             id=team.id,
@@ -59,16 +51,8 @@ async def get_teams(db: Session = Depends(get_db)):
     team_responses = []
     
     for team in teams:
-        players = db.query(Player).filter(Player.team_id == team.id).all()
-        player_responses = [
-            PlayerResponse(
-                id=player.id,
-                name=player.name,
-                score=player.score,
-                team_id=player.team_id
-            )
-            for player in players
-        ]
+        # Players are associated through GameParticipation, not directly with teams  
+        player_responses = []
         
         team_responses.append(TeamResponse(
             id=team.id,
@@ -82,11 +66,11 @@ async def get_teams(db: Session = Depends(get_db)):
 @router.get("/leaderboard")
 async def get_leaderboard(db: Session = Depends(get_db)):
     teams = db.query(Team).order_by(Team.total_score.desc()).all()
-    players = db.query(Player).order_by(Player.score.desc()).all()
+    players = db.query(Player).order_by(Player.total_score.desc()).all()
     
     return {
         "teams": [{"name": team.name, "score": team.total_score} for team in teams],
-        "players": [{"name": player.name, "score": player.score, "team": player.team_id} for player in players]
+        "players": [{"name": player.name, "score": player.total_score, "team": ""} for player in players]
     }
 
 @router.get("/game/{game_id}/events", response_model=List[GameEventResponse])

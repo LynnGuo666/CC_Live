@@ -1,0 +1,6 @@
+/frontend/node_modules/
+/node_modules/
+__pycache__/
+/frontend/.next/cache/
+/.next/cache/
+/frontend/.next/static/
