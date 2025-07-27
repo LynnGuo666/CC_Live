@@ -1,259 +1,215 @@
-"""
-游戏数据接收API模块
-
-功能:
-- 接收游戏服务器POST的各类数据
-- 实时推送数据到WebSocket客户端
-- 支持游戏事件、玩家分数、排行榜、比赛状态、团队统计
-
-API接口:
-- POST /events - 游戏事件
-- POST /player-scores - 玩家分数更新
-- POST /match-leaderboard - 排行榜更新
-- POST /match-status - 比赛状态更新
-- POST /team-stats - 团队统计更新
-"""
-
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
-from app.core.database import get_db
-from app.models.tournament_models import GameEvent, PlayerScore, MatchLeaderboard, TeamStat
-from app.schemas.schemas import (
-    GameEventCreate, PlayerScoreUpdate, LeaderboardUpdate, 
-    MatchStatusUpdate, TeamStatsUpdate
-)
-from app.services.websocket_manager import websocket_manager
-from datetime import datetime
+from sqlalchemy.orm import Session
+from typing import List
 
-# 创建API路由器 - 处理游戏服务器数据接收
+from app.core.database import get_db
+from app.core.database import GameEvent, Game
+from app.schemas.schemas import GameEventRequest, GameScoreRequest, GlobalScoreRequest, GlobalEventRequest
+from app.services.websocket_manager import manager
+from app.services.score_prediction import score_predictor
+
 router = APIRouter()
 
-
-@router.post("/events")
+@router.post("/{game_id}/event")
 async def create_game_event(
-    event: GameEventCreate,
-    db: AsyncSession = Depends(get_db)
+    game_id: str,
+    event_data: GameEventRequest,
+    db: Session = Depends(get_db)
 ):
-    """
-    接收游戏事件数据
+    game = db.query(Game).filter(Game.id == game_id).first()
+    if not game:
+        game = Game(id=game_id, name=game_id, round_number=1, tournament_id=1)
+        db.add(game)
+        db.commit()
     
-    功能:
-    - 保存游戏内发生的实时事件
-    - 通过WebSocket推送给所有连接的客户端
-    - 支持玩家行为、成就、物品获取等事件类型
-    
-    参数:
-    - event: 游戏事件数据，包含事件类型、玩家、时间等信息
-    
-    返回:
-    - 事件创建成功消息和事件ID
-    """
-    # 创建数据库事件记录
-    db_event = GameEvent(
-        match_id=event.match_id,
-        event_type=event.event_type,
-        player=event.player,
-        target=event.target,
-        data=event.data,
-        timestamp=event.timestamp or datetime.utcnow()
+    game_event = GameEvent(
+        game_id=game_id,
+        player=event_data.player,
+        team=event_data.team,
+        event=event_data.event,
+        lore=event_data.lore
     )
     
-    # 保存到数据库
-    db.add(db_event)
-    await db.commit()
-    await db.refresh(db_event)
+    db.add(game_event)
+    db.commit()
+    db.refresh(game_event)
     
-    # 通过WebSocket实时推送给前端
-    await websocket_manager.broadcast({
-        "type": "game_event",
-        "match_id": event.match_id,
-        "event": {
-            "id": db_event.id,
-            "event_type": event.event_type,
-            "player": event.player,
-            "target": event.target,
-            "data": event.data,
-            "timestamp": db_event.timestamp.isoformat()
+    # 处理分数预测
+    prediction_result = score_predictor.process_event(game_id, {
+        "event": event_data.event,
+        "player": event_data.player,
+        "team": event_data.team,
+        "lore": event_data.lore
+    })
+    
+    # 广播事件和分数预测
+    await manager.broadcast_game_event(game_id, {
+        "player": event_data.player,
+        "team": event_data.team,
+        "event": event_data.event,
+        "lore": event_data.lore,
+        "timestamp": game_event.timestamp.isoformat(),
+        "score_predictions": prediction_result.get("score_predictions", {}),
+        "predicted_scores": prediction_result.get("total_predicted_scores", {})
+    })
+    
+    return {
+        "status": "success", 
+        "message": "Event recorded",
+        "score_predictions": prediction_result.get("score_predictions", {}),
+        "predicted_scores": prediction_result.get("total_predicted_scores", {})
+    }
+
+@router.post("/{game_id}/score")
+async def update_game_scores(
+    game_id: str,
+    scores: List[GameScoreRequest],
+    db: Session = Depends(get_db)
+):
+    game = db.query(Game).filter(Game.id == game_id).first()
+    if not game:
+        game = Game(id=game_id, name=game_id, round_number=1, tournament_id=1)
+        db.add(game)
+        db.commit()
+    
+    score_updates = []
+    actual_scores = {}
+    
+    for score_data in scores:
+        score_updates.append({
+            "player": score_data.player,
+            "team": score_data.team,
+            "score": score_data.score
+        })
+        # 更新实际分数
+        actual_scores[score_data.player] = score_data.score
+    
+    # 更新分数预测器的实际分数
+    score_predictor.update_actual_scores(game_id, actual_scores)
+    
+    # 获取预测对比
+    score_comparison = score_predictor.get_score_comparison(game_id)
+    
+    await manager.broadcast_score_update({
+        "game_id": game_id,
+        "scores": score_updates,
+        "score_comparison": score_comparison
+    })
+    
+    return {
+        "status": "success", 
+        "message": "Scores updated",
+        "score_comparison": score_comparison
+    }
+
+@router.post("/{game_id}/initialize")
+async def initialize_game(
+    game_id: str,
+    teams: List[str],
+    players: dict,  # {"team_id": ["player1", "player2", ...]}
+    db: Session = Depends(get_db)
+):
+    """初始化游戏以进行分数预测"""
+    game = db.query(Game).filter(Game.id == game_id).first()
+    if not game:
+        game = Game(id=game_id, name=game_id, round_number=1, tournament_id=1)
+        db.add(game)
+        db.commit()
+    
+    # 初始化分数预测引擎
+    score_predictor.initialize_game(game_id, teams, players)
+    
+    return {
+        "status": "success",
+        "message": f"Game {game_id} initialized for score prediction",
+        "teams": teams,
+        "players": players
+    }
+
+@router.get("/{game_id}/predictions")
+async def get_score_predictions(game_id: str):
+    """获取当前的分数预测"""
+    score_comparison = score_predictor.get_score_comparison(game_id)
+    return {
+        "game_id": game_id,
+        "score_comparison": score_comparison
+    }
+
+@router.post("/game/score")
+async def update_global_scores(
+    scores: List[GlobalScoreRequest],
+    db: Session = Depends(get_db)
+):
+    from app.core.database import Team, Player
+    
+    for team_data in scores:
+        team = db.query(Team).filter(Team.id == team_data.team).first()
+        if not team:
+            team = Team(id=team_data.team, name=team_data.team, tournament_id=1)
+            db.add(team)
+        
+        team.total_score = team_data.total_score
+        
+        for player_score in team_data.scores:
+            player = db.query(Player).filter(Player.id == player_score.player).first()
+            if not player:
+                player = Player(
+                    id=player_score.player, 
+                    name=player_score.player, 
+                    team_id=team_data.team
+                )
+                db.add(player)
+            
+            player.score = player_score.score
+    
+    db.commit()
+    
+    await manager.broadcast_score_update({
+        "type": "global",
+        "teams": [
+            {
+                "team": team_data.team,
+                "total_score": team_data.total_score,
+                "players": [
+                    {"player": p.player, "score": p.score} 
+                    for p in team_data.scores
+                ]
+            }
+            for team_data in scores
+        ]
+    })
+    
+    return {"status": "success", "message": "Global scores updated"}
+
+@router.post("/game/event")
+async def create_global_event(
+    event_data: GlobalEventRequest,
+    db: Session = Depends(get_db)
+):
+    from app.core.database import Tournament
+    
+    tournament = db.query(Tournament).first()
+    if not tournament:
+        tournament = Tournament(
+            name="Minecraft Tournament",
+            status=event_data.status,
+            current_game=event_data.game.name,
+            current_round=event_data.game.round
+        )
+        db.add(tournament)
+    else:
+        tournament.status = event_data.status
+        tournament.current_game = event_data.game.name
+        tournament.current_round = event_data.game.round
+    
+    db.commit()
+    
+    await manager.broadcast_global_event({
+        "status": event_data.status,
+        "game": {
+            "name": event_data.game.name,
+            "round": event_data.game.round
         }
     })
     
-    return {"message": "Event created successfully", "event_id": db_event.id}
-
-
-@router.post("/player-scores")
-async def update_player_scores(
-    data: PlayerScoreUpdate,
-    db: AsyncSession = Depends(get_db)
-):
-    """更新玩家分数数据"""
-    for player in data.players:
-        # 检查是否存在记录
-        result = await db.execute(
-            select(PlayerScore).where(
-                PlayerScore.match_id == data.match_id,
-                PlayerScore.player_name == player.player_name
-            )
-        )
-        existing_score = result.scalar_one_or_none()
-        
-        if existing_score:
-            # 更新现有记录
-            existing_score.score = player.score
-            existing_score.level = player.level
-            existing_score.health = player.health
-            existing_score.experience = player.experience
-            existing_score.custom_stats = player.custom_stats
-            existing_score.timestamp = data.timestamp or datetime.utcnow()
-        else:
-            # 创建新记录
-            db_score = PlayerScore(
-                match_id=data.match_id,
-                player_name=player.player_name,
-                score=player.score,
-                level=player.level,
-                health=player.health,
-                experience=player.experience,
-                custom_stats=player.custom_stats,
-                timestamp=data.timestamp or datetime.utcnow()
-            )
-            db.add(db_score)
-    
-    await db.commit()
-    
-    # WebSocket推送
-    await websocket_manager.broadcast({
-        "type": "player_scores_update",
-        "match_id": data.match_id,
-        "players": [player.dict() for player in data.players]
-    })
-    
-    return {"message": "Player scores updated successfully"}
-
-
-@router.post("/match-leaderboard")
-async def update_leaderboard(
-    data: LeaderboardUpdate,
-    db: AsyncSession = Depends(get_db)
-):
-    """更新比赛排行榜"""
-    # 删除现有排行榜
-    await db.execute(
-        delete(MatchLeaderboard).where(MatchLeaderboard.match_id == data.match_id)
-    )
-    
-    # 插入新排行榜
-    for entry in data.leaderboard:
-        db_entry = MatchLeaderboard(
-            match_id=data.match_id,
-            player_name=entry.player_name,
-            rank=entry.rank,
-            total_score=entry.total_score,
-            team=entry.team,
-            timestamp=data.timestamp or datetime.utcnow()
-        )
-        db.add(db_entry)
-    
-    await db.commit()
-    
-    # WebSocket推送
-    await websocket_manager.broadcast({
-        "type": "leaderboard_update",
-        "match_id": data.match_id,
-        "leaderboard": [entry.dict() for entry in data.leaderboard]
-    })
-    
-    return {"message": "Leaderboard updated successfully"}
-
-
-@router.post("/match-status")
-async def update_match_status(
-    data: MatchStatusUpdate,
-    db: AsyncSession = Depends(get_db)
-):
-    """更新比赛状态"""
-    result = await db.execute(
-        select(MatchStatus).where(MatchStatus.match_id == data.match_id)
-    )
-    existing_status = result.scalar_one_or_none()
-    
-    if existing_status:
-        # 更新现有状态
-        existing_status.status = data.status
-        existing_status.current_round = data.current_round
-        existing_status.total_rounds = data.total_rounds
-        existing_status.time_remaining = data.time_remaining
-        existing_status.game_mode = data.game_mode
-        existing_status.custom_status = data.custom_status
-        existing_status.updated_at = datetime.utcnow()
-    else:
-        # 创建新状态
-        db_status = MatchStatus(
-            match_id=data.match_id,
-            status=data.status,
-            current_round=data.current_round,
-            total_rounds=data.total_rounds,
-            time_remaining=data.time_remaining,
-            game_mode=data.game_mode,
-            custom_status=data.custom_status
-        )
-        db.add(db_status)
-    
-    await db.commit()
-    
-    # WebSocket推送
-    await websocket_manager.broadcast({
-        "type": "match_status_update",
-        "match_id": data.match_id,
-        "status": data.dict()
-    })
-    
-    return {"message": "Match status updated successfully"}
-
-
-@router.post("/team-stats")
-async def update_team_stats(
-    data: TeamStatsUpdate,
-    db: AsyncSession = Depends(get_db)
-):
-    """更新团队统计数据"""
-    for team in data.teams:
-        # 检查是否存在记录
-        result = await db.execute(
-            select(TeamStat).where(
-                TeamStat.match_id == data.match_id,
-                TeamStat.team_name == team.team_name
-            )
-        )
-        existing_stat = result.scalar_one_or_none()
-        
-        if existing_stat:
-            # 更新现有记录
-            existing_stat.total_score = team.total_score
-            existing_stat.objectives = team.objectives
-            existing_stat.progress = team.progress
-            existing_stat.custom_stats = team.custom_stats
-            existing_stat.timestamp = data.timestamp or datetime.utcnow()
-        else:
-            # 创建新记录
-            db_stat = TeamStat(
-                match_id=data.match_id,
-                team_name=team.team_name,
-                total_score=team.total_score,
-                objectives=team.objectives,
-                progress=team.progress,
-                custom_stats=team.custom_stats,
-                timestamp=data.timestamp or datetime.utcnow()
-            )
-            db.add(db_stat)
-    
-    await db.commit()
-    
-    # WebSocket推送
-    await websocket_manager.broadcast({
-        "type": "team_stats_update",
-        "match_id": data.match_id,
-        "teams": [team.dict() for team in data.teams]
-    })
-    
-    return {"message": "Team stats updated successfully"}
+    return {"status": "success", "message": "Global event updated"}

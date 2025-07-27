@@ -1,9 +1,0 @@
-__pycache__/
-/frontend/node_modules/
-/frontend/dist/
-/frontend/.nuxt/
-/frontend/.nuxtignore
-/frontend/.nuxtg/
-/frontend/.next/
-.env
-*.db

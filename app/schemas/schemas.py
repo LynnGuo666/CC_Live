@@ -1,70 +1,64 @@
 from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from datetime import datetime
 
+class GameEventRequest(BaseModel):
+    player: str
+    team: str
+    event: str
+    lore: str
 
-class GameEventCreate(BaseModel):
-    match_id: str
-    event_type: str
-    player: Optional[str] = None
-    target: Optional[str] = None
-    data: Optional[Dict[str, Any]] = None
-    timestamp: Optional[datetime] = None
+class GameScoreRequest(BaseModel):
+    player: str
+    team: str
+    score: int
 
+class PlayerScore(BaseModel):
+    player: str
+    score: int
 
-class PlayerScoreData(BaseModel):
-    player_name: str
-    score: int = 0
-    level: int = 1
-    health: int = 100
-    experience: int = 0
-    custom_stats: Optional[Dict[str, Any]] = None
-
-
-class PlayerScoreUpdate(BaseModel):
-    match_id: str
-    timestamp: Optional[datetime] = None
-    players: List[PlayerScoreData]
-
-
-class LeaderboardEntry(BaseModel):
-    rank: int
-    player_name: str
+class GlobalScoreRequest(BaseModel):
+    team: str
     total_score: int
-    team: Optional[str] = None
+    scores: List[PlayerScore]
 
+class GameInfo(BaseModel):
+    name: str
+    round: int
 
-class LeaderboardUpdate(BaseModel):
-    match_id: str
-    timestamp: Optional[datetime] = None
-    leaderboard: List[LeaderboardEntry]
-
-
-class MatchStatusUpdate(BaseModel):
-    match_id: str
+class GlobalEventRequest(BaseModel):
     status: str
-    current_round: Optional[int] = 1
-    total_rounds: Optional[int] = 1
-    time_remaining: Optional[int] = None
-    game_mode: Optional[str] = None
-    custom_status: Optional[Dict[str, Any]] = None
+    game: GameInfo
 
+class VoteEventRequest(BaseModel):
+    game: str
+    ticket: int
 
-class TeamStatsData(BaseModel):
-    team_name: str
-    total_score: int = 0
-    objectives: int = 0
-    progress: int = 0
-    custom_stats: Optional[Dict[str, Any]] = None
+class PlayerResponse(BaseModel):
+    id: str
+    name: str
+    score: int
+    team_id: str
 
+class TeamResponse(BaseModel):
+    id: str
+    name: str
+    total_score: int
+    players: List[PlayerResponse]
 
-class TeamStatsUpdate(BaseModel):
-    match_id: str
-    timestamp: Optional[datetime] = None
-    teams: List[TeamStatsData]
+class GameEventResponse(BaseModel):
+    id: int
+    game_id: str
+    player: str
+    team: str
+    event: str
+    lore: str
+    timestamp: datetime
 
-
-class CommentCreate(BaseModel):
-    match_id: str
-    username: str
-    content: str
+class TournamentResponse(BaseModel):
+    id: int
+    name: str
+    status: str
+    current_game: Optional[str]
+    current_round: int
+    teams: List[TeamResponse]

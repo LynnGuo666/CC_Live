@@ -1,0 +1,382 @@
+tournament:
+  name: "S2CC锦标赛"
+  description: "6个小游戏 + 1个最终对决游戏"
+  estimated_duration: 180  # 预估总时长(分钟)
+  voting_enabled: true  # 启用游戏投票
+  
+teams:
+  - id: "RED"
+    name: "红队"
+    color: "#FF0000"
+    members: ["Aut_moon_white", "lao_dan", "sXKYYYY", "gdgfty"]
+    final_result: "躲避箭亚军，积分第二名"
+    
+  - id: "ORANGE" 
+    name: "橙队"
+    color: "#FFA500"
+    members: ["YK_yuki", "Tenacity__", "Stlinosuke", "Tamakochika"]
+    final_result: "积分第三名"
+    
+  - id: "BLUE"
+    name: "蓝队"
+    color: "#0000FF"
+    members: ["AnTooLot_254890", "gumorsir", "ATRI_QWQ", "TianyaOVO"]
+    final_result: "积分第十一名"
+    
+  - id: "GREEN"
+    name: "绿队"
+    color: "#00FF00"
+    members: ["StarsYu", "wsouls", "PeaceYoooooo", "ATSmok"]
+    final_result: "积分第七名"
+    
+  - id: "YELLOW"
+    name: "黄队"
+    color: "#FFFF00"
+    members: ["Thunder50BMG", "LgdandLgm", "AchilliesPRIDE", "Q_Official"]
+    final_result: "积分第六名"
+    
+  - id: "CYAN"
+    name: "青队"
+    color: "#00FFFF"
+    members: ["laffeyDD724", "Kevin_Lestek", "Morton_y", "Livefaster"]
+    final_result: "积分第十二名"
+    
+  - id: "PURPLE"
+    name: "紫队"
+    color: "#800080"
+    members: ["BaggyPark", "Nock_ZZC", "Wise_Starx", "gengER"]
+    final_result: "积分第九名"
+    
+  - id: "WHITE"
+    name: "白队"
+    color: "#FFFFFF"
+    members: ["goob233", "XiuRanYing", "Needle_Python", "long_zhi_zi"]
+    final_result: "躲避箭冠军，积分第一名"
+    
+  - id: "PINK"
+    name: "粉红队"
+    color: "#FFC0CB"
+    members: ["Ning_meng_Cat", "MingMo777", "xiaoyuanxyz", "GreenHandkignt1"]
+    final_result: "积分第八名"
+    
+  - id: "BROWN"
+    name: "棕队"
+    color: "#A52A2A"
+    members: ["zRenox", "Forest_Silence", "logicalkeys", "wei_xin"]
+    final_result: "积分第四名"
+    
+  - id: "LIGHT_BLUE"
+    name: "淡蓝队"
+    color: "#ADD8E6"
+    members: ["xiaoheng66666", "K4ver", "xiaoyao04", "Venti_Lynn"]
+    final_result: "积分第五名"
+    
+  - id: "LIGHT_GRAY"
+    name: "淡灰队"
+    color: "#D3D3D3"
+    members: ["Frozen_Rinn", "BlankChips", "ji_mo_run", "LazyOrz"]
+    final_result: "积分第十名"
+
+games:
+  - id: "bingo_speed"
+    name: "宾果时速"
+    english_name: "Bingo But Fast"
+    rounds: 1  # 1局，所有队伍在同一世界
+    estimated_time: 10  # 游戏时长：10分钟
+    description: "在有限的时间里，尽可能多和快地收集宾果所要求的物品"
+    max_players_per_world: 16  # 所有队伍同一世界
+    
+  - id: "parkour_chase"
+    name: "跑酷追击"
+    english_name: "Parkour Tag"
+    rounds: 8  # 随机匹配8轮（不重复）
+    estimated_time: 8  # 每局1分钟，总时长约8分钟
+    description: "在跑酷的竞技场中，抓住所有对手，或者尽可能在对手的追击下存活更长时间"
+    match_type: "team_vs_team"  # 两两对战
+    
+  - id: "battle_box"
+    name: "斗战方框"
+    english_name: "Battle Box"
+    rounds: 8  # 随机匹配8轮（不重复）
+    estimated_time: 8  # 每局1分钟
+    description: "在有限的空间内与对手决斗，击杀对手并通过填满场地中央的羊毛方框来取得胜利"
+    match_type: "team_vs_team"
+    
+  - id: "tnt_spleef"
+    name: "TNT飞跃"
+    english_name: "TNT Spleef"
+    rounds: 3  # 3局
+    estimated_time: 9  # 每局3分钟
+    description: "踩中的方块会消失！尽量比其他玩家活得更久"
+    players_per_arena: 4  # 每个场地4人（来自不同队伍）
+    
+  - id: "sky_brawl"
+    name: "空岛乱斗"
+    english_name: "Sky Brawl"
+    rounds: 1  # 1局，所有玩家在同一场地
+    estimated_time: 18  # 18分钟
+    description: "在天空中收集资源、搭建桥梁，并在不断缩小的活动空域内尽可能长时间地存活并击杀对手"
+    max_players_per_world: 16
+    
+  - id: "hot_cod"
+    name: "烫手鳕鱼"
+    english_name: "Hoty Cody Dusky"
+    rounds: 3  # 3局
+    estimated_time: 12  # 每局4分钟
+    description: "新鲜出炉的烫手鳕鱼！在被烫到受不了之前将鳕鱼扔给其他人"
+    players_per_arena: 4
+    
+  - id: "runaway_warrior"
+    name: "跑路战士"
+    english_name: "Runaway Warrior"
+    rounds: 1  # 1局
+    estimated_time: 12.5  # 12分钟30秒
+    description: "SCC跑酷激情回归，等等......跑路？闯过一系列跑酷关卡，尝试抵达终点"
+    max_players_per_world: 16
+    
+  - id: "dodging_bolt"
+    name: "躲避箭"
+    english_name: "Dodging Bolt"
+    rounds: 5  # 五局三胜
+    estimated_time: 15  # 不限时，预估15分钟
+    description: "最终对决：躲闪对手的射击，通过命中淘汰对手"
+    match_type: "final_showdown"
+
+schedule:
+  # 游戏轮次安排
+  rounds:
+    - round: 1
+      games: ["bingo_speed", "parkour_chase", "battle_box"]
+    - round: 2
+      games: ["tntrun", "sky_battle", "hot_cod"]
+    - round: 3
+      games: ["bingo_speed", "parkour_chase", "battle_box"]
+    - round: 4
+      games: ["tntrun", "sky_battle", "hot_cod"]
+    - round: 5
+      games: ["bingo_speed", "parkour_chase"]
+    - round: 6
+      games: ["tntrun", "hot_cod"]
+    - final_round:
+      games: ["escape_warrior"]
+
+scoring:
+  # 每个游戏的详细积分规则
+  bingo_speed:
+    # 宾果时速积分规则
+    team_placement:  # 队伍获取物品排名积分
+      1: 60   # 第一个获取物品的队伍
+      2: 50   # 第二个获取物品的队伍
+      3: 40   # 第三个获取物品的队伍
+      4: 30   # 第四个获取物品的队伍
+      5: 20   # 第五个获取物品的队伍
+      6: 5    # 第六个及以后的队伍
+    player_bonus: 20  # 获取物品的玩家额外积分
+    
+  parkour_chase:
+    # 跑酷追击积分规则
+    escaper:
+      survival_bonus: 20      # 逃生者未被全部抓住时每人积分
+      time_bonus: 2           # 每存活10秒积分
+      time_interval: 10       # 时间间隔(秒)
+    chaser:
+      complete_elimination: 30  # 成功击杀所有逃生者时追击方每人积分
+      chaser_bonus: 42         # 追击者成功击杀所有逃生者的积分(时间递减)
+      time_decay: 7            # 每10秒减少的积分
+      kill_bonus: 6            # 每抓到1名逃脱者的积分
+    max_chaser_times: 4        # 同一玩家最多担任追击者次数
+    
+  battle_box:
+    # 斗战方框积分规则
+    kill: 15          # 每击杀1名玩家积分
+    win: 40           # 取得胜利的队伍每人积分
+    draw: 15          # 平局时双方每人积分
+    
+  tnt_spleef:
+    # TNT飞跃积分规则
+    survival: 4       # 每有一名玩家在你之前坠落积分
+    placement_bonus:  # 存活时间最长的前三名额外积分
+      1: 100         # 第一名
+      2: 70          # 第二名
+      3: 30          # 第三名
+      
+  sky_brawl:
+    # 空岛乱斗积分规则
+    survival: 10      # 每有1名玩家在你之前阵亡积分
+    team_elimination: 2  # 每有1支队伍在你存活时全队出局积分
+    kill: 40          # 每击杀一名玩家积分
+    last_standing: 50 # 最后存活的玩家积分
+    
+  hot_cod:
+    # 烫手鳕鱼积分规则
+    survival: 15      # 每有一名与你在同一场地中的玩家在你之前出局积分
+    first_holder_bonus: 10  # 被随机选中为第一位鳕鱼持有者的补偿积分
+    placement_bonus:  # 每个场地存活时间最长的前三名额外积分
+      1: 25          # 第一名
+      2: 20          # 第二名
+      3: 15          # 第三名
+      
+  runaway_warrior:
+    # 跑路战士积分规则
+    checkpoints:
+      two_star: 2     # 每完成一个二星关卡积分
+      three_star: [5, 10, 10, 15, 20]  # 三星关卡递增积分
+      four_star: [10, 15, 20, 25, 30]  # 四星关卡递增积分
+      five_star: [15, 20, 25, 30, 50]  # 五星关卡递增积分
+    completion_multiplier:  # 队伍结算系数
+      simple: 0.15      # 简单路线
+      normal: 0.35      # 普通路线
+      hard: 0.8         # 困难路线
+      
+  dodging_bolt:
+    # 躲避箭积分规则（最终对决）
+    elimination: 50   # 淘汰对手积分
+    round_win: 100    # 赢得一轮积分
+    tournament_win: 500  # 锦标赛冠军积分
+    tournament_second: 300  # 锦标赛亚军积分
+
+event_types:
+  # 每个游戏的事件类型定义
+  bingo_speed:
+    - event: "Item_Found"
+      description: "找到物品"
+      lore_field: "物品ID (例如: diamond)"
+      score_impact: "team_placement + player_bonus"
+      
+  parkour_chase:
+    - event: "Chaser_Selected"
+      description: "选择追击者"
+      lore_field: "无"
+      player_field: "被选为追击者的玩家ID"
+    - event: "Round_Start"
+      description: "回合开始"
+      lore_field: "无"
+      player_field: "无"
+    - event: "Player_Tagged"
+      description: "玩家被标记"
+      lore_field: "被标记的玩家ID"
+      player_field: "标记他人的玩家ID"
+      score_impact: "chaser_kill_bonus"
+    - event: "Round_Over"
+      description: "回合结束"
+      lore_field: "无"
+      player_field: "无"
+      score_impact: "survival_bonus + time_bonus"
+      
+  battle_box:
+    - event: "Round_Start"
+      description: "回合开始"
+      lore_field: "无"
+      player_field: "无"
+    - event: "Kill"
+      description: "击杀"
+      lore_field: "被击杀的玩家ID"
+      player_field: "击杀者ID"
+      score_impact: "kill_points"
+    - event: "Wool_Win"
+      description: "羊毛获胜"
+      lore_field: "无"
+      player_field: "放置最后一个羊毛的玩家ID"
+      score_impact: "team_win_points"
+    - event: "Round_Over"
+      description: "回合结束"
+      lore_field: "无"
+      player_field: "无"
+      
+  tnt_spleef:
+    - event: "Round_Start"
+      description: "回合开始"
+      lore_field: "无"
+      player_field: "无"
+    - event: "Player_Fall"
+      description: "玩家掉落"
+      lore_field: "无"
+      player_field: "掉落的玩家ID"
+      score_impact: "survival_points"
+    - event: "Round_Over"
+      description: "回合结束"
+      lore_field: "无"
+      player_field: "无"
+      score_impact: "placement_bonus"
+      
+  sky_brawl:
+    - event: "Round_Start"
+      description: "回合开始"
+      lore_field: "无"
+      player_field: "无"
+    - event: "Kill"
+      description: "击杀"
+      lore_field: "被击杀的玩家ID (包括被击落虚空)"
+      player_field: "击杀者ID"
+      score_impact: "kill_points"
+    - event: "Fall"
+      description: "掉入虚空"
+      lore_field: "无"
+      player_field: "掉入虚空的玩家ID"
+      score_impact: "survival_points"
+    - event: "Border_Start"
+      description: "边界开始收缩"
+      lore_field: "边界收缩到的格子数 (例如: 100)"
+      player_field: "无"
+    - event: "Border_End"
+      description: "边界收缩结束"
+      lore_field: "边界收缩到的格子数 (例如: 50)"
+      player_field: "无"
+    - event: "Round_Over"
+      description: "回合结束"
+      lore_field: "无"
+      player_field: "无"
+      score_impact: "final_standings"
+      
+  hot_cod:
+    - event: "Round_Start"
+      description: "回合开始"
+      lore_field: "无"
+      player_field: "无"
+    - event: "Cod_Passed"
+      description: "鳕鱼传递"
+      lore_field: "收到鳕鱼的玩家ID"
+      player_field: "传递鳕鱼的玩家ID"
+    - event: "Death"
+      description: "持有鳕鱼爆炸身亡"
+      lore_field: "无"
+      player_field: "持有鳕鱼爆炸身亡的玩家ID"
+      score_impact: "survival_points"
+    - event: "Round_Over"
+      description: "回合结束"
+      lore_field: "无"
+      player_field: "无"
+      score_impact: "placement_bonus"
+      
+  runaway_warrior:
+    - event: "Checkpoint"
+      description: "到达检查点"
+      lore_field: "检查点ID (例如: main1, sub1)"
+      player_field: "到达检查点的玩家ID"
+      score_impact: "checkpoint_points"
+    - event: "Player_Mistake"
+      description: "玩家失误掉落"
+      lore_field: "无"
+      player_field: "失误掉落的玩家ID"
+    - event: "Player_Finish"
+      description: "玩家完成跑酷"
+      lore_field: "完成路线类型 (simple/normal/hard)"
+      player_field: "完成跑酷的玩家ID"
+      score_impact: "completion_multiplier"
+      
+  dodging_bolt:
+    - event: "Player_Eliminated"
+      description: "玩家被淘汰"
+      lore_field: "淘汰方式 (shot/fall)"
+      player_field: "被淘汰的玩家ID"
+      score_impact: "elimination_points"
+    - event: "Round_Win"
+      description: "回合获胜"
+      lore_field: "获胜队伍ID"
+      player_field: "无"
+      score_impact: "round_win_points"
+    - event: "Tournament_End"
+      description: "锦标赛结束"
+      lore_field: "冠军队伍ID"
+      player_field: "无"
+      score_impact: "tournament_final_points"

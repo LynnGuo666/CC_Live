@@ -1,74 +1,71 @@
 from typing import List, Dict
+from fastapi import WebSocket
 import json
 import asyncio
-from fastapi import WebSocket, WebSocketDisconnect
-
 
 class WebSocketManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
-        self.match_connections: Dict[str, List[WebSocket]] = {}
+        self.connection_count = 0
 
-    async def connect(self, websocket: WebSocket, match_id: str = None):
-        """接受WebSocket连接"""
+    async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.append(websocket)
-        
-        if match_id:
-            if match_id not in self.match_connections:
-                self.match_connections[match_id] = []
-            self.match_connections[match_id].append(websocket)
+        self.connection_count += 1
+        await self.broadcast_viewer_count()
 
-    def disconnect(self, websocket: WebSocket, match_id: str = None):
-        """断开WebSocket连接"""
-        if websocket in self.active_connections:
-            self.active_connections.remove(websocket)
-        
-        if match_id and match_id in self.match_connections:
-            if websocket in self.match_connections[match_id]:
-                self.match_connections[match_id].remove(websocket)
-            if not self.match_connections[match_id]:
-                del self.match_connections[match_id]
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+        self.connection_count -= 1
+        asyncio.create_task(self.broadcast_viewer_count())
 
-    async def send_personal_message(self, message: dict, websocket: WebSocket):
-        """发送个人消息"""
-        try:
-            await websocket.send_text(json.dumps(message))
-        except:
-            # 连接已断开，移除连接
-            self.disconnect(websocket)
+    async def send_personal_message(self, message: str, websocket: WebSocket):
+        await websocket.send_text(message)
 
-    async def broadcast(self, message: dict):
-        """广播消息给所有连接"""
+    async def broadcast(self, message: Dict):
         if self.active_connections:
-            await asyncio.gather(
-                *[self._safe_send(connection, message) for connection in self.active_connections],
-                return_exceptions=True
-            )
+            message_str = json.dumps(message, ensure_ascii=False, default=str)
+            disconnected = []
+            for connection in self.active_connections:
+                try:
+                    await connection.send_text(message_str)
+                except:
+                    disconnected.append(connection)
+            
+            for connection in disconnected:
+                if connection in self.active_connections:
+                    self.active_connections.remove(connection)
+                    self.connection_count -= 1
 
-    async def broadcast_to_match(self, message: dict, match_id: str):
-        """广播消息给特定比赛的连接"""
-        if match_id in self.match_connections:
-            connections = self.match_connections[match_id]
-            if connections:
-                await asyncio.gather(
-                    *[self._safe_send(connection, message) for connection in connections],
-                    return_exceptions=True
-                )
+    async def broadcast_viewer_count(self):
+        await self.broadcast({
+            "type": "viewer_count",
+            "count": self.connection_count
+        })
 
-    async def _safe_send(self, websocket: WebSocket, message: dict):
-        """安全发送消息，处理断开连接的情况"""
-        try:
-            await websocket.send_text(json.dumps(message))
-        except:
-            # 连接已断开，从列表中移除
-            if websocket in self.active_connections:
-                self.active_connections.remove(websocket)
-            # 从比赛连接中移除
-            for match_id, connections in self.match_connections.items():
-                if websocket in connections:
-                    connections.remove(websocket)
+    async def broadcast_game_event(self, game_id: str, event_data: Dict):
+        await self.broadcast({
+            "type": "game_event",
+            "game_id": game_id,
+            "data": event_data
+        })
 
+    async def broadcast_score_update(self, data: Dict):
+        await self.broadcast({
+            "type": "score_update",
+            "data": data
+        })
 
-# 全局WebSocket管理器实例
-websocket_manager = WebSocketManager()
+    async def broadcast_global_event(self, data: Dict):
+        await self.broadcast({
+            "type": "global_event",
+            "data": data
+        })
+
+    async def broadcast_vote_event(self, data: Dict):
+        await self.broadcast({
+            "type": "vote_event",
+            "data": data
+        })
+
+manager = WebSocketManager()
