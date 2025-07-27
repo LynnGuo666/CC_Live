@@ -92,7 +92,6 @@ games:
     
   - id: "skywars"
     name: "空岛乱斗"
-    english_name: "Sky Brawl"
     rounds: 1  # 1局，所有玩家在同一场地
     estimated_time: 18  # 18分钟
     description: "在天空中收集资源、搭建桥梁，并在不断缩小的活动空域内尽可能长时间地存活并击杀对手"
@@ -100,7 +99,6 @@ games:
     
   - id: "hot_cod"
     name: "烫手鳕鱼"
-    english_name: "Hoty Cody Dusky"
     rounds: 3  # 3局
     estimated_time: 12  # 每局4分钟
     description: "新鲜出炉的烫手鳕鱼！在被烫到受不了之前将鳕鱼扔给其他人"
@@ -108,11 +106,9 @@ games:
     
   - id: "runaway_warrior"
     name: "跑路战士"
-    english_name: "Runaway Warrior"
     rounds: 1  # 1局
     estimated_time: 12.5  # 12分钟30秒
     description: "SCC跑酷激情回归，等等......跑路？闯过一系列跑酷关卡，尝试抵达终点"
-    max_players_per_world: 16
     
   - id: "dodging_bolt"
     name: "躲避箭"
@@ -144,7 +140,7 @@ schedule:
       multiplier: 2.5
     - final_round:
       games: ["dodging_bolt"]
-      multiplier: 3.0  # 最终对决权重更高
+      multiplier: 0.0  # 最终对决权重更高
 
 scoring:
   # 每个游戏的详细积分规则
@@ -218,8 +214,6 @@ scoring:
     # 躲避箭积分规则（最终对决）
     elimination: 50   # 淘汰对手积分
     round_win: 100    # 赢得一轮积分
-    tournament_win: 500  # 锦标赛冠军积分
-    tournament_second: 300  # 锦标赛亚军积分
 
 event_types:
   # 每个游戏的事件类型定义
