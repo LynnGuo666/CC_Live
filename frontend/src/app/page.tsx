@@ -23,36 +23,31 @@ export default function Home() {
 
   const [showVoting, setShowVoting] = useState(false)
 
-  useEffect(() => {
-    // 每10秒刷新一次数据
-    const interval = setInterval(refreshData, 10000)
-    return () => clearInterval(interval)
-  }, [refreshData])
+  // 不再需要定时刷新，因为使用WebSocket实时更新
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white text-xl">加载中...</div>
+      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-gray-900 dark:text-white text-xl">加载中...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
       {/* 顶部标题区域 */}
       <TournamentHeader 
         tournament={tournament}
         gameStatus={gameStatus}
         viewerCount={viewerCount}
-        onToggleVoting={() => setShowVoting(!showVoting)}
       />
 
       {/* 主要内容区域 */}
       <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-12 gap-6 h-[calc(100vh-120px)]">
+        <div className="grid grid-cols-12 gap-6" style={{ height: 'calc(100vh - 200px)' }}>
           
           {/* 左侧：积分榜 */}
-          <div className="col-span-3">
+          <div className="col-span-3 h-full">
             <LeaderboardPanel 
               leaderboard={leaderboard}
               scores={scores}
@@ -89,7 +84,7 @@ export default function Home() {
           </div>
 
           {/* 右侧：弹幕聊天 */}
-          <div className="col-span-3">
+          <div className="col-span-3 h-full">
             <ChatSection 
               isConnected={isConnected}
               viewerCount={viewerCount}

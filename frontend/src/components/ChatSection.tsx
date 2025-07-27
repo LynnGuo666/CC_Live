@@ -54,6 +54,7 @@ export default function ChatSection({ isConnected, viewerCount }: ChatSectionPro
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   // 模拟消息生成
   useEffect(() => {
@@ -89,7 +90,11 @@ export default function ChatSection({ isConnected, viewerCount }: ChatSectionPro
         color: getRandomColor()
       }
 
-      setMessages(prev => [...prev.slice(-49), newMsg]) // 保持最新50条消息
+      setMessages(prev => {
+        const updated = [...prev, newMsg]
+        // 严格限制只保留最新30条消息
+        return updated.slice(-30)
+      })
     }
 
     // 随机间隔发送模拟消息
@@ -98,8 +103,10 @@ export default function ChatSection({ isConnected, viewerCount }: ChatSectionPro
   }, [isConnected])
 
   useEffect(() => {
-    // 自动滚动到底部
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    // 滚动到底部
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight
+    }
   }, [messages])
 
   const handleSendMessage = () => {
@@ -113,7 +120,11 @@ export default function ChatSection({ isConnected, viewerCount }: ChatSectionPro
       color: getRandomColor()
     }
 
-    setMessages(prev => [...prev.slice(-49), message])
+    setMessages(prev => {
+      const updated = [...prev, message]
+      // 严格限制只保留最新30条消息
+      return updated.slice(-30)
+    })
     setNewMessage('')
     inputRef.current?.focus()
   }
@@ -168,7 +179,10 @@ export default function ChatSection({ isConnected, viewerCount }: ChatSectionPro
 
       {/* 消息列表 */}
       <div className="flex-1 overflow-hidden mb-4">
-        <div className="h-full overflow-y-auto custom-scrollbar space-y-2">
+        <div 
+          ref={containerRef}
+          className="h-full overflow-y-auto custom-scrollbar space-y-2"
+        >
           {messages.map((message) => (
             <div
               key={message.id}
@@ -181,16 +195,15 @@ export default function ChatSection({ isConnected, viewerCount }: ChatSectionPro
                 >
                   {message.username}:
                 </span>
-                <span className="text-sm text-gray-200 break-words">
+                <span className="text-sm text-gray-800 dark:text-gray-200 break-words">
                   {message.message}
                 </span>
-                <span className="text-xs text-gray-500 shrink-0 ml-auto">
+                <span className="text-xs text-gray-600 dark:text-gray-500 shrink-0 ml-auto">
                   {formatTime(message.timestamp)}
                 </span>
               </div>
             </div>
           ))}
-          <div ref={messagesEndRef} />
         </div>
       </div>
 
@@ -199,7 +212,7 @@ export default function ChatSection({ isConnected, viewerCount }: ChatSectionPro
         <div className="space-y-3">
           {/* 表情选择器 */}
           {showEmojiPicker && (
-            <div className="bg-gray-700 rounded-lg p-2">
+            <div className="bg-gray-200 dark:bg-gray-700 rounded-lg p-2">
               <div className="grid grid-cols-5 gap-2">
                 {emojis.map((emoji) => (
                   <button
@@ -209,7 +222,7 @@ export default function ChatSection({ isConnected, viewerCount }: ChatSectionPro
                       setShowEmojiPicker(false)
                       inputRef.current?.focus()
                     }}
-                    className="p-2 hover:bg-gray-600 rounded text-lg"
+                    className="p-2 hover:bg-gray-300 dark:hover:bg-gray-600 rounded text-lg"
                   >
                     {emoji}
                   </button>
@@ -222,7 +235,7 @@ export default function ChatSection({ isConnected, viewerCount }: ChatSectionPro
           <div className="flex items-center space-x-2">
             <button
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded"
+              className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-300 dark:hover:bg-gray-700 rounded"
             >
               <Smile className="w-5 h-5" />
             </button>
@@ -235,11 +248,11 @@ export default function ChatSection({ isConnected, viewerCount }: ChatSectionPro
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="输入弹幕消息..."
-                className="w-full bg-gray-700 text-white placeholder-gray-400 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                 maxLength={100}
                 disabled={!isConnected}
               />
-              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-xs text-gray-500">
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-xs text-gray-600 dark:text-gray-500">
                 {newMessage.length}/100
               </div>
             </div>
@@ -254,11 +267,11 @@ export default function ChatSection({ isConnected, viewerCount }: ChatSectionPro
           </div>
 
           {/* 用户信息 */}
-          <div className="flex items-center justify-between text-xs text-gray-400">
+          <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
             <span>当前用户: {username}</span>
             <button
               onClick={() => setUsername('')}
-              className="hover:text-white transition-colors"
+              className="hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               切换用户
             </button>

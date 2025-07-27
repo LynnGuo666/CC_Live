@@ -65,15 +65,15 @@ export default function GameDisplay({ gameStatus, tournament }: GameDisplayProps
   const currentStatus = gameStatus?.status || tournament?.status || 'setting'
 
   return (
-    <div className="bg-gray-800 rounded-lg overflow-hidden h-full flex flex-col">
+    <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden h-full flex flex-col">
       {/* 游戏标题栏 */}
-      <div className="bg-gray-700 px-6 py-4 border-b border-gray-600">
+      <div className="bg-gray-100 dark:bg-gray-700 px-6 py-4 border-b border-gray-300 dark:border-gray-600">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <Monitor className="w-6 h-6 text-blue-400" />
+            <Monitor className="w-6 h-6 text-blue-500 dark:text-blue-400" />
             <div>
-              <h2 className="text-xl font-bold text-white">{currentGame}</h2>
-              <p className="text-sm text-gray-400">第 {currentRound} 轮</p>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">{currentGame}</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400">第 {currentRound} 轮</p>
             </div>
           </div>
           

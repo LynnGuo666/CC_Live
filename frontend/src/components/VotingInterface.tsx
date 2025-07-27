@@ -73,13 +73,13 @@ export default function VotingInterface({ votingData, readOnlyMode = false }: Vo
   }
 
   return (
-    <div className="bg-gray-800 rounded-lg p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-white flex items-center">
-          <Vote className="w-6 h-6 mr-2 text-blue-400" />
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
+          <Vote className="w-6 h-6 mr-2 text-blue-500 dark:text-blue-400" />
           {readOnlyMode ? '投票结果展示' : '游戏投票'}
         </h2>
-        <div className="flex items-center space-x-4 text-sm text-gray-400">
+        <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
           <div className="flex items-center space-x-1">
             <BarChart3 className="w-4 h-4" />
             <span>总票数: {totalVotes}</span>
@@ -95,7 +95,7 @@ export default function VotingInterface({ votingData, readOnlyMode = false }: Vo
         {/* 投票选项 - 只读模式下隐藏 */}
         {!readOnlyMode && (
           <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-white mb-4">选择下一个游戏</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">选择下一个游戏</h3>
             
             {Object.keys(gameDisplayNames).map((game) => (
               <button
@@ -105,13 +105,13 @@ export default function VotingInterface({ votingData, readOnlyMode = false }: Vo
                 className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
                   selectedGame === game
                     ? 'border-blue-500 bg-blue-900/30'
-                    : 'border-gray-600 bg-gray-700 hover:border-gray-500 hover:bg-gray-600'
+                    : 'border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600'
                 } ${hasVoted ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="font-semibold text-white">{game}</div>
-                    <div className="text-sm text-gray-400 mt-1">
+                    <div className="font-semibold text-gray-900 dark:text-white">{game}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                       {gameDescriptions[game]}
                     </div>
                     <div className="text-xs text-gray-500 mt-1">

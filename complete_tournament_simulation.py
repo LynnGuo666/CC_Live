@@ -17,8 +17,7 @@ BASE_URL = "http://localhost:8000"
 API_ENDPOINTS = {
     "global_event": f"{BASE_URL}/api/game/event",
     "global_score": f"{BASE_URL}/api/game/score", 
-    "game_event": f"{BASE_URL}/api/game",
-    "initialize": f"{BASE_URL}/api/game"
+    "vote_event": f"{BASE_URL}/api/vote/event"
 }
 
 # 锦标赛配置
@@ -156,11 +155,17 @@ class TournamentSimulator:
         # 万能替补：为每个游戏随机分配玩家到队伍
         team_players = self.assign_players_to_teams(game_type)
         
-        # 初始化游戏
-        await self.initialize_game(game_id, team_players, round_num)
-        
         # 发送游戏开始事件（包含轮次进度）
         await self.send_global_event_with_progress("gaming", game_type, round_num, game_index, total_games)
+        
+        # 检查是否是多轮次游戏，如果是则发送Round_Start事件
+        if self.is_multi_round_game(game_type):
+            await self.send_game_event(game_id, {
+                "event": "Round_Start",
+                "player": "",
+                "team": "",
+                "lore": ""
+            })
         
         # 模拟具体游戏事件
         if game_type == "bingo_speed":
@@ -181,7 +186,26 @@ class TournamentSimulator:
         # 发送最终分数（模拟游戏服务器POST数据）
         await self.send_final_scores(game_id, team_players, multiplier)
         
+        # 检查是否是多轮次游戏，如果是则发送Round_Over事件
+        if self.is_multi_round_game(game_type):
+            await self.send_game_event(game_id, {
+                "event": "Round_Over",
+                "player": "",
+                "team": "",
+                "lore": ""
+            })
+        
         print(f"✅ 游戏 {game_id} 结束")
+    
+    def is_multi_round_game(self, game_type: str) -> bool:
+        """判断游戏是否是多轮次游戏"""
+        multi_round_games = {
+            "battle_box",     # 斗战方框 - 多个小回合
+            "tnt_spleef",     # TNT飞跃 - 多轮生存
+            "sky_brawl",      # 空岛战争 - 多轮战斗
+            "hot_cod"         # 烫手鳕鱼 - 多轮传递
+        }
+        return game_type in multi_round_games
     
     def assign_players_to_teams(self, game_type: str) -> Dict[str, List[str]]:
         """万能替补：为游戏随机分配玩家到队伍"""
@@ -528,7 +552,7 @@ class TournamentSimulator:
     
     async def send_game_event(self, game_id: str, event_data: Dict):
         """发送游戏事件到API"""
-        url = f"{API_ENDPOINTS['game_event']}/{game_id}/event"
+        url = f"{BASE_URL}/api/{game_id}/event"
         
         try:
             async with self.session.post(url, json=event_data) as response:

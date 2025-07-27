@@ -5,3 +5,7 @@ __pycache__/
 /.next/cache/
 /frontend/.next/static/
 *.db
+/.next/
+/frontend/.next/
+/.vscode/
+/.claude/

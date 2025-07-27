@@ -92,11 +92,11 @@ export default function LiveEventFeed({ events, scores }: LiveEventFeedProps) {
     <div className="bg-white dark:bg-gray-800 rounded-lg p-6 h-full flex flex-col">
       {/* 标题 */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-white flex items-center">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
           <Activity className="w-6 h-6 mr-2 text-blue-400" />
           实时事件动态
         </h2>
-        <div className="text-sm text-gray-400">
+        <div className="text-sm text-gray-600 dark:text-gray-400">
           {events.length} 条最新事件
         </div>
       </div>
@@ -131,7 +131,7 @@ export default function LiveEventFeed({ events, scores }: LiveEventFeedProps) {
                       <div className="flex items-center space-x-2 mb-1">
                         {/* 玩家名称 */}
                         {event.player && (
-                          <span className="font-semibold text-white truncate">
+                          <span className="font-semibold text-gray-900 dark:text-white truncate">
                             {event.player}
                           </span>
                         )}
@@ -152,7 +152,7 @@ export default function LiveEventFeed({ events, scores }: LiveEventFeedProps) {
                       <div className="text-sm text-gray-300 mb-1">
                         {eventDescriptions[event.event] || event.event}
                         {event.lore && (
-                          <span className="text-gray-400 ml-1">
+                          <span className="text-gray-600 dark:text-gray-400 ml-1">
                             · {event.lore}
                           </span>
                         )}
@@ -173,7 +173,7 @@ export default function LiveEventFeed({ events, scores }: LiveEventFeedProps) {
                   </div>
 
                   {/* 时间戳 */}
-                  <div className="text-xs text-gray-400 whitespace-nowrap ml-2">
+                  <div className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap ml-2">
                     {formatTime(event.timestamp)}
                   </div>
                 </div>
@@ -185,7 +185,7 @@ export default function LiveEventFeed({ events, scores }: LiveEventFeedProps) {
 
       {/* 底部状态 */}
       <div className="mt-4 pt-3 border-t border-gray-700">
-        <div className="flex items-center justify-between text-sm text-gray-400">
+        <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
           <span>实时更新中</span>
           <div className="flex items-center space-x-1">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
