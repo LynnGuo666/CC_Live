@@ -84,6 +84,42 @@ export type WSMessage =
   | { type: 'global_event'; data: GameStatus; timestamp: string }
   | { type: 'vote_event'; data: VoteData; timestamp: string };
 
+// Bingo游戏相关类型定义
+export interface BingoTask {
+  index: number;
+  x: number;
+  y: number;
+  name: string;
+  type: string;
+  description: string;
+  material?: string;
+  count?: number;
+  completed?: boolean;
+  completedBy?: string;
+  completedAt?: number;
+}
+
+export interface BingoTeamInfo {
+  name: string;
+  color: string;
+  completeCount: number;
+  outOfTheGame: boolean;
+  members: Record<string, {
+    name: string;
+    displayName: string;
+    alwaysActive: boolean;
+  }>;
+}
+
+export interface BingoCard {
+  size: number;
+  width: number;
+  height: number;
+  team?: BingoTeamInfo; // 队伍卡片包含队伍信息，共享卡片为空
+  tasks: Record<string, BingoTask>; // 使用 "x,y" 作为键
+  timestamp: number;
+}
+
 // 完整的锦标赛数据结构（用于定时广播）
 export interface TournamentData {
   globalScores: TeamScore[];
@@ -91,6 +127,7 @@ export interface TournamentData {
   currentVote: VoteData | null;
   gameStatus: GameStatus | null;
   recentEvents: GameEvent[];
+  bingoCard?: BingoCard | null; // 新增：Bingo卡片数据
   connectionStatus: {
     connected: boolean;
     connection_count: number;

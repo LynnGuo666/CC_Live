@@ -1,13 +1,26 @@
 'use client';
 
-import { ScorePrediction } from '@/types/tournament';
+import { ScorePrediction, BingoCard } from '@/types/tournament';
 import { TEAM_COLORS, TEAM_NAMES } from '@/types/tournament';
+import BingoCardComponent from '../BingoCardComponent';
 
 interface BingoDisplayProps {
   currentGameScore: ScorePrediction;
+  bingoCard?: BingoCard | null;
 }
 
-export default function BingoDisplay({ currentGameScore }: BingoDisplayProps) {
+export default function BingoDisplay({ currentGameScore, bingoCard }: BingoDisplayProps) {
+  // 如果有Bingo卡片数据，优先显示卡片
+  if (bingoCard) {
+    return (
+      <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+        <div className="p-6">
+          <BingoCardComponent bingoCard={bingoCard} />
+        </div>
+      </div>
+    );
+  }
+
   // Add safety check for team_rankings
   if (!currentGameScore?.team_rankings || !Array.isArray(currentGameScore.team_rankings)) {
     return (
@@ -15,7 +28,8 @@ export default function BingoDisplay({ currentGameScore }: BingoDisplayProps) {
         <div className="p-6 flex items-center justify-center h-full">
           <div className="text-center text-gray-500">
             <div className="text-lg mb-2">🎯</div>
-            <div className="font-medium">等待游戏数据...</div>
+            <div className="font-medium">等待Bingo数据...</div>
+            <div className="text-sm mt-1">正在获取卡片信息</div>
           </div>
         </div>
       </div>

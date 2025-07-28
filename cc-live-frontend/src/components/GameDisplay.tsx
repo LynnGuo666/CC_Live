@@ -1,6 +1,6 @@
 'use client';
 
-import { GameStatus, ScorePrediction, VoteData } from '@/types/tournament';
+import { GameStatus, ScorePrediction, VoteData, BingoCard } from '@/types/tournament';
 import { GAME_NAMES } from '@/types/tournament';
 
 // Import game-specific displays
@@ -19,10 +19,11 @@ interface GameDisplayProps {
   gameStatus: GameStatus | null;
   currentGameScore: ScorePrediction | null;
   voteData?: VoteData | null;
+  bingoCard?: BingoCard | null;
   className?: string;
 }
 
-export default function GameDisplay({ gameStatus, currentGameScore, voteData, className = "" }: GameDisplayProps) {
+export default function GameDisplay({ gameStatus, currentGameScore, voteData, bingoCard, className = "" }: GameDisplayProps) {
   
   // If no game status, show nothing or default content
   if (!gameStatus) {
@@ -69,7 +70,7 @@ export default function GameDisplay({ gameStatus, currentGameScore, voteData, cl
 
       return (
         <div className={`bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg flex flex-col h-full overflow-hidden ${className}`}>
-          {renderGameContent(currentGameScore)}
+          {renderGameContent(currentGameScore, bingoCard)}
         </div>
       );
       
@@ -84,10 +85,10 @@ export default function GameDisplay({ gameStatus, currentGameScore, voteData, cl
 }
 
 // Render different game displays based on game type
-function renderGameContent(currentGameScore: ScorePrediction) {
+function renderGameContent(currentGameScore: ScorePrediction, bingoCard?: BingoCard | null) {
   switch (currentGameScore.game_id) {
     case 'bingo':
-      return <BingoDisplay currentGameScore={currentGameScore} />;
+      return <BingoDisplay currentGameScore={currentGameScore} bingoCard={bingoCard} />;
     case 'battle_box':
       return <BattleBoxDisplay currentGameScore={currentGameScore} />;
     case 'skywars':

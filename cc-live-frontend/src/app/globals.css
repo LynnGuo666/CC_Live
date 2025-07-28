@@ -74,3 +74,39 @@ body {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
+
+/* Line clamp utilities */
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+/* Custom aspect ratio utilities */
+.aspect-square {
+  aspect-ratio: 1 / 1;
+}
+
+/* Grid template columns utilities for Bingo cards */
+.grid-cols-bingo-5 {
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.grid-cols-bingo-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* Hover effects for interactive elements */
+.hover\:scale-105:hover {
+  transform: scale(1.05);
+}

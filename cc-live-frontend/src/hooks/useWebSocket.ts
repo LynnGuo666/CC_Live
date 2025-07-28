@@ -1,31 +1,21 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { WSMessage, ConnectionStatus, ScorePrediction, TeamScore, VoteData, GameStatus, GameEvent } from '@/types/tournament';
-
-export interface TournamentData {
-  connectionStatus: ConnectionStatus;
-  currentGameScore: ScorePrediction | null;
-  globalScores: TeamScore[];
-  currentVote: VoteData | null;
-  gameStatus: GameStatus | null;
-  recentEvents: Array<{
-    game_id: string;
-    event: GameEvent;
-    timestamp: string;
-  }>;
-  currentRound: Record<string, number>;
-}
+import { WSMessage, ScorePrediction, TeamScore, VoteData, GameStatus, GameEvent, TournamentData } from '@/types/tournament';
 
 export function useWebSocket(url: string = 'ws://localhost:8000/ws') {
   const [data, setData] = useState<TournamentData>({
-    connectionStatus: { connected: false },
+    connectionStatus: { 
+      connected: false,
+      connection_count: 0,
+      last_ping: ''
+    },
     currentGameScore: null,
     globalScores: [],
     currentVote: null,
     gameStatus: null,
     recentEvents: [],
-    currentRound: {}
+    bingoCard: null
   });
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -47,7 +37,10 @@ export function useWebSocket(url: string = 'ws://localhost:8000/ws') {
         console.log('WebSocket connected');
         setData(prev => ({
           ...prev,
-          connectionStatus: { connected: true, client_id: clientId }
+          connectionStatus: { 
+            ...prev.connectionStatus,
+            connected: true
+          }
         }));
         setReconnectAttempts(0);
 
@@ -76,8 +69,8 @@ export function useWebSocket(url: string = 'ws://localhost:8000/ws') {
               setData(prev => ({
                 ...prev,
                 connectionStatus: {
-                  connected: true,
-                  client_id: message.client_id
+                  ...prev.connectionStatus,
+                  connected: true
                 }
               }));
               break;
@@ -100,64 +93,47 @@ export function useWebSocket(url: string = 'ws://localhost:8000/ws') {
               break;
 
             case 'game_event':
-              // 兼容旧的游戏事件（如果还有的话）
               setData(prev => ({
                 ...prev,
                 currentGameScore: message.score_prediction,
                 recentEvents: [
                   {
-                    game_id: message.game_id,
-                    event: message.data,
-                    timestamp: message.timestamp,
-                    post_time: message.timestamp
+                    ...message.data,
                   },
-                  ...prev.recentEvents.slice(0, 19) // Keep last 20 events
+                  ...prev.recentEvents.slice(0, 9)
                 ]
               }));
               break;
 
             case 'game_score_update':
-              // Handle game score updates if needed
-              break;
-
-            case 'game_round_change':
               setData(prev => ({
                 ...prev,
-                currentRound: {
-                  ...prev.currentRound,
-                  [message.game_id]: message.round
-                }
+                currentGameScore: prev.currentGameScore ? {
+                  ...prev.currentGameScore,
+                  total_events_processed: message.data.total_updates
+                } : null
               }));
               break;
 
             case 'global_score_update':
-              // 兼容旧的全局分数更新
-              if (message.data?.team_scores) {
-                setData(prev => ({
-                  ...prev,
-                  globalScores: message.data.team_scores
-                }));
-              }
+              setData(prev => ({
+                ...prev,
+                globalScores: message.data.team_scores
+              }));
               break;
 
             case 'global_event':
-              // 兼容旧的游戏状态更新
-              if (message.data) {
-                setData(prev => ({
-                  ...prev,
-                  gameStatus: message.data
-                }));
-              }
+              setData(prev => ({
+                ...prev,
+                gameStatus: message.data
+              }));
               break;
 
             case 'vote_event':
-              // 兼容旧的投票事件
-              if (message.data) {
-                setData(prev => ({
-                  ...prev,
-                  currentVote: message.data
-                }));
-              }
+              setData(prev => ({
+                ...prev,
+                currentVote: message.data
+              }));
               break;
 
             case 'pong':
@@ -178,36 +154,40 @@ export function useWebSocket(url: string = 'ws://localhost:8000/ws') {
         }
       };
 
+      wsRef.current.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+
       wsRef.current.onclose = (event) => {
-        console.log('WebSocket disconnected:', event.code, event.reason);
+        console.log('WebSocket closed:', event.code, event.reason);
         setData(prev => ({
           ...prev,
-          connectionStatus: { connected: false }
+          connectionStatus: { 
+            ...prev.connectionStatus,
+            connected: false 
+          }
         }));
 
+        // Clean up intervals
         if (pingIntervalRef.current) {
           clearInterval(pingIntervalRef.current);
           pingIntervalRef.current = null;
         }
 
-        // Attempt to reconnect
-        if (reconnectAttempts < maxReconnectAttempts) {
-          const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
-          console.log(`Reconnecting in ${delay}ms... (attempt ${reconnectAttempts + 1}/${maxReconnectAttempts})`);
+        // Attempt to reconnect if not a clean close
+        if (event.code !== 1000 && reconnectAttempts < maxReconnectAttempts) {
+          const timeout = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+          console.log(`Attempting to reconnect in ${timeout}ms (attempt ${reconnectAttempts + 1}/${maxReconnectAttempts})`);
           
           reconnectTimeoutRef.current = setTimeout(() => {
             setReconnectAttempts(prev => prev + 1);
             connect();
-          }, delay);
+          }, timeout);
         }
       };
 
-      wsRef.current.onerror = (error) => {
-        console.error('WebSocket error:', error);
-      };
-
     } catch (error) {
-      console.error('Failed to create WebSocket connection:', error);
+      console.error('Error creating WebSocket:', error);
     }
   }, [url, reconnectAttempts]);
 
@@ -223,27 +203,28 @@ export function useWebSocket(url: string = 'ws://localhost:8000/ws') {
     }
 
     if (wsRef.current) {
-      wsRef.current.close();
+      wsRef.current.close(1000, 'User disconnected');
       wsRef.current = null;
     }
 
     setData(prev => ({
       ...prev,
-      connectionStatus: { connected: false }
+      connectionStatus: { 
+        ...prev.connectionStatus,
+        connected: false 
+      }
     }));
   }, []);
 
-  const sendMessage = useCallback((message: object) => {
+  const sendMessage = useCallback((message: Record<string, unknown>) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message));
-      return true;
     }
-    return false;
   }, []);
 
   useEffect(() => {
     connect();
-
+    
     return () => {
       disconnect();
     };
@@ -251,9 +232,9 @@ export function useWebSocket(url: string = 'ws://localhost:8000/ws') {
 
   return {
     data,
+    isConnected: data.connectionStatus.connected,
     sendMessage,
     connect,
-    disconnect,
-    isConnected: data.connectionStatus.connected
+    disconnect
   };
 }

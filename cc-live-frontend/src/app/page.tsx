@@ -121,6 +121,7 @@ export default function Home() {
               gameStatus={data.gameStatus}
               currentGameScore={data.currentGameScore}
               voteData={data.currentVote}
+              bingoCard={data.bingoCard}
               className="flex-1 min-h-0"
             />
             
