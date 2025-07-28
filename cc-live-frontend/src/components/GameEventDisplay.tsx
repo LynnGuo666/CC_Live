@@ -120,7 +120,7 @@ export default function GameEventDisplay({ events, maxEvents = 10, className = "
   };
 
   return (
-    <div className={`bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg ${className}`}>
+    <div className={`bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg flex flex-col ${className}`}>
       <div className="p-4 border-b border-gray-200/50">
         <h2 className="text-lg font-semibold text-gray-900">实时事件</h2>
       </div>
