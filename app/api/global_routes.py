@@ -5,7 +5,7 @@
 
 from fastapi import APIRouter, HTTPException
 from typing import List
-from models import TeamScore, GlobalEvent, VoteEvent
+from app.models.models import TeamScore, GlobalEvent, VoteEvent
 
 # 创建路由器实例
 router = APIRouter()

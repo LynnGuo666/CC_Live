@@ -5,7 +5,7 @@
 
 from fastapi import APIRouter, HTTPException
 from typing import List
-from models import GameEvent, ScoreUpdate
+from app.models.models import GameEvent, ScoreUpdate
 
 # 创建路由器实例
 router = APIRouter()
