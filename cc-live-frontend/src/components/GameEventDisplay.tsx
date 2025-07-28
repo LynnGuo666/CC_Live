@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { GameEvent } from '@/types/tournament';
 import { TEAM_COLORS, TEAM_NAMES, GAME_NAMES } from '@/types/tournament';
 
@@ -10,10 +11,19 @@ interface GameEventDisplayProps {
     timestamp: string;
   }>;
   maxEvents?: number;
+  className?: string;
 }
 
-export default function GameEventDisplay({ events, maxEvents = 10 }: GameEventDisplayProps) {
+export default function GameEventDisplay({ events, maxEvents = 10, className = "" }: GameEventDisplayProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
   const displayEvents = events.slice(0, maxEvents);
+
+  // Auto scroll to top when new events come in
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = 0;
+    }
+  }, [events.length]);
 
   const getEventDescription = (event: GameEvent) => {
     const eventMap: Record<string, string> = {
@@ -53,20 +63,48 @@ export default function GameEventDisplay({ events, maxEvents = 10 }: GameEventDi
       'Checkpoint': '🎯',
       'Player_Finish': '🏁',
       'Round_Start': '🚀',
-      'Round_Over': '⏰'
+      'Round_Over': '⏰',
+      'Cod_Passed': '🐟',
+      'Border_Start': '🔄',
+      'Border_End': '⏹️',
+      'Wool_Win': '🐑',
+      'Player_Eliminated': '❌'
     };
 
     return iconMap[eventType] || '🎮';
   };
 
+  const getEventColor = (eventType: string) => {
+    const colorMap: Record<string, { bg: string, icon: string }> = {
+      'Kill': { bg: 'bg-red-50', icon: 'bg-red-100' },
+      'Death': { bg: 'bg-red-50', icon: 'bg-red-100' },
+      'Player_Fall': { bg: 'bg-orange-50', icon: 'bg-orange-100' },
+      'Round_Win': { bg: 'bg-yellow-50', icon: 'bg-yellow-100' },
+      'Round_Start': { bg: 'bg-green-50', icon: 'bg-green-100' },
+      'Player_Finish': { bg: 'bg-green-50', icon: 'bg-green-100' },
+      'Checkpoint': { bg: 'bg-blue-50', icon: 'bg-blue-100' },
+      'Item_Found': { bg: 'bg-purple-50', icon: 'bg-purple-100' }
+    };
+
+    return colorMap[eventType] || { bg: 'bg-gray-50', icon: 'bg-gray-100' };
+  };
+
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
-    return date.toLocaleTimeString('zh-CN', { 
-      hour12: false,
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    
+    if (diff < 60000) { // Less than 1 minute
+      return '刚刚';
+    } else if (diff < 3600000) { // Less than 1 hour
+      return `${Math.floor(diff / 60000)}分钟前`;
+    } else {
+      return date.toLocaleTimeString('zh-CN', { 
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
   };
 
   const getTeamColor = (teamId: string) => {
@@ -82,78 +120,109 @@ export default function GameEventDisplay({ events, maxEvents = 10 }: GameEventDi
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">实时事件</h2>
+    <div className={`bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg ${className}`}>
+      <div className="p-6 border-b border-gray-200/50">
+        <h2 className="text-xl font-semibold text-gray-900">实时事件</h2>
+      </div>
       
-      {displayEvents.length === 0 ? (
-        <div className="text-center text-gray-500 py-8">
-          暂无事件数据
-        </div>
-      ) : (
-        <div className="space-y-3 max-h-96 overflow-y-auto">
-          {displayEvents.map((item, index) => (
-            <div
-              key={`${item.timestamp}-${index}`}
-              className="flex items-start p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              {/* Event Icon */}
-              <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-4">
-                <span className="text-lg">{getEventIcon(item.event.event)}</span>
-              </div>
+      <div className="flex-1 overflow-hidden">
+        {displayEvents.length === 0 ? (
+          <div className="text-center text-gray-500 py-8">
+            <div className="text-4xl mb-4">📡</div>
+            <div className="font-medium">等待事件数据...</div>
+          </div>
+        ) : (
+          <div 
+            ref={scrollRef}
+            className="overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
+            style={{ height: '100%' }}
+          >
+            <div className="p-4 space-y-3">
+              {displayEvents.map((item, index) => {
+                const eventColors = getEventColor(item.event.event);
+                const isRecentEvent = index < 3; // Highlight recent events
+                
+                return (
+                  <div
+                    key={`${item.timestamp}-${index}`}
+                    className={`relative p-4 rounded-xl border transition-all duration-200 hover:shadow-md ${
+                      isRecentEvent 
+                        ? `${eventColors.bg} border-gray-200 shadow-sm` 
+                        : 'bg-white/50 border-gray-100'
+                    }`}
+                  >
+                    {/* Timeline dot */}
+                    <div className="absolute left-0 top-6 w-1 h-8 bg-gradient-to-b from-blue-400 to-transparent rounded-full"></div>
+                    
+                    <div className="ml-4 flex items-start space-x-3">
+                      {/* Event Icon */}
+                      <div className={`flex-shrink-0 w-8 h-8 ${eventColors.icon} rounded-full flex items-center justify-center`}>
+                        <span className="text-sm">{getEventIcon(item.event.event)}</span>
+                      </div>
 
-              {/* Event Content */}
-              <div className="flex-grow min-w-0">
-                {/* Game and Time */}
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-blue-600 bg-blue-100 px-2 py-1 rounded">
-                    {getGameName(item.game_id)}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {formatTimestamp(item.timestamp)}
-                  </span>
-                </div>
+                      {/* Event Content */}
+                      <div className="flex-1 min-w-0">
+                        {/* Header */}
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs font-medium text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md">
+                              {getGameName(item.game_id)}
+                            </span>
+                            {isRecentEvent && (
+                              <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-md">
+                                新
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {formatTimestamp(item.timestamp)}
+                          </span>
+                        </div>
 
-                {/* Event Description */}
-                <div className="mb-2">
-                  <span className="font-semibold text-gray-800">
-                    {getEventDescription(item.event)}
-                  </span>
-                  {item.event.lore && (
-                    <span className="text-gray-600 ml-2">
-                      ({item.event.lore})
-                    </span>
-                  )}
-                </div>
+                        {/* Event Description */}
+                        <div className="mb-2">
+                          <span className="font-semibold text-gray-900 text-sm">
+                            {getEventDescription(item.event)}
+                          </span>
+                          {item.event.lore && (
+                            <span className="text-gray-600 text-sm ml-2">
+                              - {item.event.lore}
+                            </span>
+                          )}
+                        </div>
 
-                {/* Player and Team Info */}
-                <div className="flex items-center space-x-4">
-                  {item.event.player && (
-                    <div className="flex items-center">
-                      <span className="text-sm text-gray-600 mr-2">玩家:</span>
-                      <span className="font-medium text-gray-800">{item.event.player}</span>
-                    </div>
-                  )}
-                  
-                  {item.event.team && (
-                    <div className="flex items-center">
-                      <span className="text-sm text-gray-600 mr-2">队伍:</span>
-                      <div className="flex items-center">
-                        <div
-                          className="w-3 h-3 rounded-full mr-1 border border-gray-300"
-                          style={{ backgroundColor: getTeamColor(item.event.team) }}
-                        />
-                        <span className="font-medium text-gray-800">
-                          {getTeamName(item.event.team)}
-                        </span>
+                        {/* Player and Team Info */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            {item.event.player && (
+                              <div className="flex items-center space-x-1">
+                                <span className="text-xs text-gray-500">👤</span>
+                                <span className="text-xs font-medium text-gray-800">{item.event.player}</span>
+                              </div>
+                            )}
+                            
+                            {item.event.team && (
+                              <div className="flex items-center space-x-1">
+                                <div
+                                  className="w-2 h-2 rounded-full border border-white shadow-sm"
+                                  style={{ backgroundColor: getTeamColor(item.event.team) }}
+                                />
+                                <span className="text-xs font-medium text-gray-800">
+                                  {getTeamName(item.event.team)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  )}
-                </div>
-              </div>
+                  </div>
+                );
+              })}
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

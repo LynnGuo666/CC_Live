@@ -37,32 +37,32 @@ PLAYER_POOL = [
 TOURNAMENT_SCHEDULE = [
     {
         "round": 1,
-        "games": ["bingo_speed", "parkour_chase", "battle_box"],
+        "games": ["bingo", "parkour_chase", "battle_box"],
         "multiplier": 1.0
     },
     {
         "round": 2, 
-        "games": ["tnt_spleef", "sky_brawl", "hot_cod"],
+        "games": ["tntrun", "skywars", "hot_cod"],
         "multiplier": 1.5
     },
     {
         "round": 3,
-        "games": ["bingo_speed", "parkour_chase", "battle_box"], 
+        "games": ["bingo", "parkour_chase", "battle_box"], 
         "multiplier": 1.5
     },
     {
         "round": 4,
-        "games": ["tnt_spleef", "sky_brawl", "hot_cod"],
+        "games": ["tntrun", "skywars", "hot_cod"],
         "multiplier": 2.0
     },
     {
         "round": 5,
-        "games": ["bingo_speed", "parkour_chase"],
+        "games": ["bingo", "parkour_chase"],
         "multiplier": 2.0
     },
     {
         "round": 6,
-        "games": ["tnt_spleef", "hot_cod"],
+        "games": ["tntrun", "hot_cod"],
         "multiplier": 2.5
     },
     {
@@ -71,6 +71,18 @@ TOURNAMENT_SCHEDULE = [
         "multiplier": 3.0
     }
 ]
+
+# 游戏配置映射（根据config.yml）
+GAME_CONFIG = {
+    "bingo": {"rounds": 1, "name": "宾果时速"},
+    "parkour_chase": {"rounds": 8, "name": "跑酷追击", "match_type": "team_vs_team"},
+    "battle_box": {"rounds": 8, "name": "斗战方框", "match_type": "team_vs_team"},
+    "tntrun": {"rounds": 3, "name": "TNT飞跃", "players_per_arena": 4},
+    "skywars": {"rounds": 1, "name": "空岛乱斗", "max_players_per_world": 16},
+    "hot_cod": {"rounds": 3, "name": "烫手鳕鱼", "players_per_arena": 4},
+    "runaway_warrior": {"rounds": 1, "name": "跑路战士"},
+    "dodging_bolt": {"rounds": 5, "name": "躲避箭", "match_type": "final_showdown"}
+}
 
 class TournamentSimulator:
     """锦标赛模拟器 - 完整功能演示"""
@@ -135,7 +147,7 @@ class TournamentSimulator:
         print("\n🚀 初始化锦标赛...")
         
         # 发送全局事件：锦标赛开始
-        await self.send_global_event("setting", "bingo_speed", 1)
+        await self.send_global_event("setting", "bingo", 1)
         print("✅ 锦标赛状态已设置")
         
         # 初始化全局分数
@@ -177,15 +189,15 @@ class TournamentSimulator:
         await self.send_global_event("gaming", game_type, round_num)
         
         # 模拟具体游戏事件
-        if game_type == "bingo_speed":
+        if game_type == "bingo":
             await self.simulate_bingo_speed(game_id, team_players)
         elif game_type == "parkour_chase":
             await self.simulate_parkour_chase(game_id, team_players)
         elif game_type == "battle_box":
             await self.simulate_battle_box(game_id, team_players)
-        elif game_type == "tnt_spleef":
+        elif game_type == "tntrun":
             await self.simulate_tnt_spleef(game_id, team_players)
-        elif game_type == "sky_brawl":
+        elif game_type == "skywars":
             await self.simulate_sky_brawl(game_id, team_players)
         elif game_type == "hot_cod":
             await self.simulate_hot_cod(game_id, team_players)
@@ -210,21 +222,27 @@ class TournamentSimulator:
                 "ticket": random.randint(10, 100)
             })
         
-        # 构建符合新API格式的投票请求
-        vote_request = {
-            "votes": vote_data,
-            "time": 60  # 60秒倒计时
-        }
-        
-        # 发送投票事件
-        try:
-            async with self.session.post(API_ENDPOINTS["vote_event"], json=vote_request) as response:
-                if response.status == 200:
-                    print(f"🗳️  投票数据已发送: {vote_data}")
-                else:
-                    print(f"❌ 投票事件发送失败: {response.status}")
-        except Exception as e:
-            print(f"❌ 投票事件发送异常: {e}")
+        # 模拟10秒倒计时投票过程
+        print("🗳️  开始投票倒计时...")
+        for countdown in range(10, 0, -1):
+            # 构建投票请求，包含当前倒计时
+            vote_request = {
+                "votes": vote_data,
+                "time": countdown  # 当前倒计时秒数
+            }
+            
+            # 发送投票事件
+            try:
+                async with self.session.post(API_ENDPOINTS["vote_event"], json=vote_request) as response:
+                    if response.status == 200:
+                        print(f"⏰ 倒计时 {countdown} 秒 - 投票数据: {vote_data}")
+                    else:
+                        print(f"❌ 投票事件发送失败: {response.status}")
+            except Exception as e:
+                print(f"❌ 投票事件发送异常: {e}")
+            
+            # 等待1秒再发送下一个倒计时
+            await asyncio.sleep(1)
             
         # 选出票数最高的游戏
         chosen_game = max(vote_data, key=lambda x: x["ticket"])["game"]
@@ -237,7 +255,7 @@ class TournamentSimulator:
         random.shuffle(available_players)
         
         # 根据游戏类型确定每队人数
-        if game_type in ["bingo_speed", "sky_brawl", "runaway_warrior"]:
+        if game_type in ["bingo", "skywars", "runaway_warrior"]:
             players_per_team = 2  # 大型游戏，每队2人
         else:
             players_per_team = 2  # 其他游戏，每队2人
@@ -272,14 +290,18 @@ class TournamentSimulator:
             })
             
             print(f"  📦 {team}队的{player}找到了{item}")
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(random.uniform(1, 2))  # 每个事件等待1-2秒
     
     async def simulate_parkour_chase(self, game_id: str, team_players: Dict):
         """模拟跑酷追击游戏"""
         print("🏃 跑酷追击：追击与逃脱")
         
-        # 模拟8轮对战
-        for round_num in range(1, 4):  # 简化为3轮演示
+        # 根据配置模拟8轮对战
+        total_rounds = GAME_CONFIG["parkour_chase"]["rounds"]
+        print(f"🎯 总共{total_rounds}轮对战")
+        
+        for round_num in range(1, total_rounds + 1):
+            print(f"  🏃 第{round_num}轮追击开始")
             chaser_team = random.choice(TEAMS)
             chaser = random.choice(team_players[chaser_team]) if team_players[chaser_team] else "Player_A"
             
@@ -311,7 +333,9 @@ class TournamentSimulator:
                     "lore": target
                 })
                 
-                print(f"  🏃 {chaser_team}队的{chaser}抓到了{target_team}队的{target}")
+                print(f"    ✅ {chaser_team}队的{chaser}抓到了{target_team}队的{target}")
+            else:
+                print(f"    ❌ {chaser_team}队的{chaser}未能抓到目标")
             
             # 回合结束
             await self.send_game_event(game_id, {
@@ -321,14 +345,19 @@ class TournamentSimulator:
                 "lore": ""
             })
             
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(random.uniform(1, 2))  # 每轮等待1-2秒
     
     async def simulate_battle_box(self, game_id: str, team_players: Dict):
         """模拟斗战方框游戏"""
         print("⚔️ 斗战方框：团队战斗")
         
-        # 模拟3轮对战
-        for round_num in range(1, 4):
+        # 根据配置模拟8轮对战
+        total_rounds = GAME_CONFIG["battle_box"]["rounds"]
+        print(f"🎯 总共{total_rounds}轮对战")
+        
+        for round_num in range(1, total_rounds + 1):
+            print(f"  ⚔️ 第{round_num}轮战斗开始")
+            
             # 回合开始
             await self.send_game_event(game_id, {
                 "event": "Round_Start",
@@ -352,7 +381,7 @@ class TournamentSimulator:
                     "lore": victim
                 })
                 
-                print(f"  ⚔️ {killer_team}队的{killer}击杀了{victim_team}队的{victim}")
+                print(f"    💀 {killer_team}队的{killer}击杀了{victim_team}队的{victim}")
             
             # 胜利条件
             if random.random() > 0.5:  # 50%概率羊毛胜利
@@ -366,16 +395,21 @@ class TournamentSimulator:
                     "lore": ""
                 })
                 
-                print(f"  🐑 {winner_team}队通过羊毛获胜！")
+                print(f"    🐑 {winner_team}队通过羊毛获胜！")
             
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(random.uniform(1, 2))  # 每轮等待1-2秒
     
     async def simulate_tnt_spleef(self, game_id: str, team_players: Dict):
         """模拟TNT飞跃游戏"""
         print("💥 TNT飞跃：方块消失生存")
         
-        # 模拟3轮
-        for round_num in range(1, 4):
+        # 根据配置模拟3轮
+        total_rounds = GAME_CONFIG["tntrun"]["rounds"]
+        print(f"🎯 总共{total_rounds}轮比赛")
+        
+        for round_num in range(1, total_rounds + 1):
+            print(f"  💥 第{round_num}轮开始")
+            
             await self.send_game_event(game_id, {
                 "event": "Round_Start",
                 "player": "",
@@ -402,8 +436,8 @@ class TournamentSimulator:
                     "lore": ""
                 })
                 
-                print(f"  💥 {team}队的{player}掉落了")
-                await asyncio.sleep(0.3)
+                print(f"    ⬇️ {team}队的{player}掉落了")
+                await asyncio.sleep(random.uniform(0.5, 1))  # 每个掉落事件等待0.5-1秒
             
             # 回合结束
             await self.send_game_event(game_id, {
@@ -412,7 +446,8 @@ class TournamentSimulator:
                 "team": "",
                 "lore": ""
             })
-    
+            
+            await asyncio.sleep(random.uniform(1, 2))  # 每轮等待1-2秒
     async def simulate_sky_brawl(self, game_id: str, team_players: Dict):
         """模拟空岛乱斗游戏"""
         print("🌤️ 空岛乱斗：资源与战斗")
@@ -463,7 +498,7 @@ class TournamentSimulator:
                 
                 print(f"  🕳️ {victim_team}队的{victim}掉入虚空")
             
-            await asyncio.sleep(0.4)
+            await asyncio.sleep(random.uniform(1, 2))  # 每个战斗事件等待1-2秒
         
         # 边界收缩结束
         await self.send_game_event(game_id, {
@@ -477,8 +512,13 @@ class TournamentSimulator:
         """模拟烫手鳕鱼游戏"""
         print("🐟 烫手鳕鱼：传递与爆炸")
         
-        # 模拟3轮
-        for round_num in range(1, 4):
+        # 根据配置模拟3轮
+        total_rounds = GAME_CONFIG["hot_cod"]["rounds"]
+        print(f"🎯 总共{total_rounds}轮比赛")
+        
+        for round_num in range(1, total_rounds + 1):
+            print(f"  🐟 第{round_num}轮开始")
+            
             await self.send_game_event(game_id, {
                 "event": "Round_Start",
                 "player": "",
@@ -490,7 +530,8 @@ class TournamentSimulator:
             current_holder = random.choice(PLAYER_POOL[:12])  # 随机初始持有者
             current_team = random.choice(TEAMS)
             
-            for _ in range(random.randint(3, 8)):  # 3-8次传递
+            passes = random.randint(3, 8)  # 3-8次传递
+            for pass_num in range(passes):
                 next_holder = random.choice([p for p in PLAYER_POOL[:12] if p != current_holder])
                 next_team = random.choice(TEAMS)
                 
@@ -501,11 +542,11 @@ class TournamentSimulator:
                     "lore": next_holder
                 })
                 
-                print(f"  🐟 鳕鱼从{current_team}队的{current_holder}传递给{next_team}队的{next_holder}")
+                print(f"    🐟 鳕鱼从{current_team}队的{current_holder}传递给{next_team}队的{next_holder}")
                 
                 current_holder = next_holder
                 current_team = next_team
-                await asyncio.sleep(0.3)
+                await asyncio.sleep(random.uniform(0.5, 1))  # 每次传递等待0.5-1秒
             
             # 最终爆炸
             await self.send_game_event(game_id, {
@@ -515,20 +556,25 @@ class TournamentSimulator:
                 "lore": ""
             })
             
-            print(f"  💥 {current_team}队的{current_holder}被鳕鱼爆炸淘汰")
+            print(f"    💥 {current_team}队的{current_holder}被鳕鱼爆炸淘汰")
+            await asyncio.sleep(random.uniform(1, 2))  # 每轮等待1-2秒
     
     async def simulate_dodging_bolt(self, game_id: str, team_players: Dict):
         """模拟躲避箭最终对决"""
         print("🏹 躲避箭：最终对决")
         
-        # 模拟5局3胜制
+        # 根据配置模拟5局3胜制
+        total_rounds = GAME_CONFIG["dodging_bolt"]["rounds"]
+        print(f"🎯 五局三胜制，最多{total_rounds}轮")
+        
         wins = {team: 0 for team in TEAMS}
         
-        for round_num in range(1, 6):  # 最多5轮
+        for round_num in range(1, total_rounds + 1):
             print(f"  🎯 第{round_num}局对决")
             
             # 模拟淘汰
-            for _ in range(random.randint(5, 10)):
+            eliminations = random.randint(5, 10)
+            for _ in range(eliminations):
                 eliminated_team = random.choice(TEAMS)
                 eliminated_player = random.choice(team_players[eliminated_team]) if team_players[eliminated_team] else "Player_A"
                 elimination_method = random.choice(["shot", "fall"])
@@ -540,7 +586,7 @@ class TournamentSimulator:
                     "lore": elimination_method
                 })
                 
-                await asyncio.sleep(0.2)
+                await asyncio.sleep(random.uniform(0.5, 1))  # 每次淘汰等待0.5-1秒
             
             # 本局获胜队伍
             winner_team = random.choice(TEAMS)
@@ -553,14 +599,15 @@ class TournamentSimulator:
                 "lore": winner_team
             })
             
-            print(f"  🏆 第{round_num}局：{winner_team}队获胜")
+            print(f"    🏆 第{round_num}局：{winner_team}队获胜 (当前比分: {wins[winner_team]}胜)")
             
             # 检查是否有队伍率先获得3胜
             if max(wins.values()) >= 3:
                 champion_team = max(wins, key=wins.get)
+                print(f"    🎉 {champion_team}队率先获得3胜，提前结束!")
                 break
             
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(random.uniform(1, 2))  # 每局等待1-2秒
         
         # 锦标赛结束
         champion_team = max(wins, key=wins.get)
@@ -571,7 +618,7 @@ class TournamentSimulator:
             "lore": champion_team
         })
         
-        print(f"  🎉 锦标赛冠军：{champion_team}队！")
+        print(f"  🎉 锦标赛冠军：{champion_team}队！(最终比分: {wins[champion_team]}胜)")
     
     async def send_game_event(self, game_id: str, event_data: Dict):
         """发送游戏事件到API"""

@@ -1,113 +1,129 @@
 'use client';
 
 import { useWebSocket } from '@/hooks/useWebSocket';
-import Leaderboard from '@/components/Leaderboard';
+import GlobalLeaderboard from '@/components/GlobalLeaderboard';
 import GameEventDisplay from '@/components/GameEventDisplay';
 import VotingDisplay from '@/components/VotingDisplay';
 import ConnectionIndicator from '@/components/ConnectionIndicator';
 import GameStatusDisplay from '@/components/GameStatusDisplay';
+import GameDisplay from '@/components/GameDisplay';
+import CurrentGameLeaderboard from '@/components/CurrentGameLeaderboard';
+import { GAME_NAMES, getGameNumber } from '@/types/tournament';
 
 export default function Home() {
   const { data, isConnected } = useWebSocket();
 
+  // Get current game name for header
+  const getCurrentGameInfo = () => {
+    if (data.gameStatus?.game) {
+      const gameName = GAME_NAMES[data.gameStatus.game.name] || data.gameStatus.game.name;
+      const gameNumber = getGameNumber(data.gameStatus.game.name);
+      return gameNumber > 0 ? `第${gameNumber}项：${gameName}` : `${gameName}`;
+    }
+    return null;
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-50">
+        <div className="max-w-[1920px] mx-auto px-6">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold text-gray-900">S2CC锦标赛 - 实时数据</h1>
-              <span className="text-sm text-gray-500">Live Dashboard</span>
+              <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">S2CC 锦标赛</h1>
+              {getCurrentGameInfo() && (
+                <>
+                  <span className="text-gray-300">|</span>
+                  <span className="text-lg font-medium text-blue-600">{getCurrentGameInfo()}</span>
+                </>
+              )}
             </div>
-            <div className="flex-shrink-0">
-              <ConnectionIndicator status={data.connectionStatus} />
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-4 text-sm text-gray-600">
+                <div className="flex items-center space-x-1">
+                  <span>👥</span>
+                  <span>{data.connectionStatus.connection_count || 0} 人在线</span>
+                </div>
+                {data.connectionStatus.last_ping && (
+                  <div className="flex items-center space-x-1">
+                    <span>📡</span>
+                    <span>心跳: {formatLastPing(data.connectionStatus.last_ping)}</span>
+                  </div>
+                )}
+              </div>
+              <div className="h-4 w-px bg-gray-300"></div>
+              <div className="flex items-center space-x-2">
+                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'} ${isConnected ? 'animate-pulse' : ''}`}></div>
+                <span className={`text-sm font-medium ${isConnected ? 'text-green-700' : 'text-red-700'}`}>
+                  {isConnected ? '已连接' : '未连接'}
+                </span>
+                {data.connectionStatus.client_id && (
+                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                    ID: {data.connectionStatus.client_id.slice(-8)}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Game Status and Voting */}
-          <div className="lg:col-span-1 space-y-8">
+      <main className="max-w-[1920px] mx-auto px-6 py-6">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 h-[calc(100vh-120px)]">
+          {/* Left Column - Global Leaderboard */}
+          <div className="xl:col-span-3 flex flex-col">
+            <GlobalLeaderboard 
+              globalScores={data.globalScores}
+              className="flex-1"
+            />
+          </div>
+
+          {/* Center Column - Game Status and Display */}
+          <div className="xl:col-span-6 flex flex-col space-y-6">
+            {/* Game Status */}
             <GameStatusDisplay 
               gameStatus={data.gameStatus} 
               currentRound={data.currentRound}
+              voteData={data.currentVote}
             />
-            <VotingDisplay voteData={data.currentVote} />
-          </div>
-
-          {/* Middle Column - Leaderboards */}
-          <div className="lg:col-span-1 space-y-8">
-            {/* Current Game Score */}
-            {data.currentGameScore && (
-              <Leaderboard
-                gameScore={data.currentGameScore.team_rankings}
-                title={`当前游戏积分榜 (第${data.currentGameScore.round}轮)`}
-                showPlayers={true}
-              />
-            )}
-
-            {/* Global Score */}
-            <Leaderboard
-              globalScores={data.globalScores}
-              title="全局积分榜"
-              showPlayers={false}
+            
+            {/* Game Display */}
+            <GameDisplay 
+              gameStatus={data.gameStatus}
+              currentGameScore={data.currentGameScore}
+              className="flex-1"
+            />
+            
+            {/* Events */}
+            <GameEventDisplay 
+              events={data.recentEvents} 
+              maxEvents={8}
+              className="h-48"
             />
           </div>
 
-          {/* Right Column - Events */}
-          <div className="lg:col-span-1">
-            <GameEventDisplay events={data.recentEvents} maxEvents={15} />
-          </div>
-        </div>
-
-        {/* Stats Footer */}
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg shadow p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">
-              {data.connectionStatus.connection_count || 0}
-            </div>
-            <div className="text-sm text-gray-600">在线观众</div>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">
-              {data.globalScores.length}
-            </div>
-            <div className="text-sm text-gray-600">参赛队伍</div>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow p-4 text-center">
-            <div className="text-2xl font-bold text-purple-600">
-              {data.recentEvents.length}
-            </div>
-            <div className="text-sm text-gray-600">实时事件</div>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow p-4 text-center">
-            <div className={`text-2xl font-bold ${isConnected ? 'text-green-600' : 'text-red-600'}`}>
-              {isConnected ? '在线' : '离线'}
-            </div>
-            <div className="text-sm text-gray-600">连接状态</div>
+          {/* Right Column - Current Game Leaderboard */}
+          <div className="xl:col-span-3 flex flex-col">
+            <CurrentGameLeaderboard 
+              currentGameScore={data.currentGameScore}
+              className="flex-1"
+            />
           </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="bg-white border-t mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="text-center text-gray-500 text-sm">
-            <div className="mb-2">S2CC锦标赛实时数据看板</div>
-            <div>WebSocket连接状态: {isConnected ? '🟢 已连接' : '🔴 未连接'}</div>
-            {data.connectionStatus.client_id && (
-              <div className="mt-1">客户端ID: {data.connectionStatus.client_id}</div>
-            )}
-          </div>
-        </div>
-      </footer>
     </div>
   );
+}
+
+// Helper function for formatting ping time
+function formatLastPing(timestamp: string): string {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSeconds = Math.floor(diffMs / 1000);
+  
+  if (diffSeconds < 60) return `${diffSeconds}秒前`;
+  if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)}分钟前`;
+  return date.toLocaleTimeString('zh-CN', { hour12: false });
 }

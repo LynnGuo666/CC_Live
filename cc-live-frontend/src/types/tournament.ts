@@ -97,6 +97,24 @@ export const GAME_NAMES: Record<string, string> = {
   'dodging_bolt': '躲避箭'
 };
 
+// Game order for tournament progression
+export const GAME_ORDER: string[] = [
+  'bingo',          // 第1项：宾果时速
+  'parkour_chase',  // 第2项：跑酷追击
+  'battle_box',     // 第3项：斗战方框
+  'tntrun',         // 第4项：TNT飞跃
+  'skywars',        // 第5项：空岛乱斗
+  'hot_cod',        // 第6项：烫手鳕鱼
+  'runaway_warrior', // 第7项：跑路战士
+  'dodging_bolt'    // 第8项：躲避箭
+];
+
+// Get game number in tournament
+export const getGameNumber = (gameId: string): number => {
+  const index = GAME_ORDER.indexOf(gameId);
+  return index !== -1 ? index + 1 : 0;
+};
+
 export const TEAM_COLORS: Record<string, string> = {
   'WHITE': '#FFFFFF',
   'ORANGE': '#FFA500', 
