@@ -64,7 +64,7 @@ class GlobalEvent(BaseModel):
     用于/api/game/event端点
     """
     status: str = Field(..., description="游戏的当前状态，如: gaming, voting, halfing, setting")
-    game: GameInfo = Field(..., description="当前游戏信息")
+    game: Optional[GameInfo] = Field(None, description="当前游戏信息，投票时可为空")
 
 
 class VoteGame(BaseModel):

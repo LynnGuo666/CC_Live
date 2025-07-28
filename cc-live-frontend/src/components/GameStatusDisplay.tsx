@@ -41,7 +41,6 @@ export default function GameStatusDisplay({ gameStatus, currentRound, voteData }
       'gaming': '🎮',
       'waiting': '⏳',
       'voting': '🗳️',
-      'break': '☕',
       'halfing': '☕',
       'setting': '⚙️',
       'finished': '🏁'
@@ -54,7 +53,6 @@ export default function GameStatusDisplay({ gameStatus, currentRound, voteData }
       'gaming': '游戏中',
       'waiting': '等待中',
       'voting': '投票中', 
-      'break': '休息中',
       'halfing': '休息中',
       'setting': '设置中',
       'finished': '已结束'
@@ -67,7 +65,6 @@ export default function GameStatusDisplay({ gameStatus, currentRound, voteData }
       'gaming': { bg: 'bg-green-50', text: 'text-green-800', accent: 'bg-green-500' },
       'waiting': { bg: 'bg-blue-50', text: 'text-blue-800', accent: 'bg-blue-500' },
       'voting': { bg: 'bg-purple-50', text: 'text-purple-800', accent: 'bg-purple-500' },
-      'break': { bg: 'bg-blue-50', text: 'text-blue-800', accent: 'bg-blue-500' },
       'halfing': { bg: 'bg-blue-50', text: 'text-blue-800', accent: 'bg-blue-500' },
       'setting': { bg: 'bg-orange-50', text: 'text-orange-800', accent: 'bg-orange-500' },
       'finished': { bg: 'bg-gray-50', text: 'text-gray-800', accent: 'bg-gray-500' }
@@ -79,10 +76,38 @@ export default function GameStatusDisplay({ gameStatus, currentRound, voteData }
     <div className="bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg p-6">
       {!gameStatus ? (
         <div className="space-y-6">
-          {/* 等待状态已移至页面顶部状态栏 */}
-          <div className="text-center text-gray-500">
-            <p>等待游戏开始...</p>
-          </div>
+          {/* 投票信息 - 当没有游戏状态但有投票数据时显示 */}
+          {voteData && (
+            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border border-indigo-100">
+              <div className="text-center">
+                <div className="text-sm font-medium text-gray-600 mb-4">投票统计</div>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="bg-white/50 rounded-xl p-3">
+                    <div className="text-2xl font-bold text-gray-900">{voteData.total_games}</div>
+                    <div className="text-sm text-gray-600">可选游戏</div>
+                  </div>
+                  <div className="bg-white/50 rounded-xl p-3">
+                    <div className="text-2xl font-bold text-gray-900">{voteData.total_tickets}</div>
+                    <div className="text-sm text-gray-600">总投票数</div>
+                  </div>
+                </div>
+                
+                {voteData.votes.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium text-gray-600">投票结果</div>
+                    {voteData.votes.map(vote => (
+                      <div key={vote.game} className="flex items-center justify-between bg-white/50 rounded-lg px-4 py-2">
+                        <span className="font-medium text-gray-900">
+                          {GAME_NAMES[vote.game] || vote.game}
+                        </span>
+                        <span className="text-lg font-bold text-indigo-600">{vote.ticket}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="space-y-6">
@@ -103,7 +128,7 @@ export default function GameStatusDisplay({ gameStatus, currentRound, voteData }
             </div>
           </div>
 
-          {/* Voting Info */}
+          {/* Second Card - Only show one additional card based on status/data */}
           {gameStatus.status === 'voting' && voteData && (
             <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border border-indigo-100">
               <div className="text-center">
@@ -136,8 +161,8 @@ export default function GameStatusDisplay({ gameStatus, currentRound, voteData }
             </div>
           )}
 
-          {/* Round Info */}
-          {Object.keys(currentRound).length > 0 && (
+          {/* Round Info - Only show if not voting and has round data */}
+          {gameStatus.status !== 'voting' && Object.keys(currentRound).length > 0 && (
             <div className="bg-gray-50/50 rounded-2xl p-6 border border-gray-100">
               <div className="text-sm font-medium text-gray-600 mb-4 text-center">各游戏进度</div>
               <div className="grid grid-cols-2 gap-3">

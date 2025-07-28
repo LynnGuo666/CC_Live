@@ -93,10 +93,13 @@ async def handle_global_event(event: GlobalEvent):
         dict: 包含处理结果的响应信息
     """
     try:
-        print(f"全局事件 - 状态: {event.status}, 游戏: {event.game.name}, 回合: {event.game.round}")
+        if event.game:
+            print(f"全局事件 - 状态: {event.status}, 游戏: {event.game.name}, 回合: {event.game.round}")
+        else:
+            print(f"全局事件 - 状态: {event.status}, 无具体游戏信息")
         
         # 如果状态是gaming，只设置当前游戏，不自动添加到选中列表
-        if event.status == "gaming":
+        if event.status == "gaming" and event.game:
             tournament_manager.current_game = event.game.name
         
         # 获取游戏在锦标赛中的信息
@@ -111,11 +114,11 @@ async def handle_global_event(event: GlobalEvent):
             "event": {
                 "status": event.status,
                 "game": {
-                    "name": event.game.name,
-                    "round": event.game.round,
+                    "name": event.game.name if event.game else None,
+                    "round": event.game.round if event.game else None,
                     "tournament_number": tournament_number,
                     "total_selected": total_selected
-                }
+                } if event.game else None
             }
         }
         
@@ -125,11 +128,11 @@ async def handle_global_event(event: GlobalEvent):
             "data": {
                 "status": event.status,
                 "game": {
-                    "name": event.game.name,
-                    "round": event.game.round,
+                    "name": event.game.name if event.game else None,
+                    "round": event.game.round if event.game else None,
                     "tournament_number": tournament_number,
                     "total_selected": total_selected
-                }
+                } if event.game else None
             },
             "timestamp": datetime.now().isoformat()
         }

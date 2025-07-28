@@ -31,7 +31,6 @@ export default function Home() {
       'gaming': { color: 'bg-green-500', text: '游戏中' },
       'waiting': { color: 'bg-blue-500', text: '等待中' },
       'voting': { color: 'bg-purple-500', text: '投票中' },
-      'break': { color: 'bg-blue-500', text: '休息中' },
       'halfing': { color: 'bg-blue-500', text: '休息中' },
       'setting': { color: 'bg-orange-500', text: '设置中' },
       'finished': { color: 'bg-gray-500', text: '已结束' }
