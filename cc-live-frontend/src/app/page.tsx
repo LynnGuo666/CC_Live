@@ -24,6 +24,21 @@ export default function Home() {
     return null;
   };
 
+  // Get status display info
+  const getStatusInfo = () => {
+    const status = data.gameStatus?.status || 'waiting';
+    const statusConfig = {
+      'gaming': { color: 'bg-green-500', text: '游戏中' },
+      'waiting': { color: 'bg-blue-500', text: '等待中' },
+      'voting': { color: 'bg-purple-500', text: '投票中' },
+      'break': { color: 'bg-blue-500', text: '休息中' },
+      'halfing': { color: 'bg-blue-500', text: '休息中' },
+      'setting': { color: 'bg-orange-500', text: '设置中' },
+      'finished': { color: 'bg-gray-500', text: '已结束' }
+    };
+    return statusConfig[status] || { color: 'bg-gray-500', text: status };
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -41,6 +56,11 @@ export default function Home() {
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-4 text-sm text-gray-600">
+                {/* Game Status Indicator */}
+                <div className="flex items-center space-x-1">
+                  <div className={`w-2 h-2 rounded-full ${getStatusInfo().color}`}></div>
+                  <span>{getStatusInfo().text}</span>
+                </div>
                 <div className="flex items-center space-x-1">
                   <span>👥</span>
                   <span>{data.connectionStatus.connection_count || 0} 人在线</span>
@@ -58,11 +78,6 @@ export default function Home() {
                 <span className={`text-sm font-medium ${isConnected ? 'text-green-700' : 'text-red-700'}`}>
                   {isConnected ? '已连接' : '未连接'}
                 </span>
-                {data.connectionStatus.client_id && (
-                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                    ID: {data.connectionStatus.client_id.slice(-8)}
-                  </span>
-                )}
               </div>
             </div>
           </div>

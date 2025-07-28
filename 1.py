@@ -165,12 +165,15 @@ class TournamentSimulator:
         
         self.current_round = round_num
         
-        # 1. 模拟投票
+        # 1. 先设置全局状态为投票
+        await self.send_global_event("voting")
+        
+        # 2. 模拟投票
         chosen_game = await self.simulate_voting(available_games, round_num)
         print(f"🎉 投票结束！本轮游戏: {chosen_game}")
         await asyncio.sleep(2) # 等待前端展示投票结果
         
-        # 2. 模拟选定的游戏
+        # 3. 模拟选定的游戏
         print(f"\n🎯 第{round_num}轮 - 开始游戏: {chosen_game}")
         await self.simulate_game(chosen_game, round_num, multiplier)
         
@@ -211,9 +214,6 @@ class TournamentSimulator:
     
     async def simulate_voting(self, games: List[str], round_num: int) -> str:
         """模拟投票过程"""
-        # 发送全局事件：进入投票状态（没有具体游戏信息）
-        await self.send_global_event("voting")
-        
         # 生成模拟投票数据
         vote_data = []
         for game in games:
@@ -243,6 +243,21 @@ class TournamentSimulator:
             
             # 等待1秒再发送下一个倒计时
             await asyncio.sleep(1)
+        
+        # 发送最终0秒结果
+        final_vote_request = {
+            "votes": vote_data,
+            "time": 0  # 倒计时结束，显示最终结果
+        }
+        
+        try:
+            async with self.session.post(API_ENDPOINTS["vote_event"], json=final_vote_request) as response:
+                if response.status == 200:
+                    print(f"🏁 投票结束 (0秒) - 最终结果: {vote_data}")
+                else:
+                    print(f"❌ 最终投票结果发送失败: {response.status}")
+        except Exception as e:
+            print(f"❌ 最终投票结果发送异常: {e}")
             
         # 选出票数最高的游戏
         chosen_game = max(vote_data, key=lambda x: x["ticket"])["game"]
