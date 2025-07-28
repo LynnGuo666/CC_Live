@@ -18,8 +18,6 @@ export default function VotingGameDisplay({ voteData, className = "" }: VotingGa
               <div className="w-full max-w-2xl">
                 <div className="text-center mb-8">
                   <div className="text-6xl mb-4">🗳️</div>
-                  <div className="text-3xl font-bold text-gray-900 mb-2">投票进行中</div>
-                  <div className="text-gray-600">选择下一个游戏项目</div>
                 </div>
                 
                 <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border border-indigo-100">
@@ -55,7 +53,6 @@ export default function VotingGameDisplay({ voteData, className = "" }: VotingGa
             ) : (
               <div className="text-center text-gray-500">
                 <div className="text-6xl mb-4">🗳️</div>
-                <div className="text-xl font-medium mb-2">投票进行中</div>
                 <div className="text-gray-400">等待投票数据...</div>
               </div>
             )}

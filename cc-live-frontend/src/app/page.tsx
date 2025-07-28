@@ -26,7 +26,7 @@ export default function Home() {
   // Get status display info
   const getStatusInfo = () => {
     const status = data.gameStatus?.status || 'waiting';
-    const statusConfig = {
+    const statusConfig: { [key: string]: { color: string; text: string } } = {
       'gaming': { color: 'bg-green-500', text: '游戏中' },
       'waiting': { color: 'bg-blue-500', text: '等待中' },
       'voting': { color: 'bg-purple-500', text: '投票中' },
@@ -38,7 +38,7 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen overflow-hidden bg-gray-50">
+    <div className="h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-50">
         <div className="max-w-[1920px] mx-auto px-6">
@@ -100,18 +100,18 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <main className="h-[calc(100vh-64px)] max-w-[1920px] mx-auto px-6 py-6 overflow-hidden">
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 h-full">
+      <main className="min-h-[calc(100vh-64px)] max-w-[1920px] mx-auto px-6 py-6">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 min-h-full">
           {/* Left Column - Global Leaderboard */}
-          <div className="xl:col-span-3 h-full">
+          <div className="xl:col-span-3 flex flex-col min-h-[600px]">
             <GlobalLeaderboard 
               globalScores={data.globalScores}
-              className="h-full"
+              className="flex-1 min-h-0"
             />
           </div>
 
           {/* Center Column - Game Display */}
-          <div className="xl:col-span-6 h-full flex flex-col space-y-6">
+          <div className="xl:col-span-6 min-h-[600px] flex flex-col space-y-6">
             {/* Game Display */}
             <GameDisplay 
               gameStatus={data.gameStatus}
@@ -129,11 +129,11 @@ export default function Home() {
           </div>
 
           {/* Right Column - Current Game Leaderboard */}
-          <div className="xl:col-span-3 h-full">
+          <div className="xl:col-span-3 flex flex-col min-h-[600px]">
             <CurrentGameLeaderboard 
               currentGameScore={data.currentGameScore}
               gameStatus={data.gameStatus}
-              className="h-full"
+              className="flex-1 min-h-0"
             />
           </div>
         </div>

@@ -45,7 +45,7 @@ export default function GameDisplay({ gameStatus, currentGameScore, voteData, cl
       </div>;
     
     case 'voting':
-      return <VotingGameDisplay voteData={voteData} className={className} />;
+      return <VotingGameDisplay voteData={voteData || null} className={className} />;
     
     case 'halfing':
       return <HalfingDisplay className={className} />;
@@ -68,10 +68,8 @@ export default function GameDisplay({ gameStatus, currentGameScore, voteData, cl
       }
 
       return (
-        <div className={`bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg flex flex-col ${className}`}>
-          <div className="flex-1 overflow-hidden">
-            {renderGameContent(currentGameScore)}
-          </div>
+        <div className={`bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg flex flex-col h-full overflow-hidden ${className}`}>
+          {renderGameContent(currentGameScore)}
         </div>
       );
       
