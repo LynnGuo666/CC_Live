@@ -9,12 +9,7 @@ import BattleBoxDisplay from './game-displays/BattleBoxDisplay';
 import SkywarsDisplay from './game-displays/SkywarsDisplay';
 import DefaultGameDisplay from './game-displays/DefaultGameDisplay';
 
-// Import status-specific displays
-import WaitingDisplay from './game-displays/WaitingDisplay';
-import VotingDisplay from './game-displays/VotingDisplay';
-import HalfingDisplay from './game-displays/HalfingDisplay';
-import SettingDisplay from './game-displays/SettingDisplay';
-import FinishedDisplay from './game-displays/FinishedDisplay';
+
 
 interface GameDisplayProps {
   gameStatus: GameStatus | null;
@@ -24,15 +19,25 @@ interface GameDisplayProps {
 
 export default function GameDisplay({ gameStatus, currentGameScore, className = "" }: GameDisplayProps) {
   
-  // If no game status, show waiting
+  // If no game status, show nothing or default content
   if (!gameStatus) {
-    return <WaitingDisplay className={className} />;
+    return <div className={`${className} flex items-center justify-center text-gray-500`}>
+      <div className="text-center">
+        <div className="text-2xl">🎮</div>
+        <div>等待游戏状态</div>
+      </div>
+    </div>;
   }
 
   // Handle different game states
   switch (gameStatus.status) {
     case 'waiting':
-      return <WaitingDisplay className={className} />;
+      return <div className={`${className} flex items-center justify-center text-gray-500`}>
+        <div className="text-center">
+          <div className="text-2xl">⏰</div>
+          <div>等待开始</div>
+        </div>
+      </div>;
     
     case 'voting':
       return <VotingDisplay className={className} />;
@@ -49,33 +54,17 @@ export default function GameDisplay({ gameStatus, currentGameScore, className = 
     case 'gaming':
       // Show game content if we have score data
       if (!currentGameScore) {
-        return <WaitingDisplay className={className} />;
+        return <div className={`${className} flex items-center justify-center text-gray-500`}>
+          <div className="text-center">
+            <div className="text-2xl">🎮</div>
+            <div>加载游戏数据中...</div>
+          </div>
+        </div>;
       }
 
-      const gameName = GAME_NAMES[currentGameScore.game_id] || currentGameScore.game_id;
-      const gameNumber = gameStatus?.game?.tournament_number || 0;
-
       return (
-        <div className={`bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg ${className}`}>
-          <div className="p-6 border-b border-gray-200/50">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="text-2xl font-bold text-gray-900">
-                  {gameNumber > 0 ? `第${gameNumber}项：${gameName}` : gameName}
-                </div>
-                <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                  第 {currentGameScore.round} 轮
-                </div>
-              </div>
-              <div className="text-sm text-gray-500">
-                {currentGameScore.total_events_processed} 个事件已处理
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex-1 overflow-hidden">
-            {renderGameContent(currentGameScore)}
-          </div>
+        <div className={className}>
+          {renderGameContent(currentGameScore)}
         </div>
       );
       

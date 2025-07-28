@@ -111,22 +111,19 @@ export default function GameStatusDisplay({ gameStatus, currentRound, voteData }
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Main Status */}
-          <div className="text-center">
-            <div className={`inline-flex items-center px-6 py-3 rounded-2xl ${getStatusColor(gameStatus.status).bg} border border-opacity-20`}>
-              <span className="text-3xl mr-3">{getStatusIcon(gameStatus.status)}</span>
-              <div className="text-left">
-                <div className={`text-xl font-bold ${getStatusColor(gameStatus.status).text}`}>
-                  {getStatusText(gameStatus.status)}
-                </div>
-                {gameStatus.status === 'voting' && voteData && timeLeft > 0 && (
-                  <div className="text-sm text-gray-600 mt-1">
-                    剩余时间: {formatTime(timeLeft)}
+          {/* Main Status - Hide for voting status */}
+          {gameStatus.status !== 'voting' && (
+            <div className="text-center">
+              <div className={`inline-flex items-center px-6 py-3 rounded-2xl ${getStatusColor(gameStatus.status).bg} border border-opacity-20`}>
+                <span className="text-3xl mr-3">{getStatusIcon(gameStatus.status)}</span>
+                <div className="text-left">
+                  <div className={`text-xl font-bold ${getStatusColor(gameStatus.status).text}`}>
+                    {getStatusText(gameStatus.status)}
                   </div>
-                )}
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Second Card - Only show one additional card based on status/data */}
           {gameStatus.status === 'voting' && voteData && (
