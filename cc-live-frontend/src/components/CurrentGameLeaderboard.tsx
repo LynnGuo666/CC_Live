@@ -34,12 +34,14 @@ export default function CurrentGameLeaderboard({ currentGameScore, gameStatus, c
   const gameNumber = gameStatus?.game?.tournament_number || 0;
 
   // Sort teams by rank
-  const sortedTeams = [...currentGameScore.team_rankings].sort((a, b) => a.rank - b.rank);
+  const sortedTeams = currentGameScore?.team_rankings && Array.isArray(currentGameScore.team_rankings) 
+    ? [...currentGameScore.team_rankings].sort((a, b) => a.rank - b.rank)
+    : [];
 
   // Get all players sorted by score
   const allPlayers = sortedTeams
     .flatMap(team => 
-      Object.entries(team.players).map(([playerName, score]) => ({
+      Object.entries(team.players || {}).map(([playerName, score]) => ({
         player: playerName,
         score,
         team: team.team_id,

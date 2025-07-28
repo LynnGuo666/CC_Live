@@ -8,6 +8,20 @@ interface BingoDisplayProps {
 }
 
 export default function BingoDisplay({ currentGameScore }: BingoDisplayProps) {
+  // Add safety check for team_rankings
+  if (!currentGameScore?.team_rankings || !Array.isArray(currentGameScore.team_rankings)) {
+    return (
+      <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+        <div className="p-6 flex items-center justify-center h-full">
+          <div className="text-center text-gray-500">
+            <div className="text-lg mb-2">🎯</div>
+            <div className="font-medium">等待游戏数据...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   const sortedTeams = [...currentGameScore.team_rankings].sort((a, b) => a.rank - b.rank);
   
   return (

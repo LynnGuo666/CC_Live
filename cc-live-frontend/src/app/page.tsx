@@ -18,7 +18,11 @@ export default function Home() {
       const gameName = GAME_NAMES[data.gameStatus.game.name] || data.gameStatus.game.name;
       // 使用后端提供的tournament_number，如果没有或为0则不显示项目编号
       const gameNumber = data.gameStatus.game.tournament_number || 0;
-      return gameNumber > 0 ? `第${gameNumber}项：${gameName}` : `${gameName}`;
+      const numberMap: { [key: number]: string } = {
+        1: '一', 2: '二', 3: '三', 4: '四', 5: '五', 6: '六', 7: '七', 8: '八', 9: '九', 10: '十'
+      };
+      const chineseNumber = numberMap[gameNumber] || gameNumber.toString();
+      return gameNumber > 0 ? `${gameName}｜第${chineseNumber}项` : `${gameName}`;
     }
     return null;
   };
@@ -42,16 +46,24 @@ export default function Home() {
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-50">
         <div className="max-w-[1920px] mx-auto px-6">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-16 w-full">
             <div className="flex items-center space-x-4">
               <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">S2CC 锦标赛</h1>
+            </div>
+            
+            {/* Center - Game Info and Round */}
+            <div className="flex items-center space-x-6">
               {getCurrentGameInfo() && (
-                <>
-                  <span className="text-gray-300">|</span>
-                  <span className="text-lg font-medium text-blue-600">{getCurrentGameInfo()}</span>
-                </>
+                <span className="text-lg font-medium text-blue-600">{getCurrentGameInfo()}</span>
+              )}
+              {data.gameStatus?.game && (
+                <div className="flex items-center space-x-1 text-sm text-gray-600">
+                  <span>🎮</span>
+                  <span>第 {data.gameStatus.game.round} 轮</span>
+                </div>
               )}
             </div>
+            
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-4 text-sm text-gray-600">
                 {/* Game Status Indicator */}
@@ -59,14 +71,6 @@ export default function Home() {
                   <div className={`w-2 h-2 rounded-full ${getStatusInfo().color}`}></div>
                   <span>{getStatusInfo().text}</span>
                 </div>
-                
-                {/* Current Round Info */}
-                {data.gameStatus?.game && (
-                  <div className="flex items-center space-x-1">
-                    <span>🎮</span>
-                    <span>第 {data.gameStatus.game.round} 轮</span>
-                  </div>
-                )}
                 
                 {/* Voting Time */}
                 {data.gameStatus?.status === 'voting' && data.currentVote?.time_remaining && (
