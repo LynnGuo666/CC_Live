@@ -128,7 +128,7 @@ export default function Home() {
             <GameEventDisplay 
               events={data.recentEvents} 
               maxEvents={8}
-              className="h-32"
+              className="h-48"
             />
           </div>
 

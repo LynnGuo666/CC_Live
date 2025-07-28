@@ -22,22 +22,12 @@ export default function VotingGameDisplay({ voteData, className = "" }: VotingGa
                 
                 <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border border-indigo-100">
                   <div className="text-center">
-                    <div className="text-lg font-medium text-gray-700 mb-6">投票统计</div>
-                    <div className="grid grid-cols-2 gap-6 mb-6">
-                      <div className="bg-white/50 rounded-xl p-4">
-                        <div className="text-3xl font-bold text-gray-900">{voteData.total_games}</div>
-                        <div className="text-gray-600">可选游戏</div>
-                      </div>
-                      <div className="bg-white/50 rounded-xl p-4">
-                        <div className="text-3xl font-bold text-gray-900">{voteData.total_tickets}</div>
-                        <div className="text-gray-600">总投票数</div>
-                      </div>
-                    </div>
-                    
                     {voteData.votes.length > 0 && (
                       <div className="space-y-3">
                         <div className="text-lg font-medium text-gray-700">投票结果</div>
-                        {voteData.votes.map(vote => (
+                        {voteData.votes
+                          .sort((a, b) => b.ticket - a.ticket)
+                          .map(vote => (
                           <div key={vote.game} className="flex items-center justify-between bg-white/70 rounded-lg px-6 py-4">
                             <span className="text-lg font-medium text-gray-900">
                               {GAME_NAMES[vote.game] || vote.game}
