@@ -8,7 +8,7 @@ import ConnectionIndicator from '@/components/ConnectionIndicator';
 import GameStatusDisplay from '@/components/GameStatusDisplay';
 import GameDisplay from '@/components/GameDisplay';
 import CurrentGameLeaderboard from '@/components/CurrentGameLeaderboard';
-import { GAME_NAMES, getGameNumber } from '@/types/tournament';
+import { GAME_NAMES } from '@/types/tournament';
 
 export default function Home() {
   const { data, isConnected } = useWebSocket();
@@ -17,7 +17,8 @@ export default function Home() {
   const getCurrentGameInfo = () => {
     if (data.gameStatus?.game) {
       const gameName = GAME_NAMES[data.gameStatus.game.name] || data.gameStatus.game.name;
-      const gameNumber = getGameNumber(data.gameStatus.game.name);
+      // 使用后端提供的tournament_number，如果没有或为0则不显示项目编号
+      const gameNumber = data.gameStatus.game.tournament_number || 0;
       return gameNumber > 0 ? `第${gameNumber}项：${gameName}` : `${gameName}`;
     }
     return null;
@@ -107,6 +108,7 @@ export default function Home() {
           <div className="xl:col-span-3 flex flex-col">
             <CurrentGameLeaderboard 
               currentGameScore={data.currentGameScore}
+              gameStatus={data.gameStatus}
               className="flex-1"
             />
           </div>

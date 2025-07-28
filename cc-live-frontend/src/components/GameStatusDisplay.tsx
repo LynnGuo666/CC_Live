@@ -63,10 +63,10 @@ export default function GameStatusDisplay({ gameStatus, currentRound, voteData }
   const getStatusColor = (status: string) => {
     const colorMap: Record<string, { bg: string, text: string, accent: string }> = {
       'gaming': { bg: 'bg-green-50', text: 'text-green-800', accent: 'bg-green-500' },
-      'waiting': { bg: 'bg-yellow-50', text: 'text-yellow-800', accent: 'bg-yellow-500' },
-      'voting': { bg: 'bg-blue-50', text: 'text-blue-800', accent: 'bg-blue-500' },
-      'break': { bg: 'bg-purple-50', text: 'text-purple-800', accent: 'bg-purple-500' },
-      'setting': { bg: 'bg-gray-50', text: 'text-gray-800', accent: 'bg-gray-500' },
+      'waiting': { bg: 'bg-blue-50', text: 'text-blue-800', accent: 'bg-blue-500' },
+      'voting': { bg: 'bg-purple-50', text: 'text-purple-800', accent: 'bg-purple-500' },
+      'break': { bg: 'bg-blue-50', text: 'text-blue-800', accent: 'bg-blue-500' },
+      'setting': { bg: 'bg-orange-50', text: 'text-orange-800', accent: 'bg-orange-500' },
       'finished': { bg: 'bg-gray-50', text: 'text-gray-800', accent: 'bg-gray-500' }
     };
     return colorMap[status] || { bg: 'bg-gray-50', text: 'text-gray-800', accent: 'bg-gray-500' };
@@ -75,9 +75,18 @@ export default function GameStatusDisplay({ gameStatus, currentRound, voteData }
   return (
     <div className="bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg p-6">
       {!gameStatus ? (
-        <div className="text-center text-gray-500 py-8">
-          <div className="text-4xl mb-4">⏳</div>
-          <div className="font-medium">等待状态数据...</div>
+        <div className="space-y-6">
+          {/* 默认显示等待状态 */}
+          <div className="text-center">
+            <div className={`inline-flex items-center px-6 py-3 rounded-2xl ${getStatusColor('waiting').bg} border border-opacity-20`}>
+              <span className="text-3xl mr-3">{getStatusIcon('waiting')}</span>
+              <div className="text-left">
+                <div className={`text-xl font-bold ${getStatusColor('waiting').text}`}>
+                  {getStatusText('waiting')}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="space-y-6">

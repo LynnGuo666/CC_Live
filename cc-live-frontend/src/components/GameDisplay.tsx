@@ -1,7 +1,7 @@
 'use client';
 
 import { GameStatus, ScorePrediction } from '@/types/tournament';
-import { GAME_NAMES, TEAM_COLORS, TEAM_NAMES, getGameNumber } from '@/types/tournament';
+import { GAME_NAMES, TEAM_COLORS, TEAM_NAMES } from '@/types/tournament';
 
 interface GameDisplayProps {
   gameStatus: GameStatus | null;
@@ -24,7 +24,8 @@ export default function GameDisplay({ gameStatus, currentGameScore, className = 
   }
 
   const gameName = GAME_NAMES[currentGameScore.game_id] || currentGameScore.game_id;
-  const gameNumber = getGameNumber(currentGameScore.game_id);
+  // 使用后端提供的tournament_number，如果没有或为0则不显示项目编号
+  const gameNumber = gameStatus?.game?.tournament_number || 0;
 
   // Render different game displays based on game type
   const renderGameContent = () => {

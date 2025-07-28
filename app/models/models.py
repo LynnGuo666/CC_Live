@@ -50,10 +50,12 @@ class TeamScore(BaseModel):
 class GameInfo(BaseModel):
     """
     游戏信息数据模型
-    包含游戏名称和回合数
+    包含游戏名称、回合数和在锦标赛中的序号
     """
     name: str = Field(..., description="游戏名称")
     round: int = Field(..., description="当前游戏的回合数")
+    tournament_number: Optional[int] = Field(None, description="游戏在锦标赛中的序号（第几项）")
+    total_selected: Optional[int] = Field(None, description="锦标赛已选择的游戏总数")
 
 
 class GlobalEvent(BaseModel):

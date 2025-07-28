@@ -63,6 +63,8 @@ export interface GameStatus {
   game?: {
     name: string;
     round: number;
+    tournament_number?: number;
+    total_selected?: number;
   };
 }
 

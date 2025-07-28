@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException
 from typing import List
 from app.models.models import TeamScore, GlobalEvent, VoteEvent
 from app.core.websocket import connection_manager
+from app.core.tournament_manager import tournament_manager
 from datetime import datetime
 
 # 创建路由器实例
@@ -94,6 +95,15 @@ async def handle_global_event(event: GlobalEvent):
     try:
         print(f"全局事件 - 状态: {event.status}, 游戏: {event.game.name}, 回合: {event.game.round}")
         
+        # 如果状态是gaming，只设置当前游戏，不自动添加到选中列表
+        if event.status == "gaming":
+            tournament_manager.current_game = event.game.name
+        
+        # 获取游戏在锦标赛中的信息
+        current_game_info = tournament_manager.get_current_game_info()
+        tournament_number = current_game_info["number"] if current_game_info else 0
+        total_selected = current_game_info["total_selected"] if current_game_info else 0
+        
         # 准备响应数据
         response_data = {
             "message": "全局事件处理成功",
@@ -102,7 +112,9 @@ async def handle_global_event(event: GlobalEvent):
                 "status": event.status,
                 "game": {
                     "name": event.game.name,
-                    "round": event.game.round
+                    "round": event.game.round,
+                    "tournament_number": tournament_number,
+                    "total_selected": total_selected
                 }
             }
         }
@@ -114,7 +126,9 @@ async def handle_global_event(event: GlobalEvent):
                 "status": event.status,
                 "game": {
                     "name": event.game.name,
-                    "round": event.game.round
+                    "round": event.game.round,
+                    "tournament_number": tournament_number,
+                    "total_selected": total_selected
                 }
             },
             "timestamp": datetime.now().isoformat()
@@ -141,9 +155,20 @@ async def handle_vote_event(vote_data: VoteEvent):
     try:
         print(f"投票事件 - 剩余时间: {vote_data.time} 秒")
         total_tickets = 0
+        winning_game = None
+        max_tickets = 0
+        
         for vote in vote_data.votes:
             print(f"  游戏: {vote.game}, 票数: {vote.ticket}")
             total_tickets += vote.ticket
+            if vote.ticket > max_tickets:
+                max_tickets = vote.ticket
+                winning_game = vote.game
+        
+        # 如果投票时间结束且有获胜游戏，将其添加到锦标赛顺序中
+        if vote_data.time <= 0 and winning_game:
+            tournament_manager.add_selected_game(winning_game)
+            print(f"投票结束，获胜游戏: {winning_game}")
         
         # 准备响应数据
         response_data = {
@@ -153,6 +178,7 @@ async def handle_vote_event(vote_data: VoteEvent):
                 "time_remaining": vote_data.time,
                 "total_games": len(vote_data.votes),
                 "total_tickets": total_tickets,
+                "winning_game": winning_game if vote_data.time <= 0 else None,
                 "votes": [
                     {
                         "game": vote.game,
@@ -169,6 +195,7 @@ async def handle_vote_event(vote_data: VoteEvent):
                 "time_remaining": vote_data.time,
                 "total_games": len(vote_data.votes),
                 "total_tickets": total_tickets,
+                "winning_game": winning_game if vote_data.time <= 0 else None,
                 "votes": [
                     {
                         "game": vote.game,
@@ -184,3 +211,58 @@ async def handle_vote_event(vote_data: VoteEvent):
     except Exception as e:
         print(f"处理投票事件时发生错误: {str(e)}")
         raise HTTPException(status_code=500, detail=f"处理投票事件失败: {str(e)}")
+
+
+@router.post("/api/tournament/reset")
+async def reset_tournament():
+    """
+    重置锦标赛状态
+    
+    返回:
+        dict: 包含重置结果的响应信息
+    """
+    try:
+        tournament_manager.reset_tournament()
+        
+        response_data = {
+            "message": "锦标赛状态重置成功",
+            "success": True,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        # 通过WebSocket广播重置事件
+        websocket_message = {
+            "type": "tournament_reset",
+            "data": response_data,
+            "timestamp": datetime.now().isoformat()
+        }
+        await connection_manager.broadcast(websocket_message)
+        
+        return response_data
+    except Exception as e:
+        print(f"重置锦标赛状态时发生错误: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"重置锦标赛状态失败: {str(e)}")
+
+
+@router.get("/api/tournament/status")
+async def get_tournament_status():
+    """
+    获取锦标赛当前状态
+    
+    返回:
+        dict: 包含锦标赛状态信息的响应
+    """
+    try:
+        status = tournament_manager.get_tournament_status()
+        
+        response_data = {
+            "message": "获取锦标赛状态成功",
+            "success": True,
+            "tournament_status": status,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        return response_data
+    except Exception as e:
+        print(f"获取锦标赛状态时发生错误: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"获取锦标赛状态失败: {str(e)}")

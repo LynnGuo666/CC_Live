@@ -1,15 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { ScorePrediction, TeamRanking } from '@/types/tournament';
-import { TEAM_COLORS, TEAM_NAMES, GAME_NAMES, getGameNumber } from '@/types/tournament';
+import { ScorePrediction, TeamRanking, GameStatus } from '@/types/tournament';
+import { TEAM_COLORS, TEAM_NAMES, GAME_NAMES } from '@/types/tournament';
 
 interface CurrentGameLeaderboardProps {
   currentGameScore: ScorePrediction | null;
+  gameStatus: GameStatus | null;
   className?: string;
 }
 
-export default function CurrentGameLeaderboard({ currentGameScore, className = "" }: CurrentGameLeaderboardProps) {
+export default function CurrentGameLeaderboard({ currentGameScore, gameStatus, className = "" }: CurrentGameLeaderboardProps) {
   const [viewMode, setViewMode] = useState<'team' | 'player'>('team');
 
   if (!currentGameScore) {
@@ -29,7 +30,8 @@ export default function CurrentGameLeaderboard({ currentGameScore, className = "
   }
 
   const gameName = GAME_NAMES[currentGameScore.game_id] || currentGameScore.game_id;
-  const gameNumber = getGameNumber(currentGameScore.game_id);
+  // 使用后端提供的tournament_number，如果没有或为0则不显示项目编号
+  const gameNumber = gameStatus?.game?.tournament_number || 0;
 
   // Sort teams by rank
   const sortedTeams = [...currentGameScore.team_rankings].sort((a, b) => a.rank - b.rank);
