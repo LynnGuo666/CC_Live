@@ -8,6 +8,7 @@ from typing import List
 from app.models.models import TeamScore, GlobalEvent, VoteEvent
 from app.core.websocket import connection_manager
 from app.core.tournament_manager import tournament_manager
+from app.core.data_manager import data_manager
 from datetime import datetime
 
 # 创建路由器实例
@@ -32,48 +33,16 @@ async def handle_global_score_update(team_scores: List[TeamScore]):
             for player_score in team_score.scores:
                 print(f"    玩家: {player_score.player}, 分数: {player_score.score}")
         
+        # 更新数据管理器中的全局积分数据
+        data_manager.update_global_scores(team_scores)
+        
         # 准备响应数据
         response_data = {
             "message": "全局分数更新处理成功",
             "success": True,
             "total_teams": len(team_scores),
-            "team_scores": [
-                {
-                    "team": team.team,
-                    "total_score": team.total_score,
-                    "player_count": len(team.scores),
-                    "scores": [
-                        {
-                            "player": score.player,
-                            "score": score.score
-                        } for score in team.scores
-                    ]
-                } for team in team_scores
-            ]
-        }
-        
-        # 通过WebSocket广播全局分数更新
-        websocket_message = {
-            "type": "global_score_update",
-            "data": {
-                "total_teams": len(team_scores),
-                "team_scores": [
-                    {
-                        "team": team.team,
-                        "total_score": team.total_score,
-                        "player_count": len(team.scores),
-                        "scores": [
-                            {
-                                "player": score.player,
-                                "score": score.score
-                            } for score in team.scores
-                        ]
-                    } for team in team_scores
-                ]
-            },
             "timestamp": datetime.now().isoformat()
         }
-        await connection_manager.broadcast(websocket_message)
         
         return response_data
     except Exception as e:
@@ -102,41 +71,15 @@ async def handle_global_event(event: GlobalEvent):
         if event.status == "gaming" and event.game:
             tournament_manager.current_game = event.game.name
         
-        # 获取游戏在锦标赛中的信息
-        current_game_info = tournament_manager.get_current_game_info()
-        tournament_number = current_game_info["number"] if current_game_info else 0
-        total_selected = current_game_info["total_selected"] if current_game_info else 0
+        # 更新数据管理器中的游戏状态
+        data_manager.update_game_status(event)
         
         # 准备响应数据
         response_data = {
             "message": "全局事件处理成功",
             "success": True,
-            "event": {
-                "status": event.status,
-                "game": {
-                    "name": event.game.name if event.game else None,
-                    "round": event.game.round if event.game else None,
-                    "tournament_number": tournament_number,
-                    "total_selected": total_selected
-                } if event.game else None
-            }
-        }
-        
-        # 通过WebSocket广播全局事件
-        websocket_message = {
-            "type": "global_event",
-            "data": {
-                "status": event.status,
-                "game": {
-                    "name": event.game.name if event.game else None,
-                    "round": event.game.round if event.game else None,
-                    "tournament_number": tournament_number,
-                    "total_selected": total_selected
-                } if event.game else None
-            },
             "timestamp": datetime.now().isoformat()
         }
-        await connection_manager.broadcast(websocket_message)
         
         return response_data
     except Exception as e:
@@ -173,42 +116,15 @@ async def handle_vote_event(vote_data: VoteEvent):
             tournament_manager.add_selected_game(winning_game)
             print(f"投票结束，获胜游戏: {winning_game}")
         
+        # 更新数据管理器中的投票数据
+        data_manager.update_vote_data(vote_data)
+        
         # 准备响应数据
         response_data = {
             "message": "投票事件处理成功",
             "success": True,
-            "vote_data": {
-                "time_remaining": vote_data.time,
-                "total_games": len(vote_data.votes),
-                "total_tickets": total_tickets,
-                "winning_game": winning_game if vote_data.time <= 0 else None,
-                "votes": [
-                    {
-                        "game": vote.game,
-                        "ticket": vote.ticket
-                    } for vote in vote_data.votes
-                ]
-            }
-        }
-        
-        # 通过WebSocket广播投票事件
-        websocket_message = {
-            "type": "vote_event",
-            "data": {
-                "time_remaining": vote_data.time,
-                "total_games": len(vote_data.votes),
-                "total_tickets": total_tickets,
-                "winning_game": winning_game if vote_data.time <= 0 else None,
-                "votes": [
-                    {
-                        "game": vote.game,
-                        "ticket": vote.ticket
-                    } for vote in vote_data.votes
-                ]
-            },
             "timestamp": datetime.now().isoformat()
         }
-        await connection_manager.broadcast(websocket_message)
         
         return response_data
     except Exception as e:

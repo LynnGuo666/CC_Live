@@ -5,6 +5,8 @@ CC Live 游戏API主应用程序
 
 from app.core.config import create_app
 from app.api import global_routes, game_routes, websocket_routes
+from app.core.data_manager import data_manager
+import asyncio
 
 # 创建应用实例
 app = create_app()
@@ -13,6 +15,13 @@ app = create_app()
 app.include_router(websocket_routes.router, tags=["WebSocket"])
 app.include_router(global_routes.router, tags=["全局事件"])
 app.include_router(game_routes.router, tags=["游戏事件"])
+
+
+@app.on_event("startup")
+async def startup_event():
+    """应用启动时的初始化"""
+    print("CC Live 游戏API服务启动中...")
+    print("数据管理器已初始化，支持定时广播机制")
 
 
 @app.get("/")

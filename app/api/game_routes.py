@@ -8,6 +8,7 @@ from typing import List
 from app.models.models import GameEvent, ScoreUpdate
 from app.core.websocket import connection_manager
 from app.core.score_engine import score_engine
+from app.core.data_manager import data_manager
 from datetime import datetime
 
 # 创建路由器实例
@@ -34,33 +35,27 @@ async def handle_game_event(game_id: str, event: GameEvent):
             score_engine.set_current_game(game_id)
         
         # 处理事件并获取分数预测
-        event_data = {
+        score_prediction = score_engine.process_event({
             "player": event.player,
             "team": event.team,
             "event": event.event,
             "lore": event.lore
-        }
+        })
         
-        score_prediction = score_engine.process_event(event_data)
+        # 添加事件到数据管理器（带时间戳）
+        data_manager.add_event(event, game_id)
+        
+        # 更新当前游戏积分数据
+        if score_prediction:
+            data_manager.update_current_game_score(score_prediction)
         
         # 准备响应数据
         response_data = {
             "message": "游戏事件处理成功",
             "success": True,
             "game_id": game_id,
-            "event": event_data,
-            "score_prediction": score_prediction
-        }
-        
-        # 通过WebSocket广播事件和分数预测
-        websocket_message = {
-            "type": "game_event",
-            "game_id": game_id,
-            "data": event_data,
-            "score_prediction": score_prediction,
             "timestamp": datetime.now().isoformat()
         }
-        await connection_manager.broadcast(websocket_message)
         
         return response_data
     except Exception as e:

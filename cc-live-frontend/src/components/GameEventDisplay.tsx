@@ -5,11 +5,7 @@ import { GameEvent } from '@/types/tournament';
 import { TEAM_COLORS, TEAM_NAMES, GAME_NAMES } from '@/types/tournament';
 
 interface GameEventDisplayProps {
-  events: Array<{
-    game_id: string;
-    event: GameEvent;
-    timestamp: string;
-  }>;
+  events: GameEvent[];
   maxEvents?: number;
   className?: string;
 }
@@ -89,7 +85,9 @@ export default function GameEventDisplay({ events, maxEvents = 10, className = "
     return colorMap[eventType] || { bg: 'bg-gray-50', icon: 'bg-gray-100' };
   };
 
-  const formatTimestamp = (timestamp: string) => {
+  const formatTimestamp = (timestamp?: string) => {
+    if (!timestamp) return '刚刚';
+    
     const date = new Date(timestamp);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
@@ -105,6 +103,18 @@ export default function GameEventDisplay({ events, maxEvents = 10, className = "
         minute: '2-digit'
       });
     }
+  };
+
+  const formatPostTime = (postTime?: string) => {
+    if (!postTime) return '';
+    
+    const date = new Date(postTime);
+    return date.toLocaleTimeString('zh-CN', { 
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
   };
 
   const getTeamColor = (teamId: string) => {
@@ -137,13 +147,13 @@ export default function GameEventDisplay({ events, maxEvents = 10, className = "
             className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
           >
             <div className="p-3 space-y-1">
-              {displayEvents.map((item, index) => {
-                const eventColors = getEventColor(item.event.event);
+              {displayEvents.map((event, index) => {
+                const eventColors = getEventColor(event.event);
                 const isRecentEvent = index < 3; // Highlight recent events
                 
                 return (
                   <div
-                    key={`${item.timestamp}-${index}`}
+                    key={`${event.post_time || event.timestamp}-${index}`}
                     className={`flex items-center space-x-3 p-2 rounded-lg transition-all duration-200 hover:shadow-sm ${
                       isRecentEvent 
                         ? `${eventColors.bg} border border-gray-200` 
@@ -152,45 +162,50 @@ export default function GameEventDisplay({ events, maxEvents = 10, className = "
                   >
                     {/* Event Icon */}
                     <div className={`flex-shrink-0 w-6 h-6 ${eventColors.icon} rounded-full flex items-center justify-center`}>
-                      <span className="text-xs">{getEventIcon(item.event.event)}</span>
+                      <span className="text-xs">{getEventIcon(event.event)}</span>
                     </div>
 
                     {/* Game Badge */}
-                    <span className="flex-shrink-0 text-xs font-medium text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md">
-                      {getGameName(item.game_id)}
-                    </span>
+                    {event.game_id && (
+                      <span className="flex-shrink-0 text-xs font-medium text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md">
+                        {getGameName(event.game_id)}
+                      </span>
+                    )}
 
                     {/* Event Description */}
                     <div className="flex-1 min-w-0">
                       <span className="text-sm font-medium text-gray-900 truncate">
-                        {getEventDescription(item.event)}
-                        {item.event.lore && (
+                        {getEventDescription(event)}
+                        {event.lore && (
                           <span className="text-gray-600 ml-1">
-                            - {item.event.lore}
+                            - {event.lore}
                           </span>
                         )}
                       </span>
                     </div>
 
                     {/* Player Info */}
-                    {item.event.player && (
+                    {event.player && (
                       <div className="flex-shrink-0 flex items-center space-x-1">
-                        {item.event.team && (
+                        {event.team && (
                           <div
                             className="w-2 h-2 rounded-full border border-white shadow-sm"
-                            style={{ backgroundColor: getTeamColor(item.event.team) }}
+                            style={{ backgroundColor: getTeamColor(event.team) }}
                           />
                         )}
                         <span className="text-xs font-medium text-gray-700 truncate max-w-20">
-                          {item.event.player}
+                          {event.player}
                         </span>
                       </div>
                     )}
 
-                    {/* Timestamp */}
-                    <span className="flex-shrink-0 text-xs text-gray-500">
-                      {formatTimestamp(item.timestamp)}
-                    </span>
+                    {/* Post Time (更精确的服务器接收时间) */}
+                    <div className="flex-shrink-0 flex flex-col items-end text-xs text-gray-500">
+                      <span>{formatTimestamp(event.post_time || event.timestamp)}</span>
+                      {event.post_time && (
+                        <span className="text-gray-400">{formatPostTime(event.post_time)}</span>
+                      )}
+                    </div>
 
                     {/* New Badge */}
                     {isRecentEvent && (

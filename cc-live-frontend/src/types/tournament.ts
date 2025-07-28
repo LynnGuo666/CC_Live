@@ -30,6 +30,9 @@ export interface GameEvent {
   team: string;
   event: string;
   lore?: string;
+  game_id?: string;
+  timestamp?: string;
+  post_time?: string; // 新增：post到服务器的时间戳
 }
 
 export interface GameScore {
@@ -71,6 +74,7 @@ export interface GameStatus {
 // WebSocket message types
 export type WSMessage = 
   | { type: 'connection'; status: string; message: string; client_id: string; timestamp: string }
+  | { type: 'full_data_update'; data: TournamentData; timestamp: string } // 新增：完整数据更新
   | { type: 'pong'; timestamp: string }
   | { type: 'status_response'; connection_count: number; client_info: Record<string, unknown> }
   | { type: 'game_event'; game_id: string; data: GameEvent; score_prediction: ScorePrediction; timestamp: string }
@@ -79,6 +83,20 @@ export type WSMessage =
   | { type: 'global_score_update'; data: { total_teams: number; team_scores: TeamScore[] }; timestamp: string }
   | { type: 'global_event'; data: GameStatus; timestamp: string }
   | { type: 'vote_event'; data: VoteData; timestamp: string };
+
+// 完整的锦标赛数据结构（用于定时广播）
+export interface TournamentData {
+  globalScores: TeamScore[];
+  currentGameScore: ScorePrediction | null;
+  currentVote: VoteData | null;
+  gameStatus: GameStatus | null;
+  recentEvents: GameEvent[];
+  connectionStatus: {
+    connected: boolean;
+    connection_count: number;
+    last_ping: string;
+  };
+}
 
 export interface ConnectionStatus {
   connected: boolean;

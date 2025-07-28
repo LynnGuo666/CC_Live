@@ -5,6 +5,7 @@ WebSocket路由模块
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 from app.core.websocket import connection_manager
+from app.core.data_manager import data_manager
 import asyncio
 import json
 
@@ -19,6 +20,11 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str = Query(None))
     """
     await connection_manager.connect(websocket, client_id)
     
+    # 如果这是第一个连接，启动定时广播
+    if connection_manager.get_connection_count() == 1:
+        print("启动定时广播调度器")
+        await data_manager.start_broadcast_scheduler()
+    
     try:
         # 发送连接成功消息
         await connection_manager.send_personal_message({
@@ -28,6 +34,10 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str = Query(None))
             "client_id": connection_manager.client_info[websocket]["client_id"],
             "timestamp": connection_manager.client_info[websocket]["connected_at"]
         }, websocket)
+        
+        # 立即发送一次完整数据
+        complete_data = data_manager.get_complete_data()
+        await connection_manager.send_personal_message(complete_data, websocket)
         
         # 保持连接活跃，监听客户端消息
         while True:
@@ -57,9 +67,20 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str = Query(None))
                 
     except WebSocketDisconnect:
         connection_manager.disconnect(websocket)
+        
+        # 如果没有连接了，停止定时广播
+        if connection_manager.get_connection_count() == 0:
+            print("停止定时广播调度器")
+            await data_manager.stop_broadcast_scheduler()
+            
     except Exception as e:
         print(f"WebSocket错误: {e}")
         connection_manager.disconnect(websocket)
+        
+        # 如果没有连接了，停止定时广播
+        if connection_manager.get_connection_count() == 0:
+            print("停止定时广播调度器")
+            await data_manager.stop_broadcast_scheduler()
 
 
 @router.get("/ws/stats")

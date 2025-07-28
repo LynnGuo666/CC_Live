@@ -82,6 +82,13 @@ export function useWebSocket(url: string = 'ws://localhost:8000/ws') {
               }));
               break;
 
+            case 'full_data_update':
+              // 处理完整数据更新（新的定时广播机制）
+              if (message.data) {
+                setData(message.data);
+              }
+              break;
+
             case 'status_response':
               setData(prev => ({
                 ...prev,
@@ -93,6 +100,7 @@ export function useWebSocket(url: string = 'ws://localhost:8000/ws') {
               break;
 
             case 'game_event':
+              // 兼容旧的游戏事件（如果还有的话）
               setData(prev => ({
                 ...prev,
                 currentGameScore: message.score_prediction,
@@ -100,7 +108,8 @@ export function useWebSocket(url: string = 'ws://localhost:8000/ws') {
                   {
                     game_id: message.game_id,
                     event: message.data,
-                    timestamp: message.timestamp
+                    timestamp: message.timestamp,
+                    post_time: message.timestamp
                   },
                   ...prev.recentEvents.slice(0, 19) // Keep last 20 events
                 ]
@@ -122,24 +131,33 @@ export function useWebSocket(url: string = 'ws://localhost:8000/ws') {
               break;
 
             case 'global_score_update':
-              setData(prev => ({
-                ...prev,
-                globalScores: message.data.team_scores
-              }));
+              // 兼容旧的全局分数更新
+              if (message.data?.team_scores) {
+                setData(prev => ({
+                  ...prev,
+                  globalScores: message.data.team_scores
+                }));
+              }
               break;
 
             case 'global_event':
-              setData(prev => ({
-                ...prev,
-                gameStatus: message.data
-              }));
+              // 兼容旧的游戏状态更新
+              if (message.data) {
+                setData(prev => ({
+                  ...prev,
+                  gameStatus: message.data
+                }));
+              }
               break;
 
             case 'vote_event':
-              setData(prev => ({
-                ...prev,
-                currentVote: message.data
-              }));
+              // 兼容旧的投票事件
+              if (message.data) {
+                setData(prev => ({
+                  ...prev,
+                  currentVote: message.data
+                }));
+              }
               break;
 
             case 'pong':
