@@ -5,7 +5,6 @@ import GlobalLeaderboard from '@/components/GlobalLeaderboard';
 import GameEventDisplay from '@/components/GameEventDisplay';
 import VotingDisplay from '@/components/VotingDisplay';
 import ConnectionIndicator from '@/components/ConnectionIndicator';
-import GameStatusDisplay from '@/components/GameStatusDisplay';
 import GameDisplay from '@/components/GameDisplay';
 import CurrentGameLeaderboard from '@/components/CurrentGameLeaderboard';
 import { GAME_NAMES } from '@/types/tournament';
@@ -60,6 +59,23 @@ export default function Home() {
                   <div className={`w-2 h-2 rounded-full ${getStatusInfo().color}`}></div>
                   <span>{getStatusInfo().text}</span>
                 </div>
+                
+                {/* Current Round Info */}
+                {data.gameStatus?.game && (
+                  <div className="flex items-center space-x-1">
+                    <span>🎮</span>
+                    <span>第 {data.gameStatus.game.round} 轮</span>
+                  </div>
+                )}
+                
+                {/* Voting Time */}
+                {data.gameStatus?.status === 'voting' && data.currentVote?.time_remaining && (
+                  <div className="flex items-center space-x-1">
+                    <span>⏱️</span>
+                    <span>剩余: {formatTime(data.currentVote.time_remaining)}</span>
+                  </div>
+                )}
+                
                 <div className="flex items-center space-x-1">
                   <span>👥</span>
                   <span>{data.connectionStatus.connection_count || 0} 人在线</span>
@@ -94,19 +110,13 @@ export default function Home() {
             />
           </div>
 
-          {/* Center Column - Game Status and Display */}
+          {/* Center Column - Game Display */}
           <div className="xl:col-span-6 flex flex-col space-y-6">
-            {/* Game Status */}
-            <GameStatusDisplay 
-              gameStatus={data.gameStatus} 
-              currentRound={data.currentRound}
-              voteData={data.currentVote}
-            />
-            
             {/* Game Display */}
             <GameDisplay 
               gameStatus={data.gameStatus}
               currentGameScore={data.currentGameScore}
+              voteData={data.currentVote}
               className="flex-1"
             />
             
@@ -142,4 +152,11 @@ function formatLastPing(timestamp: string): string {
   if (diffSeconds < 60) return `${diffSeconds}秒前`;
   if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)}分钟前`;
   return date.toLocaleTimeString('zh-CN', { hour12: false });
+}
+
+// Helper function for formatting time
+function formatTime(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }

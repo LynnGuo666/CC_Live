@@ -125,39 +125,6 @@ export default function GameStatusDisplay({ gameStatus, currentRound, voteData }
             </div>
           )}
 
-          {/* Second Card - Only show one additional card based on status/data */}
-          {gameStatus.status === 'voting' && voteData && (
-            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border border-indigo-100">
-              <div className="text-center">
-                <div className="text-sm font-medium text-gray-600 mb-4">投票统计</div>
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="bg-white/50 rounded-xl p-3">
-                    <div className="text-2xl font-bold text-gray-900">{voteData.total_games}</div>
-                    <div className="text-sm text-gray-600">可选游戏</div>
-                  </div>
-                  <div className="bg-white/50 rounded-xl p-3">
-                    <div className="text-2xl font-bold text-gray-900">{voteData.total_tickets}</div>
-                    <div className="text-sm text-gray-600">总投票数</div>
-                  </div>
-                </div>
-                
-                {voteData.votes.length > 0 && (
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium text-gray-600">投票结果</div>
-                    {voteData.votes.map(vote => (
-                      <div key={vote.game} className="flex items-center justify-between bg-white/50 rounded-lg px-4 py-2">
-                        <span className="font-medium text-gray-900">
-                          {GAME_NAMES[vote.game] || vote.game}
-                        </span>
-                        <span className="text-lg font-bold text-indigo-600">{vote.ticket}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
           {/* Round Info - Only show if not voting and has round data */}
           {gameStatus.status !== 'voting' && Object.keys(currentRound).length > 0 && (
             <div className="bg-gray-50/50 rounded-2xl p-6 border border-gray-100">
