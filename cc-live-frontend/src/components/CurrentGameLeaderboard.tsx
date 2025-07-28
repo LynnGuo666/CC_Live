@@ -79,18 +79,6 @@ export default function CurrentGameLeaderboard({ currentGameScore, gameStatus, c
             </button>
           </div>
         </div>
-        
-        <div className="flex items-center space-x-4 text-sm">
-          <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded-lg font-medium">
-            {gameNumber > 0 ? `第${gameNumber}项：${gameName}` : gameName}
-          </div>
-          <div className="text-gray-500">
-            第 {currentGameScore.round} 轮
-          </div>
-          <div className="text-gray-500">
-            {currentGameScore.total_events_processed} 个事件
-          </div>
-        </div>
       </div>
 
       <div className="flex-1 overflow-hidden">
