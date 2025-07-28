@@ -6,6 +6,8 @@
 from fastapi import APIRouter, HTTPException
 from typing import List
 from app.models.models import TeamScore, GlobalEvent, VoteEvent
+from app.core.websocket import connection_manager
+from datetime import datetime
 
 # 创建路由器实例
 router = APIRouter()
@@ -29,7 +31,8 @@ async def handle_global_score_update(team_scores: List[TeamScore]):
             for player_score in team_score.scores:
                 print(f"    玩家: {player_score.player}, 分数: {player_score.score}")
         
-        return {
+        # 准备响应数据
+        response_data = {
             "message": "全局分数更新处理成功",
             "success": True,
             "total_teams": len(team_scores),
@@ -47,6 +50,31 @@ async def handle_global_score_update(team_scores: List[TeamScore]):
                 } for team in team_scores
             ]
         }
+        
+        # 通过WebSocket广播全局分数更新
+        websocket_message = {
+            "type": "global_score_update",
+            "data": {
+                "total_teams": len(team_scores),
+                "team_scores": [
+                    {
+                        "team": team.team,
+                        "total_score": team.total_score,
+                        "player_count": len(team.scores),
+                        "scores": [
+                            {
+                                "player": score.player,
+                                "score": score.score
+                            } for score in team.scores
+                        ]
+                    } for team in team_scores
+                ]
+            },
+            "timestamp": datetime.now().isoformat()
+        }
+        await connection_manager.broadcast(websocket_message)
+        
+        return response_data
     except Exception as e:
         print(f"处理全局分数更新时发生错误: {str(e)}")
         raise HTTPException(status_code=500, detail=f"处理全局分数更新失败: {str(e)}")
@@ -66,7 +94,8 @@ async def handle_global_event(event: GlobalEvent):
     try:
         print(f"全局事件 - 状态: {event.status}, 游戏: {event.game.name}, 回合: {event.game.round}")
         
-        return {
+        # 准备响应数据
+        response_data = {
             "message": "全局事件处理成功",
             "success": True,
             "event": {
@@ -77,6 +106,22 @@ async def handle_global_event(event: GlobalEvent):
                 }
             }
         }
+        
+        # 通过WebSocket广播全局事件
+        websocket_message = {
+            "type": "global_event",
+            "data": {
+                "status": event.status,
+                "game": {
+                    "name": event.game.name,
+                    "round": event.game.round
+                }
+            },
+            "timestamp": datetime.now().isoformat()
+        }
+        await connection_manager.broadcast(websocket_message)
+        
+        return response_data
     except Exception as e:
         print(f"处理全局事件时发生错误: {str(e)}")
         raise HTTPException(status_code=500, detail=f"处理全局事件失败: {str(e)}")
@@ -100,7 +145,8 @@ async def handle_vote_event(vote_data: VoteEvent):
             print(f"  游戏: {vote.game}, 票数: {vote.ticket}")
             total_tickets += vote.ticket
         
-        return {
+        # 准备响应数据
+        response_data = {
             "message": "投票事件处理成功",
             "success": True,
             "vote_data": {
@@ -115,6 +161,26 @@ async def handle_vote_event(vote_data: VoteEvent):
                 ]
             }
         }
+        
+        # 通过WebSocket广播投票事件
+        websocket_message = {
+            "type": "vote_event",
+            "data": {
+                "time_remaining": vote_data.time,
+                "total_games": len(vote_data.votes),
+                "total_tickets": total_tickets,
+                "votes": [
+                    {
+                        "game": vote.game,
+                        "ticket": vote.ticket
+                    } for vote in vote_data.votes
+                ]
+            },
+            "timestamp": datetime.now().isoformat()
+        }
+        await connection_manager.broadcast(websocket_message)
+        
+        return response_data
     except Exception as e:
         print(f"处理投票事件时发生错误: {str(e)}")
         raise HTTPException(status_code=500, detail=f"处理投票事件失败: {str(e)}")

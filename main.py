@@ -4,12 +4,13 @@ CC Live 游戏API主应用程序
 """
 
 from app.core.config import create_app
-from app.api import global_routes, game_routes
+from app.api import global_routes, game_routes, websocket_routes
 
 # 创建应用实例
 app = create_app()
 
 # 注册路由
+app.include_router(websocket_routes.router, tags=["WebSocket"])
 app.include_router(global_routes.router, tags=["全局事件"])
 app.include_router(game_routes.router, tags=["游戏事件"])
 
