@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { WSMessage, ScorePrediction, TeamScore, VoteData, GameStatus, GameEvent, TournamentData } from '@/types/tournament';
 
-export function useWebSocket(url: string = 'ws://localhost:8000/ws') {
+export function useWebSocket(url: string = 'wss://live-cc-api.lynn6.top/ws') {
   const [data, setData] = useState<TournamentData>({
     connectionStatus: { 
       connected: false,
