@@ -7,6 +7,18 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'zh.minecraft.wiki',
       },
+      {
+        protocol: 'https',
+        hostname: 'minecraft.wiki',
+      },
+      {
+        protocol: 'https',
+        hostname: 'minecraftitemids.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'static.wikia.nocookie.net',
+      },
     ],
   },
 };

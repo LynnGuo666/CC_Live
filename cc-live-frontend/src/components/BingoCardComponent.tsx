@@ -41,24 +41,34 @@ export default function BingoCardComponent({ bingoCard, className = '' }: BingoC
     SOUL_SAND: 'https://zh.minecraft.wiki/images/Soul_Sand_JE2_BE2.png?f1135',
   };
 
-  // 将 MATERIAL 常量名转换为 Wiki 图片候选 URL 列表
+  // 将 MATERIAL 常量名转换为图片候选 URL 列表（多源兜底）
   const getWikiImageCandidates = (material: string): string[] => {
     if (MATERIAL_IMG[material]) return [MATERIAL_IMG[material]];
     const words = material.toLowerCase().split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1));
     const base = words.join('_');
-    const suffixes = [
-      '_JE2_BE2.png',
-      '_JE3_BE1.png',
-      '_JE1_BE1.png',
-      '.png'
-    ];
-    return suffixes.map(s => `https://zh.minecraft.wiki/images/${base}${s}`);
+    const zh = [
+      `${base}_JE2_BE2.png`,
+      `${base}_JE3_BE1.png`,
+      `${base}_JE1_BE1.png`,
+      `${base}.png`,
+    ].map(name => `https://zh.minecraft.wiki/images/${name}`);
+    const en = [
+      `${base}.png`,
+    ].map(name => `https://minecraft.wiki/images/${name}`);
+    const ids = [
+      material.toLowerCase(),
+    ].map(id => `https://minecraftitemids.com/item/32/${id}.png`);
+    const fandom = [
+      `${base}.png`,
+    ].map(name => `https://static.wikia.nocookie.net/minecraft_gamepedia/images/${name}`);
+    return [...zh, ...en, ...ids, ...fandom];
   };
 
   // 小部件：逐个尝试候选图片，失败则回退到 emoji
   function MaterialImage({ material }: { material: string }) {
     const [idx, setIdx] = useState(0);
     const [failed, setFailed] = useState(false);
+    const [key, setKey] = useState(0); // 用于强制刷新
     const candidates = getWikiImageCandidates(material);
 
     if (failed || candidates.length === 0) {
@@ -70,9 +80,13 @@ export default function BingoCardComponent({ bingoCard, className = '' }: BingoC
         src={candidates[Math.min(idx, candidates.length - 1)]}
         alt={material}
         className="h-6 w-6 object-contain"
+        key={key}
         onError={() => {
           if (idx < candidates.length - 1) setIdx(idx + 1);
           else setFailed(true);
+        }}
+        onLoad={() => {
+          // 每次任务数据刷新时可通过变更 key 来刷新缓存
         }}
       />
     );
@@ -114,7 +128,10 @@ export default function BingoCardComponent({ bingoCard, className = '' }: BingoC
       for (let x = 0; x < bingoCard.width; x++) {
         const key = `${x},${y}`;
         if (bingoCard.tasks[key]) {
-          tasks.push(bingoCard.tasks[key]);
+          // 克隆并注入一个刷新键，确保图片在卡片刷新时可强制更新
+          const t = { ...bingoCard.tasks[key] } as BingoTask & { __v?: number };
+          (t as any).__v = bingoCard.timestamp; // 以 timestamp 作为刷新版本
+          tasks.push(t);
         }
       }
     }
@@ -185,7 +202,7 @@ export default function BingoCardComponent({ bingoCard, className = '' }: BingoC
               {/* Task Icon */}
               <div className="text-lg mb-1 h-6 flex items-center justify-center">
                 {task.type.toLowerCase() === 'item' && task.material
-                  ? <MaterialImage material={task.material} />
+                  ? <MaterialImage key={(task as any).__v ?? 0} material={task.material} />
                   : <span>{getTaskTypeIcon(task.type)}</span>}
               </div>
               
