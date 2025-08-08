@@ -36,6 +36,11 @@ export default function BingoCardComponent({ bingoCard, className = '' }: BingoC
     }
   };
 
+  // 简单的 material -> 图片 URL 映射，可按需扩展
+  const MATERIAL_IMG: Record<string, string> = {
+    SOUL_SAND: 'https://zh.minecraft.wiki/images/Soul_Sand_JE2_BE2.png?f1135',
+  };
+
   // 解析 Adventure TextComponent 的 toString 文本为可读字符串
   const parseAdventureText = (raw?: string): string => {
     if (!raw) return '';
@@ -141,7 +146,15 @@ export default function BingoCardComponent({ bingoCard, className = '' }: BingoC
               `}
             >
               {/* Task Icon */}
-              <div className="text-lg mb-1">{getTaskTypeIcon(task.type)}</div>
+              <div className="text-lg mb-1 h-6 flex items-center justify-center">
+                {task.type.toLowerCase() === 'item' && task.material && MATERIAL_IMG[task.material] ? (
+                  // 使用 next/image 以优化加载
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={MATERIAL_IMG[task.material]} alt={task.material} className="h-6 w-6 object-contain" />
+                ) : (
+                  <span>{getTaskTypeIcon(task.type)}</span>
+                )}
+              </div>
               
               {/* Task Name */}
               <div className="text-xs font-medium leading-tight overflow-hidden line-clamp-2">
