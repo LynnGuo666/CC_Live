@@ -1,6 +1,6 @@
 'use client';
 
-import { GameStatus, ScorePrediction, VoteData, BingoCard, RunawayWarriorSummary } from '@/types/tournament';
+import { GameStatus, ScorePrediction, VoteData, BingoCard, RunawayWarriorSummary, GAME_NAMES } from '@/types/tournament';
 
 // Import game-specific displays
 import BingoDisplay from './game-displays/BingoDisplay';
@@ -61,7 +61,8 @@ export default function GameDisplay({ gameStatus, currentGameScore, voteData, bi
     case 'gaming':
       // 优先在 Bingo 游戏下展示卡片，即使还没有比分预测
       if (!currentGameScore) {
-        const isBingo = gameStatus.game?.name === 'bingo';
+        const gameName = gameStatus.game?.name || '';
+        const isBingo = gameName === 'bingo' || gameName === GAME_NAMES['bingo'];
         if (isBingo && bingoCard) {
           return (
             <div className={`bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg flex flex-col h-full overflow-hidden ${className}`}>
