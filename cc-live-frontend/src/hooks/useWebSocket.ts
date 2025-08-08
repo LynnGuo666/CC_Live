@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { WSMessage, TournamentData } from '@/types/tournament';
 
-export function useWebSocket(url?: string) {
+export function useWebSocket() {
   const [data, setData] = useState<TournamentData>({
     connectionStatus: { 
       connected: false,
@@ -25,14 +25,8 @@ export function useWebSocket(url?: string) {
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
   const maxReconnectAttempts = 5;
 
-  const effectiveUrl = useMemo(() => {
-    if (url && url.length > 0) return url;
-    if (typeof window !== 'undefined') {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      return `${protocol}//${window.location.host}/ws`;
-    }
-    return process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000/ws';
-  }, [url]);
+  // 写死后端 WS 地址（按要求：live-cc-api.lynn6.top）
+  const effectiveUrl = 'wss://live-cc-api.lynn6.top/ws';
 
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
