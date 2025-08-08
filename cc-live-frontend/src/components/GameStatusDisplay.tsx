@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+// no hooks used
 import { GameStatus, VoteData } from '@/types/tournament';
 import { GAME_NAMES } from '@/types/tournament';
 

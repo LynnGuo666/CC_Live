@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ScorePrediction, TeamRanking, GameStatus } from '@/types/tournament';
+import { ScorePrediction, GameStatus } from '@/types/tournament';
 import { TEAM_COLORS, TEAM_NAMES, GAME_NAMES } from '@/types/tournament';
 
 interface CurrentGameLeaderboardProps {

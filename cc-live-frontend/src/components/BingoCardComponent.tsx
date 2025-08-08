@@ -43,7 +43,7 @@ export default function BingoCardComponent({ bingoCard, className = '' }: BingoC
     if (!raw.includes('TextComponentImpl') && !raw.includes('TranslatableComponentImpl')) {
       return raw;
     }
-    let resultParts: string[] = [];
+    const resultParts: string[] = [];
     // 抽取所有 content="..." 的文本
     const contentRegex = /content=\"([^\"]*)\"/g;
     let match: RegExpExecArray | null;

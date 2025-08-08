@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+// no need for useState here
 import { BingoTask } from '@/types/tournament';
 
 interface BingoTaskModalProps {
@@ -41,7 +41,7 @@ export default function BingoTaskModal({ task, isOpen, onClose }: BingoTaskModal
     if (!raw.includes('TextComponentImpl') && !raw.includes('TranslatableComponentImpl')) {
       return raw;
     }
-    let resultParts: string[] = [];
+    const resultParts: string[] = [];
     const contentRegex = /content=\"([^\"]*)\"/g;
     let match: RegExpExecArray | null;
     while ((match = contentRegex.exec(raw)) !== null) {
