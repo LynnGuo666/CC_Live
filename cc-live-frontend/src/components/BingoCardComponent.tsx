@@ -10,6 +10,9 @@ interface BingoCardProps {
   className?: string;
 }
 
+// 简单的物品图片缓存：material -> 成功加载的图片 URL
+const MATERIAL_IMG_CACHE: Record<string, string> = {};
+
 export default function BingoCardComponent({ bingoCard, className = '' }: BingoCardProps) {
   const [selectedTask, setSelectedTask] = useState<BingoTask | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -66,27 +69,40 @@ export default function BingoCardComponent({ bingoCard, className = '' }: BingoC
 
   // 小部件：逐个尝试候选图片，失败则回退到 emoji
   function MaterialImage({ material }: { material: string }) {
-    const [idx, setIdx] = useState(0);
+    const cached = MATERIAL_IMG_CACHE[material];
+    const [idx, setIdx] = useState(cached ? -1 : 0); // -1 表示使用缓存 URL
     const [failed, setFailed] = useState(false);
-    const [key, setKey] = useState(0); // 用于强制刷新
     const candidates = getWikiImageCandidates(material);
 
     if (failed || candidates.length === 0) {
       return <span role="img" aria-label="item">📦</span>;
     }
+
+    // 优先使用缓存 URL
+    const src = idx === -1 && cached ? cached : candidates[Math.min(idx, candidates.length - 1)];
+
     // eslint-disable-next-line @next/next/no-img-element
     return (
       <img
-        src={candidates[Math.min(idx, candidates.length - 1)]}
+        src={src}
         alt={material}
-        className="h-6 w-6 object-contain"
-        key={key}
+        className="h-8 w-8 object-contain"
         onError={() => {
+          // 缓存失效则清除并开始候选尝试
+          if (idx === -1) {
+            delete MATERIAL_IMG_CACHE[material];
+            setIdx(0);
+            return;
+          }
           if (idx < candidates.length - 1) setIdx(idx + 1);
           else setFailed(true);
         }}
         onLoad={() => {
-          // 每次任务数据刷新时可通过变更 key 来刷新缓存
+          if (idx >= 0) {
+            // 成功后写入缓存，后续同物品不再尝试其它候选
+            MATERIAL_IMG_CACHE[material] = candidates[idx];
+            setIdx(-1);
+          }
         }}
       />
     );
@@ -122,15 +138,16 @@ export default function BingoCardComponent({ bingoCard, className = '' }: BingoC
   };
 
   // 根据坐标排序任务
-  const getSortedTasks = (): BingoTask[] => {
-    const tasks: BingoTask[] = [];
+  type BingoTaskWithVersion = BingoTask & { __v?: number };
+
+  const getSortedTasks = (): BingoTaskWithVersion[] => {
+    const tasks: BingoTaskWithVersion[] = [];
     for (let y = 0; y < bingoCard.height; y++) {
       for (let x = 0; x < bingoCard.width; x++) {
         const key = `${x},${y}`;
         if (bingoCard.tasks[key]) {
           // 克隆并注入一个刷新键，确保图片在卡片刷新时可强制更新
-          const t = { ...bingoCard.tasks[key] } as BingoTask & { __v?: number };
-          (t as any).__v = bingoCard.timestamp; // 以 timestamp 作为刷新版本
+          const t: BingoTaskWithVersion = { ...(bingoCard.tasks[key] as BingoTask), __v: bingoCard.timestamp };
           tasks.push(t);
         }
       }
@@ -200,9 +217,9 @@ export default function BingoCardComponent({ bingoCard, className = '' }: BingoC
               `}
             >
               {/* Task Icon */}
-              <div className="text-lg mb-1 h-6 flex items-center justify-center">
+              <div className="text-lg mb-1 h-10 flex items-center justify-center">
                 {task.type.toLowerCase() === 'item' && task.material
-                  ? <MaterialImage key={(task as any).__v ?? 0} material={task.material} />
+                  ? <MaterialImage key={(task as BingoTaskWithVersion).__v ?? 0} material={task.material} />
                   : <span>{getTaskTypeIcon(task.type)}</span>}
               </div>
               
