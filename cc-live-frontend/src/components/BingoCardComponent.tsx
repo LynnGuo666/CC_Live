@@ -41,6 +41,43 @@ export default function BingoCardComponent({ bingoCard, className = '' }: BingoC
     SOUL_SAND: 'https://zh.minecraft.wiki/images/Soul_Sand_JE2_BE2.png?f1135',
   };
 
+  // 将 MATERIAL 常量名转换为 Wiki 图片候选 URL 列表
+  const getWikiImageCandidates = (material: string): string[] => {
+    if (MATERIAL_IMG[material]) return [MATERIAL_IMG[material]];
+    const words = material.toLowerCase().split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1));
+    const base = words.join('_');
+    const suffixes = [
+      '_JE2_BE2.png',
+      '_JE3_BE1.png',
+      '_JE1_BE1.png',
+      '.png'
+    ];
+    return suffixes.map(s => `https://zh.minecraft.wiki/images/${base}${s}`);
+  };
+
+  // 小部件：逐个尝试候选图片，失败则回退到 emoji
+  function MaterialImage({ material }: { material: string }) {
+    const [idx, setIdx] = useState(0);
+    const [failed, setFailed] = useState(false);
+    const candidates = getWikiImageCandidates(material);
+
+    if (failed || candidates.length === 0) {
+      return <span role="img" aria-label="item">📦</span>;
+    }
+    // eslint-disable-next-line @next/next/no-img-element
+    return (
+      <img
+        src={candidates[Math.min(idx, candidates.length - 1)]}
+        alt={material}
+        className="h-6 w-6 object-contain"
+        onError={() => {
+          if (idx < candidates.length - 1) setIdx(idx + 1);
+          else setFailed(true);
+        }}
+      />
+    );
+  }
+
   // 解析 Adventure TextComponent 的 toString 文本为可读字符串
   const parseAdventureText = (raw?: string): string => {
     if (!raw) return '';
@@ -147,13 +184,9 @@ export default function BingoCardComponent({ bingoCard, className = '' }: BingoC
             >
               {/* Task Icon */}
               <div className="text-lg mb-1 h-6 flex items-center justify-center">
-                {task.type.toLowerCase() === 'item' && task.material && MATERIAL_IMG[task.material] ? (
-                  // 使用 next/image 以优化加载
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={MATERIAL_IMG[task.material]} alt={task.material} className="h-6 w-6 object-contain" />
-                ) : (
-                  <span>{getTaskTypeIcon(task.type)}</span>
-                )}
+                {task.type.toLowerCase() === 'item' && task.material
+                  ? <MaterialImage material={task.material} />
+                  : <span>{getTaskTypeIcon(task.type)}</span>}
               </div>
               
               {/* Task Name */}
