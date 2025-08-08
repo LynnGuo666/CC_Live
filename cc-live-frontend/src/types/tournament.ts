@@ -128,11 +128,19 @@ export interface TournamentData {
   gameStatus: GameStatus | null;
   recentEvents: GameEvent[];
   bingoCard?: BingoCard | null; // 新增：Bingo卡片数据
+  runawayWarrior?: RunawayWarriorSummary | null; // 新增：跑路战士汇总
   connectionStatus: {
     connected: boolean;
     connection_count: number;
     last_ping: string;
   };
+}
+
+// 跑路战士：检查点与完成路线汇总
+export interface RunawayWarriorSummary {
+  checkpoints: Record<string, { count: number; players: string[] }>;
+  completion: { ez: number; mid: number; hard: number; other?: number };
+  order: string[];
 }
 
 export interface ConnectionStatus {

@@ -5,7 +5,7 @@ import { TEAM_COLORS, TEAM_NAMES } from '@/types/tournament';
 import BingoCardComponent from '../BingoCardComponent';
 
 interface BingoDisplayProps {
-  currentGameScore: ScorePrediction;
+  currentGameScore: ScorePrediction | null;
   bingoCard?: BingoCard | null;
 }
 

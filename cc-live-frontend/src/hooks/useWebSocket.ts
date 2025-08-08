@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { WSMessage, ScorePrediction, TeamScore, VoteData, GameStatus, GameEvent, TournamentData } from '@/types/tournament';
 
-export function useWebSocket(url: string = 'wss://live-cc-api.lynn6.top/ws') {
+export function useWebSocket(url?: string) {
   const [data, setData] = useState<TournamentData>({
     connectionStatus: { 
       connected: false,
@@ -15,7 +15,8 @@ export function useWebSocket(url: string = 'wss://live-cc-api.lynn6.top/ws') {
     currentVote: null,
     gameStatus: null,
     recentEvents: [],
-    bingoCard: null
+    bingoCard: null,
+    runawayWarrior: null
   });
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -24,6 +25,15 @@ export function useWebSocket(url: string = 'wss://live-cc-api.lynn6.top/ws') {
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
   const maxReconnectAttempts = 5;
 
+  const effectiveUrl = useMemo(() => {
+    if (url && url.length > 0) return url;
+    if (typeof window !== 'undefined') {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      return `${protocol}//${window.location.host}/ws`;
+    }
+    return process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000/ws';
+  }, [url]);
+
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       return;
@@ -31,7 +41,7 @@ export function useWebSocket(url: string = 'wss://live-cc-api.lynn6.top/ws') {
 
     try {
       const clientId = `viewer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      wsRef.current = new WebSocket(`${url}?client_id=${clientId}`);
+      wsRef.current = new WebSocket(`${effectiveUrl}?client_id=${clientId}`);
 
       wsRef.current.onopen = () => {
         console.log('WebSocket connected');
@@ -189,7 +199,7 @@ export function useWebSocket(url: string = 'wss://live-cc-api.lynn6.top/ws') {
     } catch (error) {
       console.error('Error creating WebSocket:', error);
     }
-  }, [url, reconnectAttempts]);
+  }, [effectiveUrl, reconnectAttempts]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {

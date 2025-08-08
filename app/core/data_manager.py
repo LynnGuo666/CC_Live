@@ -10,6 +10,7 @@ from datetime import datetime
 from app.models.models import TeamScore, GameEvent, VoteEvent, GlobalEvent, BingoCard
 from app.core.websocket import connection_manager
 from app.core.tournament_manager import tournament_manager
+from app.core.score_engine import score_engine
 
 
 class DataManager:
@@ -123,7 +124,7 @@ class DataManager:
         返回:
             Dict: 包含所有实时数据的完整数据包
         """
-        return {
+        full_data = {
             "type": "full_data_update",
             "data": {
                 "globalScores": [
@@ -163,6 +164,16 @@ class DataManager:
             "timestamp": datetime.now().isoformat()
         }
 
+        # 针对跑路战士，附带检查点与完成路线汇总，方便前端渲染
+        try:
+            if score_engine.current_game_id == 'runaway_warrior':
+                summary = self._build_runaway_warrior_summary()
+                full_data["data"]["runawayWarrior"] = summary
+        except Exception as e:
+            print(f"构建跑路战士汇总信息失败: {e}")
+
+        return full_data
+
     def update_bingo_card(self, card: BingoCard):
         """更新 Bingo 卡片，并准备广播"""
         self.bingo_card = card
@@ -174,6 +185,65 @@ class DataManager:
             return None
         # Pydantic BaseModel 的 dict() 即可满足，但确保 keys 为字符串 "x,y"
         return self.bingo_card.dict()
+
+    def _build_runaway_warrior_summary(self) -> Dict:
+        """
+        从分数引擎的内部状态构建跑路战士的检查点、通过人数与完成路线统计。
+        结构示例：
+        {
+          "checkpoints": {
+            "main0": { count: 5, players: ["p1", "p2"...] },
+            "check0": { count: 3, players: [...] },
+            ...
+          },
+          "completion": { ez: 2, mid: 5, hard: 1 },
+          "order": ["main0", "check0", "check1", "check2", "sub1-0", "sub1-1", "sub1-2", "main1", ..., "main5" ]
+        }
+        """
+        state = score_engine.runaway_warrior_state
+        checkpoint_progress = state.get('checkpoint_progress', {})  # dict[player] -> List[str]
+        completion_routes = state.get('completion_routes', {})       # dict[player] -> route_type
+
+        # 聚合各检查点通过玩家与数量
+        checkpoints: Dict[str, Dict[str, object]] = {}
+        for player, checkpoints_list in checkpoint_progress.items():
+            for cp in checkpoints_list:
+                if cp not in checkpoints:
+                    checkpoints[cp] = {"count": 0, "players": []}
+                checkpoints[cp]["count"] = int(checkpoints[cp]["count"]) + 1
+                checkpoints[cp]["players"].append(player)
+
+        # 统计完成路线（将 simple/normal/hard 映射为 ez/mid/hard 以兼容前端文案）
+        completion = {"ez": 0, "mid": 0, "hard": 0, "other": 0}
+        for player, route in completion_routes.items():
+            key = route
+            if route == 'simple':
+                key = 'ez'
+            elif route == 'normal':
+                key = 'mid'
+            elif route == 'hard':
+                key = 'hard'
+            if key in completion:
+                completion[key] += 1
+            else:
+                completion['other'] += 1
+
+        # 预设顺序（若检查点命名与此不同，前端仍可从 checkpoints 字典遍历）
+        order = [
+            "main0", "check0", "check1", "check2",
+            "sub1-0", "sub1-1", "sub1-2",
+            "main1", "main2", "main3", "main4", "main5",
+            # 完成阶段（显示在末尾）
+            "finish-ez-0", "finish-ez-1",
+            "finish-mid-0", "finish-mid-1", "finish-mid-2",
+            "finish-hard-0", "finish-hard-1", "finish-hard-2",
+        ]
+
+        return {
+            "checkpoints": checkpoints,
+            "completion": completion,
+            "order": order
+        }
     
     async def start_broadcast_scheduler(self):
         """

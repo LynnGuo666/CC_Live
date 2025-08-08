@@ -117,11 +117,13 @@ export default function Home() {
           {/* Center Column - Game Display */}
           <div className="xl:col-span-6 min-h-[600px] flex flex-col space-y-6">
             {/* Game Display */}
+            {/* 将 runawayWarrior 汇总通过 context 下发到 RunawayWarriorDisplay */}
             <GameDisplay 
               gameStatus={data.gameStatus}
               currentGameScore={data.currentGameScore}
               voteData={data.currentVote}
               bingoCard={data.bingoCard}
+              runawayWarrior={data.runawayWarrior}
               className="flex-1 min-h-0"
             />
             
