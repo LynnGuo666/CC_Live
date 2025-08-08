@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { WSMessage, ScorePrediction, TeamScore, VoteData, GameStatus, GameEvent, TournamentData } from '@/types/tournament';
+import { WSMessage, TournamentData } from '@/types/tournament';
 
 export function useWebSocket(url?: string) {
   const [data, setData] = useState<TournamentData>({

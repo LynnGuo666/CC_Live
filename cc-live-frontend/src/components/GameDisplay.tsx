@@ -1,7 +1,6 @@
 'use client';
 
 import { GameStatus, ScorePrediction, VoteData, BingoCard, RunawayWarriorSummary } from '@/types/tournament';
-import { GAME_NAMES } from '@/types/tournament';
 
 // Import game-specific displays
 import BingoDisplay from './game-displays/BingoDisplay';

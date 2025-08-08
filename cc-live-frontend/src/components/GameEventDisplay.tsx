@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { GameEvent } from '@/types/tournament';
-import { TEAM_COLORS, TEAM_NAMES, GAME_NAMES } from '@/types/tournament';
+import { TEAM_COLORS, GAME_NAMES } from '@/types/tournament';
 
 interface GameEventDisplayProps {
   events: GameEvent[];
@@ -121,9 +121,7 @@ export default function GameEventDisplay({ events, maxEvents = 10, className = "
     return TEAM_COLORS[teamId] || '#666666';
   };
 
-  const getTeamName = (teamId: string) => {
-    return TEAM_NAMES[teamId] || teamId;
-  };
+  // removed unused getTeamName
 
   const getGameName = (gameId: string) => {
     return GAME_NAMES[gameId] || gameId;

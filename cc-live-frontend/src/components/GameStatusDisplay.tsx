@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { GameStatus, VoteData } from '@/types/tournament';
 import { GAME_NAMES } from '@/types/tournament';
 
@@ -11,31 +11,7 @@ interface GameStatusDisplayProps {
 }
 
 export default function GameStatusDisplay({ gameStatus, currentRound, voteData }: GameStatusDisplayProps) {
-  const [timeLeft, setTimeLeft] = useState<number>(0);
-
-  useEffect(() => {
-    if (voteData?.time_remaining) {
-      setTimeLeft(voteData.time_remaining);
-      
-      const interval = setInterval(() => {
-        setTimeLeft(prev => {
-          if (prev <= 1) {
-            clearInterval(interval);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(interval);
-    }
-  }, [voteData?.time_remaining]);
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+  // Removed unused timeLeft state and formatTime
   const getStatusIcon = (status: string) => {
     const iconMap: Record<string, string> = {
       'gaming': '🎮',
