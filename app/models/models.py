@@ -4,7 +4,7 @@
 """
 
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 
 class GameEvent(BaseModel):
@@ -84,3 +84,52 @@ class VoteEvent(BaseModel):
     """
     votes: List[VoteGame] = Field(..., description="投票数据列表")
     time: int = Field(..., description="投票剩余时间，倒计时，单位为秒")
+
+
+# =====================
+# Bingo 相关数据模型
+# =====================
+
+class BingoTask(BaseModel):
+    """
+    Bingo 卡片中的单个任务
+    键存储在字典中使用 "x,y" 形式（由外层 BingoCard 维护）
+    """
+    index: int = Field(..., description="任务索引（从0开始）")
+    x: int = Field(..., description="任务在卡片中的 X 坐标（从0开始）")
+    y: int = Field(..., description="任务在卡片中的 Y 坐标（从0开始）")
+    name: str = Field(..., description="任务名称")
+    type: str = Field(..., description="任务类型，如 ITEM/ADVANCEMENT 等")
+    description: str = Field("", description="任务描述")
+    material: Optional[str] = Field(None, description="物品类任务的材料标识")
+    count: Optional[int] = Field(None, description="物品类任务的数量")
+    completed: Optional[bool] = Field(False, description="是否完成（可选，前端展示用）")
+    completedBy: Optional[str] = Field(None, description="完成者（可选，前端展示用）")
+    completedAt: Optional[int] = Field(None, description="完成时间毫秒（可选，前端展示用）")
+
+
+class BingoTeamMember(BaseModel):
+    name: str
+    displayName: str
+    alwaysActive: bool
+
+
+class BingoTeamInfo(BaseModel):
+    name: str
+    color: str
+    completeCount: int
+    outOfTheGame: bool
+    members: Dict[str, BingoTeamMember]
+
+
+class BingoCard(BaseModel):
+    """
+    Bingo 卡片整体结构
+    与前端 `BingoCard` 类型保持一致
+    """
+    size: int
+    width: int
+    height: int
+    team: Optional[BingoTeamInfo] = None
+    tasks: Dict[str, BingoTask]
+    timestamp: int = Field(..., description="时间戳（毫秒）")

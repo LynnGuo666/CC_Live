@@ -55,6 +55,28 @@ CC_Live/
 - ✅ 自动重连机制
 - ✅ TypeScript类型安全
 
+## 技术栈
+
+### 后端技术
+- **框架**: FastAPI 0.104.1+
+- **ASGI服务器**: Uvicorn
+- **数据验证**: Pydantic 2.5.0+
+- **配置管理**: PyYAML 6.0+
+- **实时通信**: WebSockets 12.0+
+- **API文档**: Swagger UI / ReDoc
+
+### 前端技术
+- **框架**: Next.js 15.4.4 (React 19)
+- **样式**: Tailwind CSS 4
+- **类型检查**: TypeScript 5+
+- **代码规范**: ESLint 9+
+- **实时通信**: WebSocket API
+
+### 开发工具
+- **包管理**: npm (前端) / pip (后端)
+- **构建工具**: Turbopack (Next.js)
+- **开发环境**: Node.js 20+ / Python 3.8+
+
 ## API端点
 
 ### 1. 游戏事件
@@ -80,22 +102,42 @@ CC_Live/
 
 ## 快速开始
 
-### 1. 安装依赖
+### 后端启动
+
+#### 1. 安装后端依赖
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. 启动服务器
+#### 2. 启动后端服务器
 ```bash
 python main.py
 ```
 
-服务器将在 `http://localhost:8000` 启动
+后端服务器将在 `http://localhost:8000` 启动
 
-### 3. 查看API文档
+### 前端启动
+
+#### 1. 安装前端依赖
+```bash
+cd cc-live-frontend
+npm install
+```
+
+#### 2. 启动前端开发服务器
+```bash
+npm run dev
+```
+
+前端应用将在 `http://localhost:3000` 启动
+
+### API文档
 访问 `http://localhost:8000/docs` 查看完整的Swagger UI文档
 
-### 4. 测试API
+### WebSocket连接
+前端会自动连接到 `wss://live-cc-api.lynn6.top/ws` (生产环境) 或 `ws://localhost:8000/ws` (开发环境)
+
+### 测试
 ```bash
 python test_api.py
 ```

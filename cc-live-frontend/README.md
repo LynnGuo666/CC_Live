@@ -63,7 +63,7 @@ src/
 
 ## WebSocket连接
 
-应用会自动连接到 `ws://localhost:8000/ws`。如需修改WebSocket地址，编辑 `src/app/page.tsx` 中的 `useWebSocket()` 调用。
+应用会自动连接到生产环境 `wss://live-cc-api.lynn6.top/ws` 或开发环境 `ws://localhost:8000/ws`。
 
 ### 支持的消息类型
 
@@ -123,7 +123,7 @@ WebSocket相关逻辑集中在 `src/hooks/useWebSocket.ts` 中。如需添加新
 ## 故障排除
 
 ### WebSocket连接失败
-- 确保后端WebSocket服务运行在 `ws://localhost:8000/ws`
+- 确保后端WebSocket服务运行在 `wss://live-cc-api.lynn6.top/ws` (生产环境) 或 `ws://localhost:8000/ws` (开发环境)
 - 检查网络连接和防火墙设置
 - 查看浏览器控制台的错误信息
 

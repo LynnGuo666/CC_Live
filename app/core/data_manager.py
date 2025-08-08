@@ -7,7 +7,7 @@
 import asyncio
 from typing import List, Dict, Optional
 from datetime import datetime
-from app.models.models import TeamScore, GameEvent, VoteEvent, GlobalEvent
+from app.models.models import TeamScore, GameEvent, VoteEvent, GlobalEvent, BingoCard
 from app.core.websocket import connection_manager
 from app.core.tournament_manager import tournament_manager
 
@@ -34,6 +34,9 @@ class DataManager:
         
         # 是否启用定时广播
         self.auto_broadcast_enabled = True
+        
+        # Bingo 卡片（如果收到则存储并广播）
+        self.bingo_card: Optional[BingoCard] = None
     
     def add_event(self, event: GameEvent, game_id: str):
         """
@@ -137,6 +140,7 @@ class DataManager:
                     } for team in self.global_scores
                 ],
                 "currentGameScore": self.current_game_score,
+                "bingoCard": self._serialize_bingo_card() if self.bingo_card else None,
                 "currentVote": {
                     "time_remaining": self.current_vote_data.time,
                     "total_games": len(self.current_vote_data.votes),
@@ -158,6 +162,18 @@ class DataManager:
             },
             "timestamp": datetime.now().isoformat()
         }
+
+    def update_bingo_card(self, card: BingoCard):
+        """更新 Bingo 卡片，并准备广播"""
+        self.bingo_card = card
+        print("更新 Bingo 卡片: {}x{} size={}".format(card.width, card.height, card.size))
+
+    def _serialize_bingo_card(self) -> Dict:
+        """将 BingoCard 转为可 JSON 序列化的 dict，以与前端类型兼容"""
+        if not self.bingo_card:
+            return None
+        # Pydantic BaseModel 的 dict() 即可满足，但确保 keys 为字符串 "x,y"
+        return self.bingo_card.dict()
     
     async def start_broadcast_scheduler(self):
         """

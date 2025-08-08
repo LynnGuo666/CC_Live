@@ -5,7 +5,7 @@
 
 from fastapi import APIRouter, HTTPException
 from typing import List
-from app.models.models import GameEvent, ScoreUpdate
+from app.models.models import GameEvent, ScoreUpdate, BingoCard
 from app.core.websocket import connection_manager
 from app.core.score_engine import score_engine
 from app.core.data_manager import data_manager
@@ -182,3 +182,29 @@ async def set_game_round(game_id: str, round_data: dict):
     except Exception as e:
         print(f"设置游戏回合时发生错误: {str(e)}")
         raise HTTPException(status_code=500, detail=f"设置游戏回合失败: {str(e)}")
+
+
+@router.post("/api/bingo/card")
+async def post_bingo_card(card: BingoCard):
+    """
+    接收 Bingo 卡片数据（来自插件），并通过 WebSocket 广播给前端。
+    符合示例 JSON 结构：
+    - 顶层: size, width, height, team(可选), tasks(键为"x,y"), timestamp(ms)
+    - tasks 每项含: index, x, y, name, type, description, material(可选), count(可选)
+    """
+    try:
+        # 存储到数据管理器
+        data_manager.update_bingo_card(card)
+
+        # 通过WebSocket进行一次即时广播（含完整数据，保证前端及时显示）
+        complete_data = data_manager.get_complete_data()
+        await connection_manager.broadcast(complete_data)
+
+        return {
+            "message": "Bingo 卡片接收成功",
+            "success": True,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        print(f"接收 Bingo 卡片时发生错误: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"接收 Bingo 卡片失败: {str(e)}")
