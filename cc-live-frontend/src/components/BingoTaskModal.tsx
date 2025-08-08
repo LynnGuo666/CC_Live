@@ -36,6 +36,30 @@ export default function BingoTaskModal({ task, isOpen, onClose }: BingoTaskModal
     }
   };
 
+  const parseAdventureText = (raw?: string): string => {
+    if (!raw) return '';
+    if (!raw.includes('TextComponentImpl') && !raw.includes('TranslatableComponentImpl')) {
+      return raw;
+    }
+    let resultParts: string[] = [];
+    const contentRegex = /content=\"([^\"]*)\"/g;
+    let match: RegExpExecArray | null;
+    while ((match = contentRegex.exec(raw)) !== null) {
+      if (match[1]) resultParts.push(match[1]);
+    }
+    const keyRegex = /TranslatableComponentImpl\{key=\"([^\"]+)\"/g;
+    while ((match = keyRegex.exec(raw)) !== null) {
+      if (match[1]) {
+        const key = match[1];
+        const pretty = key.split('.').pop()?.replace(/_/g, ' ') || key;
+        const titled = pretty.replace(/\b\w/g, (c) => c.toUpperCase());
+        resultParts.push(titled);
+      }
+    }
+    const result = resultParts.join(' ').replace(/\s+/g, ' ').trim();
+    return result || raw;
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
@@ -57,7 +81,7 @@ export default function BingoTaskModal({ task, isOpen, onClose }: BingoTaskModal
           {/* Task Icon and Name */}
           <div className="text-center">
             <div className="text-4xl mb-2">{getTaskTypeIcon(task.type)}</div>
-            <h4 className="text-lg font-semibold text-gray-900 mb-1">{task.name}</h4>
+            <h4 className="text-lg font-semibold text-gray-900 mb-1">{parseAdventureText(task.name)}</h4>
             <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
               {getTaskTypeText(task.type)}
             </span>
@@ -85,7 +109,7 @@ export default function BingoTaskModal({ task, isOpen, onClose }: BingoTaskModal
           {/* Task Description */}
           <div className="bg-gray-50 rounded-lg p-4">
             <h5 className="font-medium text-gray-900 mb-2">任务描述</h5>
-            <p className="text-gray-700">{task.description}</p>
+              <p className="text-gray-700">{parseAdventureText(task.description)}</p>
           </div>
 
           {/* Task Details */}

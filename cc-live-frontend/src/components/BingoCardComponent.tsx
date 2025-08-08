@@ -36,6 +36,35 @@ export default function BingoCardComponent({ bingoCard, className = '' }: BingoC
     }
   };
 
+  // 解析 Adventure TextComponent 的 toString 文本为可读字符串
+  const parseAdventureText = (raw?: string): string => {
+    if (!raw) return '';
+    // 若原本就是普通字符串，直接返回
+    if (!raw.includes('TextComponentImpl') && !raw.includes('TranslatableComponentImpl')) {
+      return raw;
+    }
+    let resultParts: string[] = [];
+    // 抽取所有 content="..." 的文本
+    const contentRegex = /content=\"([^\"]*)\"/g;
+    let match: RegExpExecArray | null;
+    while ((match = contentRegex.exec(raw)) !== null) {
+      if (match[1]) resultParts.push(match[1]);
+    }
+    // 抽取可翻译 key，例如 block.minecraft.soul_sand
+    const keyRegex = /TranslatableComponentImpl\{key=\"([^\"]+)\"/g;
+    while ((match = keyRegex.exec(raw)) !== null) {
+      if (match[1]) {
+        const key = match[1];
+        const pretty = key.split('.').pop()?.replace(/_/g, ' ') || key;
+        // 首字母大写
+        const titled = pretty.replace(/\b\w/g, (c) => c.toUpperCase());
+        resultParts.push(titled);
+      }
+    }
+    const result = resultParts.join(' ').replace(/\s+/g, ' ').trim();
+    return result || raw; // 兜底返回原始
+  };
+
   // 根据坐标排序任务
   const getSortedTasks = (): BingoTask[] => {
     const tasks: BingoTask[] = [];
@@ -116,7 +145,7 @@ export default function BingoCardComponent({ bingoCard, className = '' }: BingoC
               
               {/* Task Name */}
               <div className="text-xs font-medium leading-tight overflow-hidden line-clamp-2">
-                {task.name}
+                {parseAdventureText(task.name)}
               </div>
               
               {/* Count indicator */}
