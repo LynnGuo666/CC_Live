@@ -127,6 +127,13 @@ export function useWebSocket() {
                   const previousConnection = prev.connectionStatus || { connected: false, connection_count: 0, last_ping: '' };
                   const incomingConnection = incoming.connectionStatus || { connected: previousConnection.connected, connection_count: previousConnection.connection_count, last_ping: previousConnection.last_ping };
 
+                  // 暴露 itemImages 到 window，便于非 props 组件轻量访问
+                  try {
+                    if (incoming.itemImages) {
+                      (window as unknown as { __itemImages?: Record<string, string | null> }).__itemImages = incoming.itemImages;
+                    }
+                  } catch {}
+
                   return {
                     ...incoming,
                     connectionStatus: {

@@ -344,15 +344,29 @@ class DataManager:
         if mcid in self.item_image_cache:
             return self.item_image_cache[mcid]
 
-        # Minecraft Wiki（新域名）：优先 zh.minecraft.wiki，失败再退到 minecraft.wiki
-        # 方案1：使用搜索以更好兼容 mcid（下划线/英文ID）
-        # 方案2（兜底）：使用 titles title-case 名称
-        page_title = mcid.replace('_', ' ').title()
-        api_bases = [
-            "https://zh.minecraft.wiki/api.php",
-            "https://minecraft.fandom.com/zh/api.php",
-        ]
+        # 先尝试候选直链（复用此前前端策略）：
+        # zh.minecraft.wiki images、minecraft.wiki images、minecraftitemids、fandom静态库
+        candidates = self._build_image_candidates(mcid)
         async with httpx.AsyncClient(timeout=10.0) as client:
+            # 1) 直链探测（HEAD/GET）
+            for url in candidates:
+                try:
+                    resp = await client.head(url)
+                    if resp.status_code == 405:
+                        resp = await client.get(url)
+                    if resp.status_code == 200 and ('image' in resp.headers.get('content-type', '')):
+                        self.item_image_cache[mcid] = url
+                        return url
+                except Exception:
+                    pass
+
+            # 2) MediaWiki API 搜索与 titles 兜底（多次重试）
+            # Minecraft Wiki（新域名）：优先 zh.minecraft.wiki，失败再退到 fandom zh
+            page_title = mcid.replace('_', ' ').title()
+            api_bases = [
+                "https://zh.minecraft.wiki/api.php",
+                "https://minecraft.fandom.com/zh/api.php",
+            ]
             for _ in range(max_attempts):
                 try:
                     # 尝试：generator=search
@@ -414,6 +428,30 @@ class DataManager:
         # 最终失败，写入None以避免频繁命中
         self.item_image_cache[mcid] = None
         return None
+
+    def _build_image_candidates(self, mcid: str) -> List[str]:
+        """构造与前端一致的候选直链列表，按优先级排列。"""
+        if not mcid:
+            return []
+        base_words = mcid.lower().split('_')
+        title_case = '_'.join(w.capitalize() for w in base_words)
+        # 常见 JE/BE 后缀组合（与前端相似）
+        zh_names = [
+            f"{title_case}_JE2_BE2.png",
+            f"{title_case}_JE3_BE1.png",
+            f"{title_case}_JE1_BE1.png",
+            f"{title_case}.png",
+        ]
+        en_names = [
+            f"{title_case}.png",
+        ]
+        zh_urls = [f"https://zh.minecraft.wiki/images/{name}" for name in zh_names]
+        en_urls = [f"https://minecraft.wiki/images/{name}" for name in en_names]
+        ids_urls = [f"https://minecraftitemids.com/item/32/{mcid.lower()}.png"]
+        fandom_urls = [
+            f"https://static.wikia.nocookie.net/minecraft_gamepedia/images/{title_case}.png",
+        ]
+        return zh_urls + en_urls + ids_urls + fandom_urls
 
     def _build_runaway_warrior_summary(self) -> Dict:
         """

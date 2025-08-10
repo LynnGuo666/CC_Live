@@ -137,7 +137,7 @@ export default function GameEventDisplay({ events, maxEvents = 10, className = "
 
   return (
     <div className={`bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg flex flex-col ${className}`}>
-      <div className="p-3 sm:p-4 border-b border-gray-200/50 flex items-center justify-between">
+      <div className="p-2.5 sm:p-4 border-b border-gray-200/50 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900">实时事件</h2>
         {enableFilter && (
           <div className="flex items-center gap-2">
@@ -172,7 +172,7 @@ export default function GameEventDisplay({ events, maxEvents = 10, className = "
             ref={scrollRef}
             className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent -mx-1 sm:mx-0 px-1 sm:px-0"
           >
-            <div className="p-2 sm:p-3 space-y-1.5">
+            <div className="p-1.5 sm:p-3 space-y-1">
               {displayEvents.map((event, index) => {
                 const eventColors = getEventColor(event.event);
                 const isRecentEvent = index < 3; // Highlight recent events
@@ -180,30 +180,30 @@ export default function GameEventDisplay({ events, maxEvents = 10, className = "
                 return (
                   <div
                     key={`${event.post_time || event.timestamp}-${index}`}
-                    className={`flex items-center space-x-3 p-2 rounded-lg transition-all duration-200 hover:shadow-sm ${
+                    className={`flex items-center space-x-2.5 sm:space-x-3 p-2 rounded-lg transition-all duration-200 hover:shadow-sm ${
                       isRecentEvent 
                         ? `${eventColors.bg} border border-gray-200` 
                         : 'bg-white/50 hover:bg-white/70'
                     }`}
                   >
                     {/* Event Icon */}
-                    <div className={`flex-shrink-0 w-6 h-6 ${eventColors.icon} rounded-full flex items-center justify-center`}>
-                      <span className="text-xs">{getEventIcon(event.event)}</span>
+                    <div className={`flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 ${eventColors.icon} rounded-full flex items-center justify-center`}>
+                      <span className="text-[10px] sm:text-xs">{getEventIcon(event.event)}</span>
                     </div>
 
                     {/* Game Badge */}
                     {event.game_id && (
-                      <span className="flex-shrink-0 text-xs font-medium text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md">
+                      <span className="flex-shrink-0 text-[10px] sm:text-xs font-medium text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded-md">
                         {getGameName(event.game_id)}
                       </span>
                     )}
 
                     {/* Event Description */}
                     <div className="flex-1 min-w-0">
-                      <span className="text-sm font-medium text-gray-900 truncate">
+                      <span className="text-xs sm:text-sm font-medium text-gray-900 truncate">
                         {getEventDescription(event)}
                         {event.lore && (
-                          <span className="text-gray-600 ml-1">
+                          <span className="text-gray-600 ml-1 hidden sm:inline">
                             - {event.lore}
                           </span>
                         )}
@@ -219,14 +219,14 @@ export default function GameEventDisplay({ events, maxEvents = 10, className = "
                             style={{ backgroundColor: getTeamColor(event.team, event.team_color) }}
                           />
                         )}
-                        <span className="text-xs font-medium text-gray-700 truncate max-w-20">
+                        <span className="text-[10px] sm:text-xs font-medium text-gray-700 truncate max-w-20">
                           {event.player}
                         </span>
                       </div>
                     )}
 
                     {/* Post Time (更精确的服务器接收时间) */}
-                    <div className="flex-shrink-0 flex flex-col items-end text-xs text-gray-500">
+                    <div className="flex-shrink-0 flex flex-col items-end text-[10px] sm:text-xs text-gray-500">
                       <span>{formatTimestamp(event.post_time || event.timestamp)}</span>
                       {event.post_time && (
                         <span className="text-gray-400">{formatPostTime(event.post_time)}</span>
