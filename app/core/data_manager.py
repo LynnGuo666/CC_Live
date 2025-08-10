@@ -615,46 +615,88 @@ class DataManager:
         }
     
     async def _openai_localize(self, *, name: str, desc: str, material: Optional[str] = None, count: Optional[int] = None, kind: Optional[str] = None) -> Optional[Dict[str, str]]:
-        """调用自定义 OpenAI 兼容接口，对名称/描述进行中文润色。"""
-        try:
-            import json as _json
-            if not (self.openai_base and self.openai_key):
+        """调用自定义 OpenAI 兼容接口，对名称/描述进行中文润色。内置失败重试。"""
+        import json as _json
+        if not (self.openai_base and self.openai_key):
+            return None
+        url = self.openai_base.rstrip('/') + '/v1/chat/completions'
+        headers = {
+            'Authorization': f'Bearer {self.openai_key}',
+            'Content-Type': 'application/json'
+        }
+        system = '你是一个将 Minecraft 物品与成就文本本地化为简体中文的助手。请：1) 输出更自然的中文标题与描述；2) 提供简要合成/完成建议；3) 给出获取途径或位置来源；4) 评估难度为 简单/中等/困难。仅返回JSON，不要多余文本。'
+        meta = []
+        if material:
+            meta.append(f"material={material}")
+        if isinstance(count, int):
+            meta.append(f"count={count}")
+        if kind:
+            meta.append(f"kind={kind}")
+        meta_line = ("，".join(meta)) if meta else ""
+        user = f"请本地化并补充信息（{meta_line}）。\n名称: {name}\n描述: {desc}\n返回 JSON: {{name, desc, advice, source, difficulty}}"
+        payload = {
+            'model': os.environ.get('OPENAI_MODEL', 'gpt-4o-mini'),
+            'messages': [
+                { 'role': 'system', 'content': system },
+                { 'role': 'user', 'content': user }
+            ],
+            'temperature': 0.2
+        }
+        max_attempts = 3
+        backoff = 0.8
+        for attempt in range(1, max_attempts + 1):
+            try:
+                async with httpx.AsyncClient(timeout=12.0) as client:
+                    resp = await client.post(url, headers=headers, json=payload)
+                    status = resp.status_code
+                    text = await resp.aread()
+                    text_str = text.decode(errors='ignore') if isinstance(text, (bytes, bytearray)) else str(text)
+                    if status != 200:
+                        print(f"[BINGO][AI][HTTP] attempt={attempt} status={status} resp={text_str[:500]}")
+                        # 其他情况也重试：对所有非200状态在剩余次数内进行指数退避重试
+                        if attempt < max_attempts:
+                            await asyncio.sleep(backoff * (2 ** (attempt - 1)))
+                            continue
+                        return None
+                    # 优先尝试标准结构
+                    try:
+                        data = _json.loads(text_str)
+                        content = data.get('choices', [{}])[0].get('message', {}).get('content', '')
+                    except Exception:
+                        try:
+                            data = resp.json()
+                            content = data.get('choices', [{}])[0].get('message', {}).get('content', '')
+                        except Exception:
+                            content = text_str
+                    start = content.find('{')
+                    end = content.rfind('}')
+                    if start != -1 and end != -1 and end > start:
+                        try:
+                            return _json.loads(content[start:end+1])
+                        except Exception as e:
+                            print(f"[BINGO][AI][PARSE] attempt={attempt} 解析失败: {e}")
+                            if attempt < max_attempts:
+                                await asyncio.sleep(backoff * (2 ** (attempt - 1)))
+                                continue
+                            return None
+                    else:
+                        # 某些网关会直接返回顶级 JSON
+                        try:
+                            data = _json.loads(text_str)
+                            if isinstance(data, dict) and ('name' in data and 'desc' in data):
+                                return data
+                        except Exception:
+                            pass
+                        if attempt < max_attempts:
+                            await asyncio.sleep(backoff * (2 ** (attempt - 1)))
+                            continue
+                        return None
+            except Exception as e:
+                print(f"[BINGO][AI][ERROR] attempt={attempt} 调用失败: {e}")
+                if attempt < max_attempts:
+                    await asyncio.sleep(backoff * (2 ** (attempt - 1)))
+                    continue
                 return None
-            url = self.openai_base.rstrip('/') + '/v1/chat/completions'
-            headers = {
-                'Authorization': f'Bearer {self.openai_key}',
-                'Content-Type': 'application/json'
-            }
-            system = '你是一个将 Minecraft 物品与成就文本本地化为简体中文的助手。请：1) 输出更自然的中文标题与描述；2) 提供简要合成/完成建议；3) 给出获取途径或位置来源；4) 评估难度为 简单/中等/困难。仅返回JSON，不要多余文本。'
-            meta = []
-            if material:
-                meta.append(f"material={material}")
-            if isinstance(count, int):
-                meta.append(f"count={count}")
-            if kind:
-                meta.append(f"kind={kind}")
-            meta_line = ("，".join(meta)) if meta else ""
-            user = f"请本地化并补充信息（{meta_line}）。\n名称: {name}\n描述: {desc}\n返回 JSON: {{name, desc, advice, source, difficulty}}"
-            payload = {
-                'model': 'gemini-2.5-pro',
-                'messages': [
-                    { 'role': 'system', 'content': system },
-                    { 'role': 'user', 'content': user }
-                ],
-                'temperature': 0.2
-            }
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                resp = await client.post(url, headers=headers, json=payload)
-                data = resp.json()
-                content = data.get('choices', [{}])[0].get('message', {}).get('content', '')
-                # 尝试提取 JSON
-                start = content.find('{')
-                end = content.rfind('}')
-                if start != -1 and end != -1 and end > start:
-                    text = content[start:end+1]
-                    return _json.loads(text)
-        except Exception as e:
-            print(f"调用 OpenAI 接口失败: {e}")
         return None
 
     def _build_runaway_warrior_summary(self) -> Dict:
