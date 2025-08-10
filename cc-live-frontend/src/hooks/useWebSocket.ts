@@ -120,8 +120,28 @@ export function useWebSocket() {
 
             case 'full_data_update':
               // 处理完整数据更新（新的定时广播机制）
+              // 注意：服务端的广播不包含 viewer_id。为避免覆盖，合并而非整树替换。
               if (message.data) {
-                setData(message.data);
+                setData(prev => {
+                  const incoming = message.data;
+                  const previousConnection = prev.connectionStatus || { connected: false, connection_count: 0, last_ping: '' };
+                  const incomingConnection = incoming.connectionStatus || { connected: previousConnection.connected, connection_count: previousConnection.connection_count, last_ping: previousConnection.last_ping };
+
+                  return {
+                    ...incoming,
+                    connectionStatus: {
+                      // 以现有为基，覆盖服务端提供的字段，但保留 viewer_id
+                      ...previousConnection,
+                      ...incomingConnection,
+                      // viewer_id 以已有为主；如之前为空则采用服务端（通常也不会下发）
+                      viewer_id: previousConnection.viewer_id ?? incomingConnection.viewer_id,
+                      // connected 状态以客户端为准（WS开着即 true）
+                      connected: previousConnection.connected || incomingConnection.connected,
+                      // last_ping 优先使用服务端的最新值
+                      last_ping: incomingConnection.last_ping || previousConnection.last_ping,
+                    }
+                  };
+                });
               }
               break;
 
