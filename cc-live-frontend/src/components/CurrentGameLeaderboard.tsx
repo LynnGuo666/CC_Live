@@ -54,7 +54,7 @@ export default function CurrentGameLeaderboard({ currentGameScore, gameStatus, c
     .sort((a, b) => b.score - a.score);
 
   return (
-    <div className={`bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg flex flex-col h-full relative ${className}`}>
+    <div className={`bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg flex flex-col h-full ${className}`}>
       <div className="p-4 sm:p-6 border-b border-gray-200/50 flex-shrink-0">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xl font-semibold text-gray-900">当前游戏积分榜</h2>
@@ -85,7 +85,7 @@ export default function CurrentGameLeaderboard({ currentGameScore, gameStatus, c
         </div>
       </div>
 
-      <div className="absolute top-[88px] bottom-0 left-0 right-0 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
         {viewMode === 'team' ? (
             <div className="p-6 space-y-4">
               {sortedTeams.map((team) => {
