@@ -101,6 +101,7 @@ export default function Home() {
                     观赛ID: {data.connectionStatus.viewer_id}
                   </span>
                 )}
+                {!data.connectionStatus.viewer_id && (
                 <div className="flex items-center rounded-md border bg-white overflow-hidden">
                   <input
                     value={viewerId}
@@ -116,11 +117,16 @@ export default function Home() {
                         setViewerId('');
                         setToast('观赛ID 已提交');
                         setTimeout(() => setToast(null), 1500);
+                        // Save to cookie for 180 days
+                        const expires = new Date();
+                        expires.setDate(expires.getDate() + 180);
+                        document.cookie = `viewer_id=${encodeURIComponent(id)}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
                       }
                     }}
                     className="px-2 py-1 text-sm bg-blue-600 text-white hover:bg-blue-700"
                   >提交</button>
                 </div>
+                )}
               </div>
               <div className="flex items-center space-x-2" aria-live="polite">
                 <span className="relative flex h-3 w-3">
@@ -134,11 +140,13 @@ export default function Home() {
                 </span>
               </div>
               {/* 移动端观赛ID弹出按钮 */}
+              {!data.connectionStatus.viewer_id && (
               <button
                 className="sm:hidden px-2 py-1 rounded-md border bg-white text-gray-700"
                 aria-label="填写观赛ID"
                 onClick={() => setToast('请在弹窗中填写观赛ID（待实现）')}
               >🪪</button>
+              )}
             </div>
           </div>
         </div>

@@ -67,6 +67,17 @@ export function useWebSocket() {
         if (wsRef.current?.readyState === WebSocket.OPEN) {
           wsRef.current.send(JSON.stringify({ type: 'status' }));
         }
+
+        // Auto send viewer_id from cookie if present
+        try {
+          const match = document.cookie.split('; ').find(row => row.startsWith('viewer_id='));
+          if (match) {
+            const cookieViewerId = decodeURIComponent(match.split('=')[1] || '');
+            if (cookieViewerId && wsRef.current?.readyState === WebSocket.OPEN) {
+              wsRef.current.send(JSON.stringify({ type: 'viewer_id', viewer_id: cookieViewerId }));
+            }
+          }
+        } catch {}
       };
 
       wsRef.current.onmessage = (event) => {
@@ -83,6 +94,15 @@ export function useWebSocket() {
                   viewer_id: message.viewer_id
                 }
               }));
+              // Also ensure cookie is present
+              try {
+                const match = document.cookie.split('; ').find(row => row.startsWith('viewer_id='));
+                if (!match && message.viewer_id) {
+                  const expires = new Date();
+                  expires.setDate(expires.getDate() + 180);
+                  document.cookie = `viewer_id=${encodeURIComponent(message.viewer_id)}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+                }
+              } catch {}
               break;
             case 'connection':
               setData(prev => ({
