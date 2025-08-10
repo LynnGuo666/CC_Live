@@ -81,9 +81,16 @@ export default function BingoCardComponent({ bingoCard, className = '', itemImag
   function MaterialImage({ material }: { material: string }) {
     // 优先使用后端下发图片，避免前端抖动；无图则回退到 emoji
     const url = itemImages?.[material] || null;
-    if (!url) return <span role="img" aria-label="item" className="text-2xl sm:text-3xl">📦</span>;
+    if (!url) return <span role="img" aria-label="item" className="text-lg sm:text-xl">📦</span>;
+    // 在不改变卡片格子尺寸的前提下，放大图案（使用 scale 而非更高的 h）
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={url} alt={material} className="h-12 w-12 sm:h-14 sm:w-14 object-contain" />;
+    return (
+      <img
+        src={url}
+        alt={material}
+        className="h-8 w-8 sm:h-10 sm:w-10 object-contain transform scale-125 sm:scale-150"
+      />
+    );
   }
 
   // 解析 Adventure TextComponent 的 toString 文本为可读字符串
@@ -195,7 +202,7 @@ export default function BingoCardComponent({ bingoCard, className = '', itemImag
               `}
             >
               {/* Task Icon */}
-              <div className="text-2xl sm:text-3xl mb-1 h-12 sm:h-14 flex items-center justify-center">
+              <div className="text-base sm:text-lg mb-1 h-8 sm:h-10 flex items-center justify-center">
                 {task.type.toLowerCase() === 'item' && task.material
                   ? <MaterialImage key={(task as BingoTaskWithVersion).__v ?? 0} material={task.material} />
                   : <span>{getTaskTypeIcon(task.type)}</span>}
