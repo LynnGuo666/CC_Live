@@ -73,7 +73,17 @@ async def handle_global_event(event: GlobalEvent):
         
         # 更新数据管理器中的游戏状态
         data_manager.update_game_status(event)
-        
+
+        # 通过WebSocket广播全局事件，确保前端状态及时更新
+        try:
+            await connection_manager.broadcast({
+                "type": "global_event",
+                "data": data_manager.game_status,
+                "timestamp": datetime.now().isoformat()
+            })
+        except Exception as be:
+            print(f"广播全局事件失败: {be}")
+
         # 准备响应数据
         response_data = {
             "message": "全局事件处理成功",

@@ -141,6 +141,7 @@ export interface RunawayWarriorSummary {
   checkpoints: Record<string, { count: number; players: string[] }>;
   completion: { ez: number; mid: number; hard: number; other?: number };
   order: string[];
+  completionPlayers?: { ez: string[]; mid: string[]; hard: string[]; other?: string[] };
 }
 
 export interface ConnectionStatus {

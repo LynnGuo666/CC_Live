@@ -133,25 +133,24 @@ export default function BingoTaskModal({ task, isOpen, onClose }: BingoTaskModal
             </div>
           )}
 
-          {/* Completion Status */}
-          <div className={`rounded-lg p-4 ${task.completed ? 'bg-green-50' : 'bg-yellow-50'}`}>
-            <h5 className="font-medium text-gray-900 mb-2">完成状态</h5>
-            <div className="flex items-center space-x-2">
-              <div className={`w-3 h-3 rounded-full ${task.completed ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-              <span className={`font-medium ${task.completed ? 'text-green-700' : 'text-yellow-700'}`}>
-                {task.completed ? '已完成' : '未完成'}
-              </span>
-            </div>
-            
-            {task.completed && task.completedBy && (
-              <div className="mt-2 text-sm text-gray-600">
-                <div>完成者: <span className="font-medium">{task.completedBy}</span></div>
-                {task.completedAt && (
-                  <div>完成时间: <span className="font-mono">{new Date(task.completedAt).toLocaleString('zh-CN')}</span></div>
-                )}
+          {/* Completion Status: 仅在已完成时显示 */}
+          {task.completed && (
+            <div className="rounded-lg p-4 bg-green-50">
+              <h5 className="font-medium text-gray-900 mb-2">完成状态</h5>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                <span className="font-medium text-green-700">已完成</span>
               </div>
-            )}
-          </div>
+              {task.completedBy && (
+                <div className="mt-2 text-sm text-gray-600">
+                  <div>完成者: <span className="font-medium">{task.completedBy}</span></div>
+                  {task.completedAt && (
+                    <div>完成时间: <span className="font-mono">{new Date(task.completedAt).toLocaleString('zh-CN')}</span></div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Footer */}

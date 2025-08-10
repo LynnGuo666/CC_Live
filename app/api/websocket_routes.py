@@ -4,6 +4,7 @@ WebSocket路由模块
 """
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
+from datetime import datetime
 from app.core.websocket import connection_manager
 from app.core.data_manager import data_manager
 import asyncio
@@ -48,9 +49,10 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str = Query(None))
                 
                 # 处理心跳包
                 if message.get("type") == "ping":
+                    # 返回当前时间作为心跳回执时间
                     await connection_manager.send_personal_message({
                         "type": "pong",
-                        "timestamp": connection_manager.client_info[websocket]["connected_at"]
+                        "timestamp": datetime.now().isoformat()
                     }, websocket)
                 
                 # 处理客户端请求连接状态

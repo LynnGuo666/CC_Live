@@ -154,7 +154,8 @@ class DataManager:
                     ]
                 } if self.current_vote_data else None,
                 "gameStatus": self.game_status,
-                "recentEvents": self.events_history[-20:],  # 发送最新20条事件
+                # 发送最新20条事件（按时间倒序，最新在前）
+                "recentEvents": list(reversed(self.events_history[-20:])),
                 "connectionStatus": {
                     "connected": True,
                     "connection_count": connection_manager.get_connection_count(),
@@ -215,6 +216,7 @@ class DataManager:
 
         # 统计完成路线（将 simple/normal/hard 映射为 ez/mid/hard 以兼容前端文案）
         completion = {"ez": 0, "mid": 0, "hard": 0, "other": 0}
+        completion_players = {"ez": [], "mid": [], "hard": [], "other": []}
         for player, route in completion_routes.items():
             key = route
             if route == 'simple':
@@ -225,8 +227,10 @@ class DataManager:
                 key = 'hard'
             if key in completion:
                 completion[key] += 1
+                completion_players[key].append(player)
             else:
                 completion['other'] += 1
+                completion_players['other'].append(player)
 
         # 预设顺序（若检查点命名与此不同，前端仍可从 checkpoints 字典遍历）
         order = [
@@ -242,6 +246,7 @@ class DataManager:
         return {
             "checkpoints": checkpoints,
             "completion": completion,
+            "completionPlayers": completion_players,
             "order": order
         }
     

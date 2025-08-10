@@ -10,6 +10,7 @@ from app.core.websocket import connection_manager
 from app.core.score_engine import score_engine
 from app.core.data_manager import data_manager
 from datetime import datetime
+from app.core.websocket import connection_manager
 
 # 创建路由器实例
 router = APIRouter()
@@ -49,6 +50,26 @@ async def handle_game_event(game_id: str, event: GameEvent):
         if score_prediction:
             data_manager.update_current_game_score(score_prediction)
         
+        # 通过WebSocket广播单条事件（含分数预测），便于前端即时更新
+        try:
+            websocket_message = {
+                "type": "game_event",
+                "game_id": game_id,
+                "data": {
+                    "player": event.player,
+                    "team": event.team,
+                    "event": event.event,
+                    "lore": event.lore,
+                    "game_id": game_id,
+                    "timestamp": datetime.now().isoformat()
+                },
+                "score_prediction": score_prediction,
+                "timestamp": datetime.now().isoformat()
+            }
+            await connection_manager.broadcast(websocket_message)
+        except Exception as be:
+            print(f"广播游戏事件失败: {be}")
+
         # 准备响应数据
         response_data = {
             "message": "游戏事件处理成功",
