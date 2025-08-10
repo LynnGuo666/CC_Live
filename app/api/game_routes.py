@@ -233,6 +233,13 @@ async def post_bingo_card(card: BingoCard):
         # 存储到数据管理器
         data_manager.update_bingo_card(card)
 
+        # 优先并发预热所有 material 的图片，尽量首帧就有图
+        try:
+            mats = data_manager._extract_bingo_materials(card)
+            await data_manager.warmup_item_images(mats)
+        except Exception as we:
+            print(f"预热 Bingo 物品图片失败: {we}")
+
         # 通过WebSocket进行一次即时广播（含完整数据，保证前端及时显示）
         complete_data = data_manager.get_complete_data()
         await connection_manager.broadcast(complete_data)

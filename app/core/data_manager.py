@@ -288,6 +288,39 @@ class DataManager:
         except Exception as e:
             print(f"预解析 Bingo 物品图片失败: {e}")
 
+    def _extract_bingo_materials(self, card: BingoCard) -> List[str]:
+        materials: List[str] = []
+        try:
+            for _key, task in (card.tasks or {}).items():
+                mat = getattr(task, 'material', None)
+                if mat and isinstance(mat, str):
+                    materials.append(mat)
+        except Exception:
+            pass
+        # 去重并保持稳定顺序
+        seen = set()
+        unique: List[str] = []
+        for m in materials:
+            if m not in seen:
+                unique.append(m)
+                seen.add(m)
+        return unique
+
+    async def warmup_item_images(self, materials: List[str], *, concurrency: int = 5):
+        """并发预热一批 material 的图片，确保首帧广播就有可用图片。"""
+        if not materials:
+            return
+        sem = asyncio.Semaphore(concurrency)
+
+        async def _one(m: str):
+            async with sem:
+                try:
+                    await self.resolve_item_image(m)
+                except Exception:
+                    pass
+
+        await asyncio.gather(*[_one(m) for m in materials])
+
     def _normalize_task_kind(self, raw_type: Optional[str]) -> str:
         if not raw_type:
             return 'other'

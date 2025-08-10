@@ -83,11 +83,13 @@ export default function GameDisplay({ gameStatus, currentGameScore, voteData, bi
       return <FinishedDisplay className={className} />;
     
     case 'gaming':
-      // 优先在 Bingo 游戏下展示卡片，即使还没有比分预测
+      // 优先在 Bingo 游戏下展示卡片
+      const nameRaw = gameStatus.game?.name || '';
+      const nameLower = nameRaw.toLowerCase();
+      const isBingoByName = nameLower.includes('bingo') || nameRaw.includes('宾果');
+
       if (!currentGameScore) {
-        const gameName = gameStatus.game?.name || '';
-        const isBingo = gameName === 'bingo' || gameName === GAME_NAMES['bingo'];
-        if (isBingo && bingoCard) {
+        if (isBingoByName && bingoCard) {
           return (
             <div className={`bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg flex flex-col h-full overflow-hidden ${className}`}>
               <BingoDisplay currentGameScore={null} bingoCard={bingoCard} />
@@ -98,6 +100,21 @@ export default function GameDisplay({ gameStatus, currentGameScore, voteData, bi
         return (
           <div className={`bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg flex flex-col h-full overflow-hidden ${className}`}>
             {renderFallbackCard({ title: '加载游戏数据中…' })}
+          </div>
+        );
+      }
+
+      // Bingo 游戏没有分数系统：有卡片则展示卡片；否则过渡层
+      const idLower = (currentGameScore.game_id || '').toLowerCase();
+      const isBingoGame = isBingoByName || idLower.includes('bingo');
+      if (isBingoGame) {
+        return (
+          <div className={`bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg flex flex-col h-full overflow-hidden ${className}`}>
+            {bingoCard ? (
+              <BingoDisplay currentGameScore={null} bingoCard={bingoCard} itemImages={(window as unknown as { __itemImages?: Record<string, string | null> }).__itemImages} />
+            ) : (
+              renderFallbackCard({ title: '加载游戏数据中…' })
+            )}
           </div>
         );
       }

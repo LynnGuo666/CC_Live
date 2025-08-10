@@ -8,16 +8,15 @@ import BingoTaskModal from './BingoTaskModal';
 interface BingoCardProps {
   bingoCard: BingoCard;
   className?: string;
+  itemImages?: Record<string, string | null>;
 }
 
 // 简单的物品图片缓存：material -> 成功加载的图片 URL
 const MATERIAL_IMG_CACHE: Record<string, string> = {};
 
-export default function BingoCardComponent({ bingoCard, className = '' }: BingoCardProps) {
+export default function BingoCardComponent({ bingoCard, className = '', itemImages }: BingoCardProps) {
   const [selectedTask, setSelectedTask] = useState<BingoTask | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // 从 window 注入的全量数据中读取 itemImages（由 useWebSocket 在最近一次 game_event 时也会映射 window.__lastScoreMap，复用此思路轻量获取）
-  const itemImages: TournamentData['itemImages'] = (typeof window !== 'undefined' && (window as unknown as { __itemImages?: TournamentData['itemImages'] }).__itemImages) || undefined;
 
   const handleTaskClick = (task: BingoTask) => {
     setSelectedTask(task);

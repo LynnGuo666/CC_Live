@@ -43,6 +43,13 @@ export default function Home() {
     return statusConfig[status] || { color: 'bg-gray-500', text: status };
   };
 
+  const isBingoGame = () => {
+    const name = data.gameStatus?.game?.name || '';
+    const id = data.currentGameScore?.game_id || '';
+    const nameLower = name.toLowerCase();
+    return nameLower.includes('bingo') || name.includes('宾果') || id.toLowerCase().includes('bingo');
+  };
+
   return (
     <div className="min-h-[100svh] bg-gradient-to-b from-gray-50 to-white">
       {/* Header */}
@@ -201,7 +208,7 @@ export default function Home() {
           </div>
 
           {/* Center Column - Game Display */}
-          <div className="lg:col-span-6 min-h-0 flex flex-col space-y-4 sm:space-y-6">
+          <div className={`min-h-0 flex flex-col space-y-4 sm:space-y-6 ${isBingoGame() ? 'lg:col-span-9' : 'lg:col-span-6'}`}>
             {/* Game Display */}
             {/* 将 runawayWarrior 汇总通过 context 下发到 RunawayWarriorDisplay */}
             <GameDisplay 
@@ -223,13 +230,15 @@ export default function Home() {
           </div>
 
           {/* Right Column - Current Game Leaderboard */}
-          <div className="lg:col-span-3 flex flex-col min-h-0 h-[60svh] sm:h-[70svh] lg:h-[calc(100svh-120px)]">
-            <CurrentGameLeaderboard 
-              currentGameScore={data.currentGameScore}
-              gameStatus={data.gameStatus}
-              className="flex-1 min-h-0"
-            />
-          </div>
+          {!isBingoGame() && (
+            <div className="lg:col-span-3 flex flex-col min-h-0 h-[60svh] sm:h-[70svh] lg:h-[calc(100svh-120px)]">
+              <CurrentGameLeaderboard 
+                currentGameScore={data.currentGameScore}
+                gameStatus={data.gameStatus}
+                className="flex-1 min-h-0"
+              />
+            </div>
+          )}
         </div>
       </main>
     </div>

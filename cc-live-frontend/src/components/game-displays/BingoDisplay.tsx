@@ -7,15 +7,16 @@ import BingoCardComponent from '../BingoCardComponent';
 interface BingoDisplayProps {
   currentGameScore: ScorePrediction | null;
   bingoCard?: BingoCard | null;
+  itemImages?: Record<string, string | null>;
 }
 
-export default function BingoDisplay({ currentGameScore, bingoCard }: BingoDisplayProps) {
+export default function BingoDisplay({ currentGameScore, bingoCard, itemImages }: BingoDisplayProps) {
   // 如果有Bingo卡片数据，优先显示卡片
   if (bingoCard) {
     return (
       <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
         <div className="p-3 sm:p-6">
-          <BingoCardComponent bingoCard={bingoCard} />
+          <BingoCardComponent bingoCard={bingoCard} itemImages={itemImages} />
           {/* 移除多余留白：用最小高度填充并避免额外 margin */}
           <div className="mt-3 sm:mt-4" />
         </div>
