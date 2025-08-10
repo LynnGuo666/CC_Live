@@ -222,6 +222,9 @@ async def set_game_round(game_id: str, round_data: dict):
 
 
 @router.post("/api/bingo/card")
+@router.post("/api/bingo/card/")
+@router.put("/api/bingo/card")
+@router.put("/api/bingo/card/")
 async def post_bingo_card(card: BingoCard):
     """
     接收 Bingo 卡片数据（来自插件），并通过 WebSocket 广播给前端。

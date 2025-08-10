@@ -216,6 +216,7 @@ async def get_tournament_status():
 
 
 @router.get("/api/bingo/status")
+@router.get("/api/bingo/status/")
 async def get_bingo_processing_status():
     """返回 Bingo 本地化与图片解析的处理进度。"""
     try:
@@ -229,6 +230,7 @@ async def get_bingo_processing_status():
 
 
 @router.post("/api/bingo/localize")
+@router.post("/api/bingo/localize/")
 async def trigger_bingo_localize():
     """手动触发 Bingo 卡片 AI 本地化处理。"""
     try:

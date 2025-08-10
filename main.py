@@ -7,6 +7,10 @@ from app.core.config import create_app
 from app.api import global_routes, game_routes, websocket_routes
 from app.core.data_manager import data_manager
 import asyncio
+from starlette.requests import Request
+from starlette.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.types import Message
 
 # 创建应用实例
 app = create_app()
@@ -22,6 +26,63 @@ async def startup_event():
     """应用启动时的初始化"""
     print("CC Live 游戏API服务启动中...")
     print("数据管理器已初始化，支持定时广播机制")
+
+
+# ========== 调试：捕获请求体并在 405 时输出 ==========
+async def _set_body(request: Request, body: bytes) -> None:
+    async def receive() -> Message:
+        return {"type": "http.request", "body": body, "more_body": False}
+    request._receive = receive  # type: ignore[attr-defined]
+
+
+@app.middleware("http")
+async def capture_request_body(request: Request, call_next):
+    try:
+        body = await request.body()
+        # 重新注入 body，避免下游读取不到
+        await _set_body(request, body)
+        request.state._raw_body = body
+    except Exception:
+        request.state._raw_body = b""
+    response = await call_next(request)
+    # 如果是 405，打印一份调试信息
+    if getattr(response, "status_code", None) == 405:
+        try:
+            snippet = (request.state._raw_body or b"")[:2048]
+            print("[405][DEBUG] method=", request.method, "path=", str(request.url))
+            print("[405][DEBUG] headers=", {k.lower(): v for k, v in request.headers.items() if k.lower() in ("content-type", "content-length", "authorization")})
+            print("[405][DEBUG] body=", snippet.decode(errors="ignore"))
+        except Exception:
+            pass
+    return response
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if exc.status_code == 405:
+        # 返回更详细的 JSON，便于前端或调用方直接看到原因
+        try:
+            raw = getattr(request.state, "_raw_body", b"")
+            snippet = raw[:2048].decode(errors="ignore")
+        except Exception:
+            snippet = ""
+        allow = None
+        try:
+            allow = exc.headers.get("allow") if getattr(exc, "headers", None) else None
+        except Exception:
+            allow = None
+        payload = {
+            "error": "Method Not Allowed",
+            "status": 405,
+            "method": request.method,
+            "path": str(request.url),
+            "allow": allow,
+            "headers": {k.lower(): v for k, v in request.headers.items() if k.lower() in ("content-type", "content-length", "authorization")},
+            "body_snippet": snippet,
+        }
+        return JSONResponse(payload, status_code=405)
+    # 其他保持默认
+    return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
 
 
 @app.get("/")
