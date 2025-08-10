@@ -154,6 +154,12 @@ export default function CurrentGameLeaderboard({ currentGameScore, gameStatus, c
                         {index + 1}
                       </div>
                       <div className="flex items-center space-x-3">
+                        <img
+                          src={`https://mc-heads.net/avatar/${encodeURIComponent(player.player)}/64`}
+                          alt={player.player}
+                          className="w-6 h-6 rounded-md shadow-sm border border-gray-200"
+                          loading="lazy"
+                        />
                         <div
                           className="w-3 h-3 rounded-full border border-white shadow-sm"
                           style={{ backgroundColor: player.teamColor }}
