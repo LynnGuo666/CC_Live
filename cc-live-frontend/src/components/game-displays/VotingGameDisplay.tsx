@@ -12,7 +12,7 @@ export default function VotingGameDisplay({ voteData, className = "" }: VotingGa
   return (
     <div className={`bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg flex flex-col ${className}`}>
       <div className="flex-1 overflow-hidden">
-        <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent p-6">
+        <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent p-3 sm:p-6">
           <div className="flex items-center justify-center h-full min-h-0">
             {voteData ? (
               <div className="w-full max-w-2xl">

@@ -26,7 +26,7 @@ export default function DefaultGameDisplay({ currentGameScore }: DefaultGameDisp
   
   return (
     <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-      <div className="p-6">
+      <div className="p-3 sm:p-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
           {sortedTeams.map((team) => {
             const teamColor = TEAM_COLORS[team.team_id] || '#808080';

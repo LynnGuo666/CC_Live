@@ -26,7 +26,7 @@ export default function SkywarsDisplay({ currentGameScore }: SkywarsDisplayProps
   
   return (
     <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-      <div className="p-6">
+      <div className="p-3 sm:p-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* 前三名大显示 */}
           {sortedTeams.slice(0, 3).map((team, index) => {
@@ -62,7 +62,7 @@ export default function SkywarsDisplay({ currentGameScore }: SkywarsDisplayProps
         
         {/* 其余队伍 */}
         {sortedTeams.length > 3 && (
-          <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="mt-4 sm:mt-6 grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
             {sortedTeams.slice(3).map((team) => {
               const teamColor = TEAM_COLORS[team.team_id] || '#808080';
               const teamName = TEAM_NAMES[team.team_id] || team.team_id;
