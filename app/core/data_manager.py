@@ -636,7 +636,7 @@ class DataManager:
             meta_line = ("，".join(meta)) if meta else ""
             user = f"请本地化并补充信息（{meta_line}）。\n名称: {name}\n描述: {desc}\n返回 JSON: {{name, desc, advice, source, difficulty}}"
             payload = {
-                'model': 'gpt-5-2025-08-07',
+                'model': 'gemini-2.5-pro',
                 'messages': [
                     { 'role': 'system', 'content': system },
                     { 'role': 'user', 'content': user }
