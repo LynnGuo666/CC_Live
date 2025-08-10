@@ -11,6 +11,7 @@ from app.models.models import TeamScore, GameEvent, VoteEvent, GlobalEvent, Bing
 from app.core.websocket import connection_manager
 from app.core.tournament_manager import tournament_manager
 from app.core.score_engine import score_engine
+import httpx
 
 
 class DataManager:
@@ -38,6 +39,9 @@ class DataManager:
         
         # Bingo 卡片（如果收到则存储并广播）
         self.bingo_card: Optional[BingoCard] = None
+        
+        # 物品图片缓存：mcid -> image_url
+        self.item_image_cache: Dict[str, Optional[str]] = {}
     
     def add_event(self, event: GameEvent, game_id: str):
         """
@@ -143,6 +147,7 @@ class DataManager:
                 ],
                 "currentGameScore": self.current_game_score,
                 "bingoCard": self._serialize_bingo_card() if self.bingo_card else None,
+                "itemImages": self.item_image_cache,
                 "currentVote": {
                     "time_remaining": self.current_vote_data.time,
                     "total_games": len(self.current_vote_data.votes),
@@ -187,6 +192,86 @@ class DataManager:
             return None
         # Pydantic BaseModel 的 dict() 即可满足，但确保 keys 为字符串 "x,y"
         return self.bingo_card.dict()
+
+    async def resolve_item_image(self, mcid: str, *, max_attempts: int = 5, delay_seconds: float = 0.5) -> Optional[str]:
+        """
+        轮询解析 MC 物品ID 的图片地址，优先使用缓存；若没有则通过 Minecraft Wiki API 获取。
+        成功则缓存并返回 URL；失败返回 None 并缓存，避免重复请求。
+        """
+        if not mcid:
+            return None
+        if mcid in self.item_image_cache:
+            return self.item_image_cache[mcid]
+
+        # Minecraft Wiki（新域名）：优先 zh.minecraft.wiki，失败再退到 minecraft.wiki
+        # 方案1：使用搜索以更好兼容 mcid（下划线/英文ID）
+        # 方案2（兜底）：使用 titles title-case 名称
+        page_title = mcid.replace('_', ' ').title()
+        api_bases = [
+            "https://zh.minecraft.wiki/api.php",
+            "https://minecraft.wiki/api.php",
+        ]
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            for _ in range(max_attempts):
+                try:
+                    # 尝试：generator=search
+                    found_src: Optional[str] = None
+                    for api_url in api_bases:
+                        search_params = {
+                            "action": "query",
+                            "format": "json",
+                            "prop": "pageimages",
+                            "pithumbsize": 128,
+                            "generator": "search",
+                            "gsrsearch": mcid,
+                            "redirects": 1
+                        }
+                        resp = await client.get(api_url, params=search_params)
+                        data = resp.json()
+                        pages = data.get('query', {}).get('pages', {})
+                        for _, page in pages.items():
+                            thumb = page.get('thumbnail', {})
+                            src = thumb.get('source')
+                            if src:
+                                found_src = src
+                                break
+                        if found_src:
+                            break
+
+                    # 若搜索未命中，使用 titles 兜底
+                    if not found_src:
+                        for api_url in api_bases:
+                            titles_params = {
+                                "action": "query",
+                                "format": "json",
+                                "prop": "pageimages",
+                                "pithumbsize": 128,
+                                "titles": page_title,
+                                "redirects": 1
+                            }
+                            resp = await client.get(api_url, params=titles_params)
+                            data = resp.json()
+                            pages = data.get('query', {}).get('pages', {})
+                            for _, page in pages.items():
+                                thumb = page.get('thumbnail', {})
+                                src = thumb.get('source')
+                                if src:
+                                    found_src = src
+                                    break
+                            if found_src:
+                                break
+
+                    if found_src:
+                        self.item_image_cache[mcid] = found_src
+                        return found_src
+                except Exception as e:
+                    print(f"获取物品图片失败: {mcid} {e}")
+                # 暂无结果，等待后重试
+                await asyncio.sleep(delay_seconds)
+
+        # 最终失败，写入None以避免频繁命中
+        self.item_image_cache[mcid] = None
+        return None
 
     def _build_runaway_warrior_summary(self) -> Dict:
         """

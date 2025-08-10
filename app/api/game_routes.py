@@ -11,6 +11,7 @@ from app.core.game_config import game_config
 from app.core.score_engine import score_engine
 from app.core.data_manager import data_manager
 from datetime import datetime
+import asyncio
 from app.core.websocket import connection_manager
 
 # 创建路由器实例
@@ -47,6 +48,14 @@ async def handle_game_event(game_id: str, event: GameEvent):
         # 添加事件到数据管理器（带时间戳）
         data_manager.add_event(event, game_id)
         
+        # 如果是 Bingo 或事件 lore 看似物品ID，则尝试解析图片并缓存（异步，不阻塞返回）
+        try:
+            lore = (event.lore or '').strip()
+            if lore and lore.isascii() and lore.lower() == lore and ('_' in lore or lore.isalpha()):
+                asyncio.create_task(data_manager.resolve_item_image(lore))
+        except Exception:
+            pass
+        
         # 更新当前游戏积分数据
         if score_prediction:
             data_manager.update_current_game_score(score_prediction)
@@ -65,6 +74,7 @@ async def handle_game_event(game_id: str, event: GameEvent):
                     "team": event.team,
                     "event": event.event,
                     "lore": event.lore,
+                    "item_image": data_manager.item_image_cache.get((event.lore or '').strip()) if hasattr(data_manager, 'item_image_cache') else None,
                     "team_color": team_color,
                     "game_id": game_id,
                     "timestamp": datetime.now().isoformat()
