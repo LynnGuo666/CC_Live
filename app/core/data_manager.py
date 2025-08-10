@@ -539,6 +539,11 @@ class DataManager:
         card = self.bingo_card
         if not card:
             return
+        try:
+            print("[BINGO][AI] 开始本地化 Bingo 卡片任务，任务数:", len(card.tasks or {}))
+            print("[BINGO][AI] OpenAI 启用:", bool(self.openai_base and self.openai_key), "base=", (self.openai_base or '')[:32])
+        except Exception:
+            pass
         tasks = card.tasks or {}
         # 并发处理，限制并发
         sem = asyncio.Semaphore(6)
@@ -581,6 +586,26 @@ class DataManager:
                     print(f"本地化任务失败: {e}")
 
         await asyncio.gather(*[_proc(k, t) for k, t in tasks.items()])
+        try:
+            print("[BINGO][AI] 本地化完成：",
+                  f"localize_done={self.progress_bingo['localize']['done']}/",
+                  f"{self.progress_bingo['localize']['total']}")
+        except Exception:
+            pass
+
+    async def localize_bingo_now(self) -> Dict[str, int]:
+        """对当前 Bingo 卡片立即执行本地化，并返回进度统计。"""
+        if not self.bingo_card:
+            return {"total": 0, "done": 0}
+        # 重置计数
+        total_tasks = len(self.bingo_card.tasks or {})
+        self.progress_bingo['localize'] = {'total': total_tasks, 'done': 0}
+        self.progress_bingo['updated_at_ms'] = int(datetime.now().timestamp() * 1000)
+        await self._localize_bingo_card_inplace()
+        return {
+            "total": self.progress_bingo['localize']['total'],
+            "done": self.progress_bingo['localize']['done']
+        }
     
     async def _openai_localize(self, *, name: str, desc: str, material: Optional[str] = None, count: Optional[int] = None, kind: Optional[str] = None) -> Optional[Dict[str, str]]:
         """调用自定义 OpenAI 兼容接口，对名称/描述进行中文润色。"""

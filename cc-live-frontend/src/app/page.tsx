@@ -208,7 +208,7 @@ export default function Home() {
           </div>
 
           {/* Center Column - Game Display */}
-          <div className={`min-h-0 flex flex-col space-y-4 sm:space-y-6 ${isBingoGame() ? 'lg:col-span-9' : 'lg:col-span-6'}`}>
+          <div className="lg:col-span-6 min-h-0 flex flex-col space-y-4 sm:space-y-6">
             {/* Game Display */}
             {/* 将 runawayWarrior 汇总通过 context 下发到 RunawayWarriorDisplay */}
             <GameDisplay 

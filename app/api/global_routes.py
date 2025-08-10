@@ -226,3 +226,13 @@ async def get_bingo_processing_status():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取 Bingo 处理进度失败: {str(e)}")
+
+
+@router.post("/api/bingo/localize")
+async def trigger_bingo_localize():
+    """手动触发 Bingo 卡片 AI 本地化处理。"""
+    try:
+        result = await data_manager.localize_bingo_now()
+        return { "success": True, "result": result }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"触发 Bingo 本地化失败: {str(e)}")
