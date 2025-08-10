@@ -12,6 +12,13 @@ from starlette.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.types import Message
 
+# 加载 .env（Docker 可挂载 .env 文件）
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
+
 # 创建应用实例
 app = create_app()
 
