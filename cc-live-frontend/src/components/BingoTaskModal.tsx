@@ -25,7 +25,7 @@ export default function BingoTaskModal({ task, isOpen, onClose }: BingoTaskModal
   };
 
   const getTaskTypeText = (type: string) => {
-    switch (type.toLowerCase()) {
+    switch ((type || '').toLowerCase()) {
       case 'item': return '物品收集';
       case 'advancement': return '成就解锁';
       case 'statistic': return '统计数据';
@@ -81,7 +81,7 @@ export default function BingoTaskModal({ task, isOpen, onClose }: BingoTaskModal
           {/* Task Icon and Name */}
           <div className="text-center">
             <div className="text-3xl sm:text-4xl mb-2">{getTaskTypeIcon(task.type)}</div>
-            <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">{parseAdventureText(task.name)}</h4>
+            <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">{task.display_name || parseAdventureText(task.name)}</h4>
             <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
               {getTaskTypeText(task.type)}
             </span>
@@ -109,7 +109,7 @@ export default function BingoTaskModal({ task, isOpen, onClose }: BingoTaskModal
           {/* Task Description */}
           <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
             <h5 className="font-medium text-gray-900 mb-2">任务描述</h5>
-              <p className="text-gray-700">{parseAdventureText(task.description)}</p>
+              <p className="text-gray-700">{task.display_description || parseAdventureText(task.description)}</p>
           </div>
 
           {/* Task Details */}

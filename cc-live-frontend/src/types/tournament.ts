@@ -100,6 +100,10 @@ export interface BingoTask {
   completed?: boolean;
   completedBy?: string;
   completedAt?: number;
+  // 后端适配后的展示字段（可选）
+  display_name?: string;
+  display_description?: string;
+  task_kind?: string;
 }
 
 export interface BingoTeamInfo {

@@ -107,6 +107,10 @@ class BingoTask(BaseModel):
     completed: Optional[bool] = Field(False, description="是否完成（可选，前端展示用）")
     completedBy: Optional[str] = Field(None, description="完成者（可选，前端展示用）")
     completedAt: Optional[int] = Field(None, description="完成时间毫秒（可选，前端展示用）")
+    # 由后端适配：成就/挑战等展示名与描述、标准化类型
+    display_name: Optional[str] = Field(None, description="用于展示的任务名称（后端解析）")
+    display_description: Optional[str] = Field(None, description="用于展示的任务描述（后端解析）")
+    task_kind: Optional[str] = Field(None, description="标准化任务类型：item/advancement/statistic/kill/craft/mine/other")
 
 
 class BingoTeamMember(BaseModel):

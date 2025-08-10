@@ -195,7 +195,7 @@ export default function BingoCardComponent({ bingoCard, className = '' }: BingoC
               
               {/* Task Name */}
               <div className="text-[10px] sm:text-xs font-medium leading-tight overflow-hidden line-clamp-2">
-                {parseAdventureText(task.name)}
+                {task.display_name || parseAdventureText(task.name)}
               </div>
               
               {/* Count indicator */}

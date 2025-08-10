@@ -256,6 +256,18 @@ class DataManager:
 
     def update_bingo_card(self, card: BingoCard):
         """更新 Bingo 卡片，并准备广播"""
+        # 适配任务展示：解析 name/description 中的 Adventure Text，归一化类型
+        try:
+            for key, task in (card.tasks or {}).items():
+                # 归一化类型
+                t = getattr(task, 'type', '')
+                task.task_kind = self._normalize_task_kind(t)
+                # 解析展示用文案
+                task.display_name = self._parse_adventure_text(getattr(task, 'name', ''))
+                task.display_description = self._parse_adventure_text(getattr(task, 'description', ''))
+        except Exception as e:
+            print(f"适配 Bingo 任务展示失败: {e}")
+
         self.bingo_card = card
         print("更新 Bingo 卡片: {}x{} size={}".format(card.width, card.height, card.size))
         # 预解析所有物品图片，异步触发解析，填充缓存
@@ -275,6 +287,45 @@ class DataManager:
             asyncio.create_task(_warmup())
         except Exception as e:
             print(f"预解析 Bingo 物品图片失败: {e}")
+
+    def _normalize_task_kind(self, raw_type: Optional[str]) -> str:
+        if not raw_type:
+            return 'other'
+        t = str(raw_type).lower()
+        if t in ('item', 'advancement', 'statistic', 'kill', 'craft', 'mine'):
+            return t
+        # 服务器可能传大写
+        mapping = {
+            'item': 'item',
+            'advancement': 'advancement',
+            'statistic': 'statistic',
+            'kill': 'kill',
+            'craft': 'craft',
+            'mine': 'mine'
+        }
+        return mapping.get(t, 'other')
+
+    def _parse_adventure_text(self, raw: Optional[str]) -> str:
+        if not raw:
+            return ''
+        try:
+            if ('TextComponentImpl' not in raw) and ('TranslatableComponentImpl' not in raw):
+                return raw
+            result_parts: List[str] = []
+            import re
+            for m in re.finditer(r'content=\"([^\"]*)\"', raw):
+                val = m.group(1)
+                if val:
+                    result_parts.append(val)
+            for m in re.finditer(r'TranslatableComponentImpl\{key=\"([^\"]+)\"', raw):
+                key = m.group(1)
+                pretty = key.split('.')[-1].replace('_', ' ')
+                titled = re.sub(r'\b\w', lambda c: c.group(0).upper(), pretty)
+                result_parts.append(titled)
+            result = ' '.join(result_parts).strip()
+            return result or raw
+        except Exception:
+            return raw
 
     def _serialize_bingo_card(self) -> Dict:
         """将 BingoCard 转为可 JSON 序列化的 dict，以与前端类型兼容"""
