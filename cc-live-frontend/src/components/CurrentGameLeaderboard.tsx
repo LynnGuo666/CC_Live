@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ScorePrediction, GameStatus } from '@/types/tournament';
 import { TEAM_COLORS, TEAM_NAMES, GAME_NAMES } from '@/types/tournament';
+import Image from 'next/image';
 
 interface CurrentGameLeaderboardProps {
   currentGameScore: ScorePrediction | null;
@@ -155,13 +156,17 @@ export default function CurrentGameLeaderboard({ currentGameScore, gameStatus, c
                         {index + 1}
                       </div>
                       <div className="flex items-center space-x-3">
-                        <img
+                        <Image
                           src={`https://mc-heads.net/avatar/${encodeURIComponent(player.player)}/64`}
                           alt={player.player}
-                          className="w-6 h-6 rounded-md shadow-sm border border-gray-200 shrink-0"
-                          loading="lazy"
-                          referrerPolicy="no-referrer"
-                          onError={(e) => { (e.currentTarget as HTMLImageElement).src = 'https://mc-heads.net/avatar/Steve/64'; }}
+                          width={24}
+                          height={24}
+                          className="rounded-md shadow-sm border border-gray-200 shrink-0"
+                          unoptimized
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = 'https://mc-heads.net/avatar/Steve/64';
+                          }}
                         />
                         <div
                           className="w-3 h-3 rounded-full border border-white shadow-sm"

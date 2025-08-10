@@ -1,7 +1,7 @@
 'use client';
 
 import { ScorePrediction, RunawayWarriorSummary } from '@/types/tournament';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 interface RunawayWarriorDisplayProps {
   currentGameScore: ScorePrediction;
@@ -10,14 +10,14 @@ interface RunawayWarriorDisplayProps {
 }
 
 export default function RunawayWarriorDisplay({ currentGameScore, summary, className = '' }: RunawayWarriorDisplayProps) {
+  const [activeModal, setActiveModal] = useState<{ title: string; players: string[] } | null>(null);
+
   if (!currentGameScore) {
     return <div className="p-6 text-gray-500">等待游戏数据...</div>;
   }
 
   const checkpoints = summary?.checkpoints || {};
   const completion = summary?.completion || { ez: 0, mid: 0, hard: 0 };
-
-  const [activeModal, setActiveModal] = useState<{ title: string; players: string[] } | null>(null);
 
   const lanes = buildLanesFromSummary(summary);
 
@@ -54,7 +54,7 @@ export default function RunawayWarriorDisplay({ currentGameScore, summary, class
                 fin1: 'ez', fin2: 'mid', fin3: 'hard'
               };
               const key = map[name as 'fin1' | 'fin2' | 'fin3'];
-              const players = (summary as any)?.completionPlayers?.[key] || [];
+              const players = (summary && (summary as unknown as { completionPlayers?: Record<'ez' | 'mid' | 'hard', string[]> }).completionPlayers?.[key]) || [];
               setActiveModal({ title: `${name} 完成名单`, players });
               return;
             }

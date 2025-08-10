@@ -27,8 +27,8 @@ export function useWebSocket() {
 
   // WebSocket 地址：优先使用环境变量，其次尝试与页面同源，最后回退到生产地址
   const effectiveUrl =
-    (typeof process !== 'undefined' && (process as any).env?.NEXT_PUBLIC_WS_URL)
-      ? (process as any).env.NEXT_PUBLIC_WS_URL as string
+    (typeof process !== 'undefined' && (process as unknown as { env?: Record<string, unknown> }).env && (process as unknown as { env: Record<string, unknown> }).env.NEXT_PUBLIC_WS_URL)
+      ? (process as unknown as { env: Record<string, string> }).env.NEXT_PUBLIC_WS_URL as string
       : (typeof window !== 'undefined' && window.location?.host)
         ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`
         : 'wss://live-cc-api.lynn6.top/ws';
