@@ -12,6 +12,7 @@ import { useState } from 'react';
 export default function Home() {
   const { data, isConnected, sendMessage } = useWebSocket();
   const [viewerId, setViewerId] = useState('');
+  const [toast, setToast] = useState<string | null>(null);
 
   // Get current game name for header
   const getCurrentGameInfo = () => {
@@ -95,23 +96,31 @@ export default function Home() {
               <div className="h-4 w-px bg-gray-300"></div>
               {/* Viewer ID 输入，用于观赛统计 */}
               <div className="flex items-center space-x-2">
-                <input
-                  value={viewerId}
-                  onChange={(e) => setViewerId(e.target.value)}
-                  placeholder="观赛ID"
-                  className="px-2 py-1 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  onClick={() => {
-                    if (viewerId.trim()) {
-                      // 通过 WS 发送一个标识消息，后端可在统计中使用
-                      sendMessage({ type: 'viewer_id', viewer_id: viewerId.trim() });
-                      // 清空输入并提示
-                      setViewerId('');
-                    }
-                  }}
-                  className="px-2 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >提交</button>
+                {data.connectionStatus.viewer_id && (
+                  <span className="px-2 py-0.5 text-xs rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                    观赛ID: {data.connectionStatus.viewer_id}
+                  </span>
+                )}
+                <div className="flex items-center rounded-md border bg-white overflow-hidden">
+                  <input
+                    value={viewerId}
+                    onChange={(e) => setViewerId(e.target.value)}
+                    placeholder="填写观赛ID"
+                    className="px-2 py-1 text-sm focus:outline-none min-w-[140px]"
+                  />
+                  <button
+                    onClick={() => {
+                      const id = viewerId.trim();
+                      if (id) {
+                        sendMessage({ type: 'viewer_id', viewer_id: id });
+                        setViewerId('');
+                        setToast('观赛ID 已提交');
+                        setTimeout(() => setToast(null), 1500);
+                      }
+                    }}
+                    className="px-2 py-1 text-sm bg-blue-600 text-white hover:bg-blue-700"
+                  >提交</button>
+                </div>
               </div>
               <div className="flex items-center space-x-2">
                 <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'} ${isConnected ? 'animate-pulse' : ''}`}></div>
@@ -123,6 +132,13 @@ export default function Home() {
           </div>
         </div>
       </header>
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[60]">
+          <div className="px-4 py-2 bg-green-600 text-white text-sm rounded-md shadow-lg">{toast}</div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="min-h-[calc(100vh-64px)] max-w-[1920px] mx-auto px-6 py-6">

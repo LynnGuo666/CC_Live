@@ -79,7 +79,8 @@ export function useWebSocket() {
                 ...prev,
                 connectionStatus: {
                   ...prev.connectionStatus,
-                  last_ping: message.timestamp
+                  last_ping: message.timestamp,
+                  viewer_id: message.viewer_id
                 }
               }));
               break;

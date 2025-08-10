@@ -136,6 +136,7 @@ export interface TournamentData {
     connected: boolean;
     connection_count: number;
     last_ping: string;
+    viewer_id?: string;
   };
 }
 
@@ -152,6 +153,7 @@ export interface ConnectionStatus {
   client_id?: string;
   connection_count?: number;
   last_ping?: string;
+  viewer_id?: string;
 }
 
 // Game configuration
