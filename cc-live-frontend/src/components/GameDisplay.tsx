@@ -118,17 +118,50 @@ function renderFallbackCard({ title }: { title: string }) {
             <span className="text-2xl">🎮</span>
             <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
           </div>
-          <div className="text-sm text-gray-600 space-y-2">
-            <div>开发者：<span className="font-medium text-gray-800">Venti_Lynn</span></div>
-            <div>
-              访问：联合锦标赛官网查看选手数据
-              {' '}
-              <a className="text-blue-600 hover:underline break-all" href="https://cc.ziip.space" target="_blank" rel="noreferrer">https://cc.ziip.space</a>
+          <div className="text-sm text-gray-600 space-y-3">
+            {/* 顶部信息行：开发者 + 博客 + 版本号 */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-gray-700">
+              <span className="inline-flex items-center gap-1">
+                <span className="text-gray-500">开发者</span>
+                <span className="font-medium text-gray-800">Venti_Lynn</span>
+              </span>
+              <span className="hidden sm:inline text-gray-300">|</span>
+              <a className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 hover:underline" href={APP_CONFIG.blogUrl} target="_blank" rel="noreferrer">
+                查看我的博客
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                  <path fillRule="evenodd" d="M5 4a1 1 0 011-1h9a1 1 0 011 1v9a1 1 0 11-2 0V6.414l-8.293 8.293a1 1 0 01-1.414-1.414L12.586 5H6a1 1 0 01-1-1z" clipRule="evenodd" />
+                </svg>
+              </a>
+              <span className="hidden sm:inline text-gray-300">|</span>
+              <span className="text-xs text-gray-400">{APP_CONFIG.version}</span>
             </div>
-            <div>
-              <a className="text-blue-600 hover:underline break-all" href={APP_CONFIG.blogUrl} target="_blank" rel="noreferrer">查看我的博客</a>
+
+            {/* 更多链接 */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <a
+                className="group inline-flex items-center justify-between gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700 hover:bg-white hover:shadow-sm transition"
+                href={APP_CONFIG.officialSiteUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <span>联合锦标赛官网</span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-gray-400 group-hover:text-blue-600">
+                  <path fillRule="evenodd" d="M5 4a1 1 0 011-1h9a1 1 0 011 1v9a1 1 0 11-2 0V6.414l-8.293 8.293a1 1 0 01-1.414-1.414L12.586 5H6a1 1 0 01-1-1z" clipRule="evenodd" />
+                </svg>
+              </a>
+
+              <a
+                className="group inline-flex items-center justify-between gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700 hover:bg-white hover:shadow-sm transition break-all"
+                href={APP_CONFIG.antiCheatUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <span>反作弊系统介绍</span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-gray-400 group-hover:text-blue-600">
+                  <path fillRule="evenodd" d="M5 4a1 1 0 011-1h9a1 1 0 011 1v9a1 1 0 11-2 0V6.414l-8.293 8.293a1 1 0 01-1.414-1.414L12.586 5H6a1 1 0 01-1-1z" clipRule="evenodd" />
+                </svg>
+              </a>
             </div>
-            <div className="text-xs text-gray-400">{APP_CONFIG.version}</div>
           </div>
         </div>
       </div>
