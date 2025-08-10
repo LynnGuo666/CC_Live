@@ -46,12 +46,12 @@ async def capture_request_body(request: Request, call_next):
         request.state._raw_body = b""
     response = await call_next(request)
     # 如果是 405，打印一份调试信息
-    if getattr(response, "status_code", None) == 405:
+    if getattr(response, "status_code", None) in (400, 401, 403, 404, 405, 415, 422):
         try:
             snippet = (request.state._raw_body or b"")[:2048]
-            print("[405][DEBUG] method=", request.method, "path=", str(request.url))
-            print("[405][DEBUG] headers=", {k.lower(): v for k, v in request.headers.items() if k.lower() in ("content-type", "content-length", "authorization")})
-            print("[405][DEBUG] body=", snippet.decode(errors="ignore"))
+            print(f"[{response.status_code}][DEBUG] method=", request.method, "path=", str(request.url))
+            print(f"[{response.status_code}][DEBUG] headers=", {k.lower(): v for k, v in request.headers.items() if k.lower() in ("content-type", "content-length", "authorization")})
+            print(f"[{response.status_code}][DEBUG] body=", snippet.decode(errors="ignore"))
         except Exception:
             pass
     return response
@@ -59,7 +59,7 @@ async def capture_request_body(request: Request, call_next):
 
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
-    if exc.status_code == 405:
+    if exc.status_code in (400, 401, 403, 404, 405, 415, 422):
         # 返回更详细的 JSON，便于前端或调用方直接看到原因
         try:
             raw = getattr(request.state, "_raw_body", b"")
@@ -73,14 +73,14 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
             allow = None
         payload = {
             "error": "Method Not Allowed",
-            "status": 405,
+            "status": exc.status_code,
             "method": request.method,
             "path": str(request.url),
             "allow": allow,
             "headers": {k.lower(): v for k, v in request.headers.items() if k.lower() in ("content-type", "content-length", "authorization")},
             "body_snippet": snippet,
         }
-        return JSONResponse(payload, status_code=405)
+        return JSONResponse(payload, status_code=exc.status_code)
     # 其他保持默认
     return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
 

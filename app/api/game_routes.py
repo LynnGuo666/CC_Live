@@ -255,3 +255,4 @@ async def post_bingo_card(card: BingoCard):
     except Exception as e:
         print(f"接收 Bingo 卡片时发生错误: {str(e)}")
         raise HTTPException(status_code=500, detail=f"接收 Bingo 卡片失败: {str(e)}")
+
