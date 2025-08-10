@@ -27,11 +27,7 @@ async def handle_global_score_update(team_scores: List[TeamScore]):
         dict: 包含处理结果的响应信息
     """
     try:
-        print("全局分数更新:")
-        for team_score in team_scores:
-            print(f"  队伍: {team_score.team}, 总分: {team_score.total_score}")
-            for player_score in team_score.scores:
-                print(f"    玩家: {player_score.player}, 分数: {player_score.score}")
+        # 移除逐项打印，避免日志刷屏
         
         # 补充队伍颜色（若未传入），从配置读取
         from app.core.game_config import game_config
