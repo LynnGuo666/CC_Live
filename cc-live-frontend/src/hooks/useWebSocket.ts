@@ -112,6 +112,19 @@ export function useWebSocket() {
                   ...prev.recentEvents.slice(0, 9)
                 ]
               }));
+              // 将最近一次分数榜映射到全局，供跑酷弹窗玩家队伍颜色展示
+              try {
+                const score = (message as any).score_prediction;
+                if (score && score.team_rankings) {
+                  const map: Record<string, { team: string }> = {};
+                  for (const t of score.team_rankings) {
+                    for (const [p] of Object.entries(t.players || {})) {
+                      map[p] = { team: t.team_id };
+                    }
+                  }
+                  (window as any).__lastScoreMap = map;
+                }
+              } catch {}
               break;
 
             case 'game_score_update':

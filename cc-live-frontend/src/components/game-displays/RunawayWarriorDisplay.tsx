@@ -1,7 +1,8 @@
 'use client';
 
-import { ScorePrediction, RunawayWarriorSummary } from '@/types/tournament';
+import { ScorePrediction, RunawayWarriorSummary, TEAM_COLORS, TEAM_NAMES } from '@/types/tournament';
 import { useState } from 'react';
+import Image from 'next/image';
 
 interface RunawayWarriorDisplayProps {
   currentGameScore: ScorePrediction;
@@ -76,7 +77,7 @@ export default function RunawayWarriorDisplay({ currentGameScore, summary, class
             }
             // 关卡点击：展开该关卡下所有检查点（summary.order 中以该关卡开头的项）
             const details: Array<{ name: string; count: number; players: string[] }> = [];
-            const prefix = name.split('-')[0]; // main0 / sub1
+            const prefix = name; // 关卡名：main0 / sub1
             const allKeys = (summary?.order || []).filter(k => k.startsWith(prefix));
             if (allKeys.length === 0) {
               // 若没有细粒度检查点，则回退为按节点玩家
@@ -246,7 +247,7 @@ function CheckpointPlayersModal({ modal, onClose }: { modal: ModalState; onClose
               <div className="text-sm text-gray-500">暂无玩家</div>
             ) : (
               modal.players.map((p) => (
-                <div key={p} className="px-3 py-2 border rounded-lg bg-gray-50">{p}</div>
+                <PlayerRow key={p} name={p} />
               ))
             )}
           </div>
@@ -263,7 +264,7 @@ function CheckpointPlayersModal({ modal, onClose }: { modal: ModalState; onClose
                     <div className="text-sm text-gray-400">暂无玩家通过</div>
                   ) : (
                     d.players.map((p) => (
-                      <div key={p} className="px-2 py-1 rounded bg-white border text-sm">{p}</div>
+                      <PlayerRow key={p} name={p} compact />
                     ))
                   )}
                 </div>
@@ -271,6 +272,29 @@ function CheckpointPlayersModal({ modal, onClose }: { modal: ModalState; onClose
             ))}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+declare global {
+  interface Window { __lastScoreMap?: Record<string, { team: string }>; }
+}
+
+function PlayerRow({ name, compact = false }: { name: string; compact?: boolean }) {
+  // 使用最近的分数榜映射队伍与颜色（无则灰色）
+  const teamId = window.__lastScoreMap?.[name]?.team as string | undefined;
+  const color = teamId ? (TEAM_COLORS[teamId] || '#666') : '#666';
+  const teamName = teamId ? (TEAM_NAMES[teamId] || teamId) : '未知队伍';
+  return (
+    <div className={`flex items-center justify-between ${compact ? 'px-2 py-1' : 'px-3 py-2'} rounded bg-white border`}>
+      <div className="flex items-center gap-2 min-w-0">
+        <Image src={`https://mc-heads.net/avatar/${encodeURIComponent(name)}/64`} alt={name} width={compact ? 18 : 24} height={compact ? 18 : 24} className="rounded border" unoptimized />
+        <span className="text-sm font-medium text-gray-900 truncate">{name}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+        <span className="text-xs text-gray-600">{teamName}</span>
       </div>
     </div>
   );
