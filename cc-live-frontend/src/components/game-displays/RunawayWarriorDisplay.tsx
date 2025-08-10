@@ -10,7 +10,7 @@ interface RunawayWarriorDisplayProps {
 }
 
 export default function RunawayWarriorDisplay({ currentGameScore, summary, className = '' }: RunawayWarriorDisplayProps) {
-  const [activeModal, setActiveModal] = useState<{ title: string; players: string[] } | null>(null);
+  const [activeModal, setActiveModal] = useState<ModalState | null>(null);
 
   if (!currentGameScore) {
     return <div className="p-6 text-gray-500">等待游戏数据...</div>;
@@ -20,6 +20,24 @@ export default function RunawayWarriorDisplay({ currentGameScore, summary, class
   const completion = summary?.completion || { ez: 0, mid: 0, hard: 0 };
 
   const lanes = buildLanesFromSummary(summary);
+
+  function aggregateCountsForLanes(lanes: Array<{ label: string; nodes: string[] }>, s?: RunawayWarriorSummary | null): Record<string, number> {
+    const result: Record<string, number> = {};
+    const cps = s?.checkpoints || {};
+    // 列表页仅展示关卡：将 mainX 和 subY 聚合为该关卡下所有检查点的总通过人数
+    lanes.forEach(l => {
+      l.nodes.forEach(node => {
+        const prefix = node.split('-')[0];
+        const keys = (s?.order || Object.keys(cps)).filter(k => k.startsWith(prefix));
+        if (keys.length > 0) {
+          result[node] = keys.reduce((sum, k) => sum + (cps[k]?.count || 0), 0);
+        } else {
+          result[node] = cps[node]?.count || 0;
+        }
+      });
+    });
+    return result;
+  }
 
   return (
     <div className={`h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent ${className}`}>
@@ -46,29 +64,38 @@ export default function RunawayWarriorDisplay({ currentGameScore, summary, class
         {/* 跑酷路线图 */}
         <RunawayGraph 
           lanes={lanes} 
-          checkpoints={checkpoints} 
+          aggregateCounts={aggregateCountsForLanes(lanes, summary)}
           onNodeClick={(name) => {
-            // 结局节点：用 completionPlayers
+            // 结局节点：展示完成玩家
             if (name === 'fin1' || name === 'fin2' || name === 'fin3') {
-              const map: Record<'fin1' | 'fin2' | 'fin3', 'ez' | 'mid' | 'hard'> = {
-                fin1: 'ez', fin2: 'mid', fin3: 'hard'
-              };
+              const map: Record<'fin1' | 'fin2' | 'fin3', 'ez' | 'mid' | 'hard'> = { fin1: 'ez', fin2: 'mid', fin3: 'hard' };
               const key = map[name as 'fin1' | 'fin2' | 'fin3'];
               const players = (summary && (summary as unknown as { completionPlayers?: Record<'ez' | 'mid' | 'hard', string[]> }).completionPlayers?.[key]) || [];
-              setActiveModal({ title: `${name} 完成名单`, players });
+              setActiveModal({ mode: 'players', title: `${name} 完成名单`, players });
               return;
             }
-            // 普通检查点：来自 checkpoints
-            const players = checkpoints[name]?.players || [];
-            setActiveModal({ title: `${name} 通过名单`, players });
+            // 关卡点击：展开该关卡下所有检查点（summary.order 中以该关卡开头的项）
+            const details: Array<{ name: string; count: number; players: string[] }> = [];
+            const prefix = name.split('-')[0]; // main0 / sub1
+            const allKeys = (summary?.order || []).filter(k => k.startsWith(prefix));
+            if (allKeys.length === 0) {
+              // 若没有细粒度检查点，则回退为按节点玩家
+              const players = checkpoints[name]?.players || [];
+              setActiveModal({ mode: 'players', title: `${name} 通过名单`, players });
+              return;
+            }
+            allKeys.forEach(k => {
+              const entry = checkpoints[k] || { count: 0, players: [] as string[] };
+              details.push({ name: k, count: entry.count || 0, players: entry.players || [] });
+            });
+            setActiveModal({ mode: 'checkpoints', title: `${name} 检查点明细`, details });
           }}
         />
 
         {/* Modal: 显示节点通过玩家 */}
         {activeModal && (
           <CheckpointPlayersModal 
-            title={activeModal.title}
-            players={activeModal.players}
+            modal={activeModal}
             onClose={() => setActiveModal(null)}
           />
         )}
@@ -112,8 +139,33 @@ function CheckpointCard({ name, count, players }: CheckpointCardProps) {
 // 子线: sub{i}-0/1/2 放在 main{i} 与 main{i+1} 之间
 function buildLanesFromSummary(summary?: RunawayWarriorSummary | null) {
   const lanes: Array<{ label: string; nodes: string[] }> = [];
-  // 主线：每段 1/2/3（3 为完成），fin1/fin2/fin3 作为结局
-  const mainNodes = [
+
+  // 若有后端提供的顺序，则按真实检查点渲染，否则回退固定模板
+  if (summary && Array.isArray(summary.order) && summary.order.length > 0) {
+    const order = summary.order;
+    const mainNodes = order.filter(k => k.startsWith('main') || k.startsWith('fin'));
+    if (mainNodes.length > 0) {
+      lanes.push({ label: '主线', nodes: mainNodes });
+    }
+
+    // 自动发现支线编号，按 sub1..subN 分组
+    const subIds = Array.from(new Set(order
+      .filter(k => k.startsWith('sub'))
+      .map(k => k.match(/^sub(\d+)/)?.[1])
+      .filter((v): v is string => !!v)));
+    subIds.sort((a, b) => Number(a) - Number(b));
+    subIds.forEach(id => {
+      const nodes = order.filter(k => k.startsWith(`sub${id}`));
+      if (nodes.length > 0) {
+        lanes.push({ label: `支线${id}`, nodes });
+      }
+    });
+
+    return lanes;
+  }
+
+  // Fallback：固定模板
+  const fallbackMain = [
     'main0-1','main0-2','main0-3',
     'main1-1','main1-2','main1-3',
     'main2-1','main2-2','main2-3',
@@ -122,25 +174,21 @@ function buildLanesFromSummary(summary?: RunawayWarriorSummary | null) {
     'main5-1','main5-2','main5-3',
     'fin1','fin2','fin3'
   ];
-  lanes.push({ label: '主线', nodes: mainNodes });
+  lanes.push({ label: '主线', nodes: fallbackMain });
 
-  // 支线 sub1..sub5，每段 1/2/3，且在对应 mainN 之前右手侧
-  for (let i = 0; i < 5; i++) {
-    const laneLabel = `支线${i + 1}`;
-    const nodes = [`sub${i + 1}-1`, `sub${i + 1}-2`, `sub${i + 1}-3`];
-    lanes.push({ label: laneLabel, nodes });
+  for (let i = 1; i <= 5; i++) {
+    lanes.push({ label: `支线${i}`, nodes: [`sub${i}-1`, `sub${i}-2`, `sub${i}-3`] });
   }
-
   return lanes;
 }
 
 interface RunawayGraphProps {
   lanes: Array<{ label: string; nodes: string[] }>;
-  checkpoints: Record<string, { count: number; players: string[] }>;
+  aggregateCounts: Record<string, number>;
   onNodeClick?: (name: string) => void;
 }
 
-function RunawayGraph({ lanes, checkpoints, onNodeClick }: RunawayGraphProps) {
+function RunawayGraph({ lanes, aggregateCounts, onNodeClick }: RunawayGraphProps) {
   return (
     <div className="bg-white rounded-xl p-4 border">
       <div className="font-semibold text-gray-900 mb-3">跑酷路线图</div>
@@ -152,7 +200,7 @@ function RunawayGraph({ lanes, checkpoints, onNodeClick }: RunawayGraphProps) {
               <div className="flex items-center gap-2">
                 {lane.nodes.map((node, idx) => (
                   <div key={node} className="flex items-center gap-2">
-                    <CheckpointBubble name={node} count={checkpoints[node]?.count || 0} onClick={() => onNodeClick?.(node)} />
+                    <CheckpointBubble name={node} count={aggregateCounts[node] || 0} onClick={() => onNodeClick?.(node)} />
                     {idx < lane.nodes.length - 1 && <div className="h-0.5 w-6 bg-gray-300" />}
                   </div>
                 ))}
@@ -180,23 +228,49 @@ function CheckpointBubble({ name, count, onClick }: { name: string; count: numbe
   );
 }
 
-function CheckpointPlayersModal({ title, players, onClose }: { title: string; players: string[]; onClose: () => void }) {
+type ModalState =
+  | { mode: 'players'; title: string; players: string[] }
+  | { mode: 'checkpoints'; title: string; details: Array<{ name: string; count: number; players: string[] }> };
+
+function CheckpointPlayersModal({ modal, onClose }: { modal: ModalState; onClose: () => void }) {
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-4 border-b">
-          <div className="font-semibold text-gray-900">{title}</div>
+          <div className="font-semibold text-gray-900">{modal.title}</div>
           <button className="text-gray-500 hover:text-gray-700" onClick={onClose}>✕</button>
         </div>
-        <div className="p-4 space-y-2">
-          {players.length === 0 ? (
-            <div className="text-sm text-gray-500">暂无玩家通过</div>
-          ) : (
-            players.map((p) => (
-              <div key={p} className="px-3 py-2 border rounded-lg bg-gray-50">{p}</div>
-            ))
-          )}
-        </div>
+        {modal.mode === 'players' ? (
+          <div className="p-4 space-y-2">
+            {modal.players.length === 0 ? (
+              <div className="text-sm text-gray-500">暂无玩家</div>
+            ) : (
+              modal.players.map((p) => (
+                <div key={p} className="px-3 py-2 border rounded-lg bg-gray-50">{p}</div>
+              ))
+            )}
+          </div>
+        ) : (
+          <div className="p-4 space-y-3">
+            {modal.details.map((d) => (
+              <div key={d.name} className="border rounded-lg">
+                <div className="px-3 py-2 flex items-center justify-between bg-gray-50 rounded-t-lg">
+                  <div className="font-medium text-gray-900">{d.name}</div>
+                  <div className="text-xs px-2 py-0.5 rounded-full bg-blue-600 text-white">{d.count}</div>
+                </div>
+                <div className="p-3 space-y-1">
+                  {d.players.length === 0 ? (
+                    <div className="text-sm text-gray-400">暂无玩家通过</div>
+                  ) : (
+                    d.players.map((p) => (
+                      <div key={p} className="px-2 py-1 rounded bg-white border text-sm">{p}</div>
+                    ))
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

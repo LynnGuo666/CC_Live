@@ -233,15 +233,20 @@ class DataManager:
                 completion['other'] += 1
                 completion_players['other'].append(player)
 
-        # 预设顺序（若检查点命名与此不同，前端仍可从 checkpoints 字典遍历）
+        # 预设顺序（按你的要求：main{i}-1..3；sub{i}-1..3 在主线之间；fin1/2/3 末尾）
         order = [
-            "main0", "check0", "check1", "check2",
-            "sub1-0", "sub1-1", "sub1-2",
-            "main1", "main2", "main3", "main4", "main5",
-            # 完成阶段（显示在末尾）
-            "finish-ez-0", "finish-ez-1",
-            "finish-mid-0", "finish-mid-1", "finish-mid-2",
-            "finish-hard-0", "finish-hard-1", "finish-hard-2",
+            'main0-1','main0-2','main0-3',
+            'sub1-1','sub1-2','sub1-3',
+            'main1-1','main1-2','main1-3',
+            'sub2-1','sub2-2','sub2-3',
+            'main2-1','main2-2','main2-3',
+            'sub3-1','sub3-2','sub3-3',
+            'main3-1','main3-2','main3-3',
+            'sub4-1','sub4-2','sub4-3',
+            'main4-1','main4-2','main4-3',
+            'sub5-1','sub5-2','sub5-3',
+            'main5-1','main5-2','main5-3',
+            'fin1','fin2','fin3'
         ]
 
         return {
