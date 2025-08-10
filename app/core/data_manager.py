@@ -160,7 +160,8 @@ class DataManager:
                 ],
                 "currentGameScore": self.current_game_score,
                 "bingoCard": self._serialize_bingo_card() if self.bingo_card else None,
-                "itemImages": self.item_image_cache,
+                 # 后端统一提供物品图片映射，前端不再尝试解析，避免闪烁
+                 "itemImages": self.item_image_cache,
                 "currentVote": {
                     "time_remaining": self.current_vote_data.time,
                     "total_games": len(self.current_vote_data.votes),
@@ -257,6 +258,23 @@ class DataManager:
         """更新 Bingo 卡片，并准备广播"""
         self.bingo_card = card
         print("更新 Bingo 卡片: {}x{} size={}".format(card.width, card.height, card.size))
+        # 预解析所有物品图片，异步触发解析，填充缓存
+        try:
+            materials = set()
+            for key, task in (card.tasks or {}).items():
+                mat = getattr(task, 'material', None)
+                if mat:
+                    materials.add(mat)
+            # 异步触发解析（不 await，逐步填充缓存）
+            async def _warmup():
+                for m in materials:
+                    try:
+                        await self.resolve_item_image(m)
+                    except Exception:
+                        pass
+            asyncio.create_task(_warmup())
+        except Exception as e:
+            print(f"预解析 Bingo 物品图片失败: {e}")
 
     def _serialize_bingo_card(self) -> Dict:
         """将 BingoCard 转为可 JSON 序列化的 dict，以与前端类型兼容"""
@@ -281,7 +299,7 @@ class DataManager:
         page_title = mcid.replace('_', ' ').title()
         api_bases = [
             "https://zh.minecraft.wiki/api.php",
-            "https://minecraft.wiki/api.php",
+            "https://minecraft.fandom.com/zh/api.php",
         ]
         async with httpx.AsyncClient(timeout=10.0) as client:
             for _ in range(max_attempts):
@@ -334,6 +352,7 @@ class DataManager:
                                 break
 
                     if found_src:
+                        # 转发到下一跳 CDN：避免跨域或未来域名变动
                         self.item_image_cache[mcid] = found_src
                         return found_src
                 except Exception as e:

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { BingoCard, BingoTask } from '@/types/tournament';
+import { BingoCard, BingoTask, TournamentData } from '@/types/tournament';
 import { TEAM_COLORS, TEAM_NAMES } from '@/types/tournament';
 import BingoTaskModal from './BingoTaskModal';
 
@@ -16,6 +16,8 @@ const MATERIAL_IMG_CACHE: Record<string, string> = {};
 export default function BingoCardComponent({ bingoCard, className = '' }: BingoCardProps) {
   const [selectedTask, setSelectedTask] = useState<BingoTask | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  // 从 window 注入的全量数据中读取 itemImages（由 useWebSocket 在最近一次 game_event 时也会映射 window.__lastScoreMap，复用此思路轻量获取）
+  const itemImages: TournamentData['itemImages'] = (typeof window !== 'undefined' && (window as unknown as { __itemImages?: TournamentData['itemImages'] }).__itemImages) || undefined;
 
   const handleTaskClick = (task: BingoTask) => {
     setSelectedTask(task);
@@ -69,43 +71,11 @@ export default function BingoCardComponent({ bingoCard, className = '' }: BingoC
 
   // 小部件：逐个尝试候选图片，失败则回退到 emoji
   function MaterialImage({ material }: { material: string }) {
-    const cached = MATERIAL_IMG_CACHE[material];
-    const [idx, setIdx] = useState(cached ? -1 : 0); // -1 表示使用缓存 URL
-    const [failed, setFailed] = useState(false);
-    const candidates = getWikiImageCandidates(material);
-
-    if (failed || candidates.length === 0) {
-      return <span role="img" aria-label="item">📦</span>;
-    }
-
-    // 优先使用缓存 URL
-    const src = idx === -1 && cached ? cached : candidates[Math.min(idx, candidates.length - 1)];
-
+    // 优先使用后端下发图片，避免前端抖动；无图则回退到 emoji
+    const url = itemImages?.[material] || null;
+    if (!url) return <span role="img" aria-label="item">📦</span>;
     // eslint-disable-next-line @next/next/no-img-element
-    return (
-      <img
-        src={src}
-        alt={material}
-        className="h-8 w-8 object-contain"
-        onError={() => {
-          // 缓存失效则清除并开始候选尝试
-          if (idx === -1) {
-            delete MATERIAL_IMG_CACHE[material];
-            setIdx(0);
-            return;
-          }
-          if (idx < candidates.length - 1) setIdx(idx + 1);
-          else setFailed(true);
-        }}
-        onLoad={() => {
-          if (idx >= 0) {
-            // 成功后写入缓存，后续同物品不再尝试其它候选
-            MATERIAL_IMG_CACHE[material] = candidates[idx];
-            setIdx(-1);
-          }
-        }}
-      />
-    );
+    return <img src={url} alt={material} className="h-8 w-8 object-contain" />;
   }
 
   // 解析 Adventure TextComponent 的 toString 文本为可读字符串

@@ -184,7 +184,7 @@ function renderFallbackCard({ title }: { title: string }) {
               >
                 <span className="inline-flex items-center gap-2">
                   <IconTrophy className="w-4 h-4 text-yellow-500" />
-                  <span>查看比赛数据、选手排名(联合锦标赛官网)</span>
+                  <span>查看比赛数据、选手排名</span>
                 </span>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-gray-400 group-hover:text-blue-600">
                   <path fillRule="evenodd" d="M5 4a1 1 0 011-1h9a1 1 0 011 1v9a1 1 0 11-2 0V6.414l-8.293 8.293a1 1 0 01-1.414-1.414L12.586 5H6a1 1 0 01-1-1z" clipRule="evenodd" />

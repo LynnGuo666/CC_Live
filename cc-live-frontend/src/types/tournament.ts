@@ -132,6 +132,8 @@ export interface TournamentData {
   recentEvents: GameEvent[];
   bingoCard?: BingoCard | null; // 新增：Bingo卡片数据
   runawayWarrior?: RunawayWarriorSummary | null; // 新增：跑路战士汇总
+  // 由后端解析并缓存的物品图片映射：material -> image_url（可能为 null）
+  itemImages?: Record<string, string | null>;
   connectionStatus: {
     connected: boolean;
     connection_count: number;
