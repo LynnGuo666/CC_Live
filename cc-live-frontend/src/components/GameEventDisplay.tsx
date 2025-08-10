@@ -137,7 +137,7 @@ export default function GameEventDisplay({ events, maxEvents = 10, className = "
 
   return (
     <div className={`bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg flex flex-col ${className}`}>
-      <div className="p-4 border-b border-gray-200/50 flex items-center justify-between">
+      <div className="p-3 sm:p-4 border-b border-gray-200/50 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900">实时事件</h2>
         {enableFilter && (
           <div className="flex items-center gap-2">
@@ -150,7 +150,7 @@ export default function GameEventDisplay({ events, maxEvents = 10, className = "
             <select
               value={teamFilter}
               onChange={(e) => setTeamFilter(e.target.value)}
-              className="text-sm border rounded-md px-2 py-1 bg-white"
+              className="text-xs sm:text-sm border rounded-md px-2 py-1 bg-white"
             >
               <option value="">全部队伍</option>
               {Object.keys(TEAM_NAMES).map((tid) => (
@@ -170,9 +170,9 @@ export default function GameEventDisplay({ events, maxEvents = 10, className = "
         ) : (
           <div 
             ref={scrollRef}
-            className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
+            className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent -mx-1 sm:mx-0 px-1 sm:px-0"
           >
-            <div className="p-3 space-y-1">
+            <div className="p-2 sm:p-3 space-y-1.5">
               {displayEvents.map((event, index) => {
                 const eventColors = getEventColor(event.event);
                 const isRecentEvent = index < 3; // Highlight recent events

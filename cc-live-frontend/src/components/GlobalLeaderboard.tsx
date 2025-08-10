@@ -40,7 +40,7 @@ export default function GlobalLeaderboard({ globalScores, className = "" }: Glob
 
   return (
     <div className={`bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg flex flex-col h-full relative ${className}`}>
-      <div className="p-6 border-b border-gray-200/50 flex-shrink-0">
+      <div className="p-4 sm:p-6 border-b border-gray-200/50 flex-shrink-0">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-gray-900">总积分榜</h2>
           
@@ -70,7 +70,7 @@ export default function GlobalLeaderboard({ globalScores, className = "" }: Glob
         </div>
       </div>
 
-      <div className="absolute top-[88px] bottom-0 left-0 right-0 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+      <div className="absolute top-[80px] sm:top-[88px] bottom-0 left-0 right-0 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
         {viewMode === 'team' ? (
             <div className="p-6 space-y-4">
               {sortedTeams.map((team, index) => {

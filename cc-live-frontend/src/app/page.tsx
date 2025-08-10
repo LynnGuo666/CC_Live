@@ -44,9 +44,9 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen bg-gray-50">
+    <div className="min-h-[100svh] bg-gradient-to-b from-gray-50 to-white">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-50">
+      <header className="supports-[backdrop-filter]:bg-white/60 bg-white/90 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-50">
         <div className="max-w-[1920px] mx-auto px-6">
           <div className="flex items-center justify-between h-16 w-full">
             <div className="flex items-center space-x-4">
@@ -66,7 +66,7 @@ export default function Home() {
               )}
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="hidden md:flex items-center space-x-4">
               <div className="flex items-center space-x-4 text-sm text-gray-600">
                 {/* Game Status Indicator */}
                 <div className="flex items-center space-x-1">
@@ -93,9 +93,9 @@ export default function Home() {
                   </div>
                 )}
               </div>
-              <div className="h-4 w-px bg-gray-300"></div>
-              {/* Viewer ID 输入，用于观赛统计 */}
-              <div className="flex items-center space-x-2">
+              <div className="hidden sm:block h-4 w-px bg-gray-300"></div>
+              {/* Viewer ID 输入，用于观赛统计（md+显示，移动在弹出层） */}
+              <div className="hidden sm:flex items-center space-x-2">
                 {data.connectionStatus.viewer_id && (
                   <span className="px-2 py-0.5 text-xs rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                     观赛ID: {data.connectionStatus.viewer_id}
@@ -122,12 +122,23 @@ export default function Home() {
                   >提交</button>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'} ${isConnected ? 'animate-pulse' : ''}`}></div>
+              <div className="flex items-center space-x-2" aria-live="polite">
+                <span className="relative flex h-3 w-3">
+                  {isConnected && (
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 animate-ping"></span>
+                  )}
+                  <span className={`relative inline-flex h-3 w-3 rounded-full ${isConnected ? 'bg-green-600' : 'bg-red-600'}`}></span>
+                </span>
                 <span className={`text-sm font-medium ${isConnected ? 'text-green-700' : 'text-red-700'}`}>
                   {isConnected ? '已连接' : '未连接'}
                 </span>
               </div>
+              {/* 移动端观赛ID弹出按钮 */}
+              <button
+                className="sm:hidden px-2 py-1 rounded-md border bg-white text-gray-700"
+                aria-label="填写观赛ID"
+                onClick={() => setToast('请在弹窗中填写观赛ID（待实现）')}
+              >🪪</button>
             </div>
           </div>
         </div>
@@ -141,10 +152,10 @@ export default function Home() {
       )}
 
       {/* Main Content */}
-      <main className="min-h-[calc(100vh-64px)] max-w-[1920px] mx-auto px-6 py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 min-h-full">
+      <main className="min-h-[calc(100svh-64px)] max-w-[1920px] mx-auto px-4 sm:px-6 py-4 sm:py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 min-h-0">
           {/* Left Column - Global Leaderboard */}
-          <div className="xl:col-span-3 flex flex-col min-h-[600px]">
+          <div className="lg:col-span-3 flex flex-col min-h-0">
             <GlobalLeaderboard 
               globalScores={data.globalScores}
               className="flex-1 min-h-0"
@@ -152,7 +163,7 @@ export default function Home() {
           </div>
 
           {/* Center Column - Game Display */}
-          <div className="xl:col-span-6 min-h-[600px] flex flex-col space-y-6">
+          <div className="lg:col-span-6 min-h-0 flex flex-col space-y-4 sm:space-y-6">
             {/* Game Display */}
             {/* 将 runawayWarrior 汇总通过 context 下发到 RunawayWarriorDisplay */}
             <GameDisplay 
@@ -169,12 +180,12 @@ export default function Home() {
               events={data.recentEvents} 
               maxEvents={8}
               enableFilter
-              className="h-48"
+              className="max-h-[40svh] sm:h-48"
             />
           </div>
 
           {/* Right Column - Current Game Leaderboard */}
-          <div className="xl:col-span-3 flex flex-col min-h-[600px]">
+          <div className="lg:col-span-3 flex flex-col min-h-0">
             <CurrentGameLeaderboard 
               currentGameScore={data.currentGameScore}
               gameStatus={data.gameStatus}
