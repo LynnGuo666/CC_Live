@@ -84,7 +84,8 @@ export type WSMessage =
   | { type: 'game_round_change'; game_id: string; round: number; timestamp: string }
   | { type: 'global_score_update'; data: { total_teams: number; team_scores: TeamScore[] }; timestamp: string }
   | { type: 'global_event'; data: GameStatus; timestamp: string }
-  | { type: 'vote_event'; data: VoteData; timestamp: string };
+  | { type: 'vote_event'; data: VoteData; timestamp: string }
+  | { type: 'viewer_id_ack'; viewer_id: string; timestamp: string };
 
 // Bingo游戏相关类型定义
 export interface BingoTask {

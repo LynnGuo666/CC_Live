@@ -65,6 +65,11 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str = Query(None))
                 # 接收观赛ID，记录到客户端信息，便于统计
                 elif message.get("type") == "viewer_id":
                     connection_manager.client_info[websocket]["viewer_id"] = message.get("viewer_id")
+                    await connection_manager.send_personal_message({
+                        "type": "viewer_id_ack",
+                        "viewer_id": connection_manager.client_info[websocket]["viewer_id"],
+                        "timestamp": connection_manager.client_info[websocket]["last_ping"]
+                    }, websocket)
                     
             except asyncio.TimeoutError:
                 # 可以添加超时处理

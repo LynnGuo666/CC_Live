@@ -74,6 +74,15 @@ export function useWebSocket() {
           const message: WSMessage = JSON.parse(event.data);
           
           switch (message.type) {
+            case 'viewer_id_ack':
+              setData(prev => ({
+                ...prev,
+                connectionStatus: {
+                  ...prev.connectionStatus,
+                  last_ping: message.timestamp
+                }
+              }));
+              break;
             case 'connection':
               setData(prev => ({
                 ...prev,

@@ -106,6 +106,8 @@ export default function Home() {
                     if (viewerId.trim()) {
                       // 通过 WS 发送一个标识消息，后端可在统计中使用
                       sendMessage({ type: 'viewer_id', viewer_id: viewerId.trim() });
+                      // 清空输入并提示
+                      setViewerId('');
                     }
                   }}
                   className="px-2 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
