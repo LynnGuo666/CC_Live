@@ -3,7 +3,6 @@
 import { useWebSocket } from '@/hooks/useWebSocket';
 import GlobalLeaderboard from '@/components/GlobalLeaderboard';
 import GameEventDisplay from '@/components/GameEventDisplay';
-import VotingDisplay from '@/components/VotingDisplay';
 import ConnectionIndicator from '@/components/ConnectionIndicator';
 import GameDisplay from '@/components/GameDisplay';
 import CurrentGameLeaderboard from '@/components/CurrentGameLeaderboard';

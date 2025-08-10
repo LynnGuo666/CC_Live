@@ -202,20 +202,20 @@ export const TEAM_COLORS: Record<string, string> = {
 };
 
 export const TEAM_NAMES: Record<string, string> = {
-  'WHITE': '白队',
-  'ORANGE': '橙队',
-  'MAGENTA': '品红队', 
-  'LIGHT_BLUE': '淡蓝队',
-  'YELLOW': '黄队',
-  'LIME': '黄绿队',
-  'PINK': '粉红队',
-  'GRAY': '灰队',
-  'LIGHT_GRAY': '淡灰队',
-  'CYAN': '青队',
-  'PURPLE': '紫队',
-  'BLUE': '蓝队',
-  'BROWN': '棕队',
-  'GREEN': '绿队',
-  'RED': '红队',
-  'BLACK': '黑队'
+  'YELLOW': '锤神叒启',
+  'BLUE': '对吗不队',
+  'GREEN': '滑动变组',
+  'RED': '灵栖觉岸',
+  'PURPLE': '来吧肘起',
+  'PINK': '啊堆怼兑',
+  'WHITE': '落地水队',
+  'LIGHT_BLUE': '夏日派对',
+  'ORANGE': '木玉成约',
+  'CYAN': '魔芋爽',
+  'BLACK': '布里吉斯',
+  'GRAY': '虚空漫步',
+  'MAGENTA': '堵桥来',
+  'LIME': '取经',
+  'LIGHT_GRAY': '无言以队',
+  'BROWN': '曲奇白巧'
 };
