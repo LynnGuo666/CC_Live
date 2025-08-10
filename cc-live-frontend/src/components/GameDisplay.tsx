@@ -2,6 +2,7 @@
 
 import { GameStatus, ScorePrediction, VoteData, BingoCard, RunawayWarriorSummary, GAME_NAMES } from '@/types/tournament';
 import { APP_CONFIG } from '@/config/appConfig';
+import { useEffect, useRef, useState } from 'react';
 
 // Import game-specific displays
 import BingoDisplay from './game-displays/BingoDisplay';
@@ -26,7 +27,31 @@ interface GameDisplayProps {
 }
 
 export default function GameDisplay({ gameStatus, currentGameScore, voteData, bingoCard, runawayWarrior, className = "" }: GameDisplayProps) {
-  
+  const [showTransition, setShowTransition] = useState(false);
+  const prevGameKeyRef = useRef<string | null>(null);
+
+  // 检测游戏切换：name+round 变化时开启过渡层
+  useEffect(() => {
+    const name = gameStatus?.game?.name || '';
+    const round = gameStatus?.game?.round || 0;
+    const key = `${name}:${round}`;
+    if (prevGameKeyRef.current && prevGameKeyRef.current !== key) {
+      setShowTransition(true);
+    }
+    if (key !== ':0') {
+      prevGameKeyRef.current = key;
+    }
+  }, [gameStatus?.game?.name, gameStatus?.game?.round]);
+
+  // 当新游戏数据就绪时关闭过渡层
+  useEffect(() => {
+    if (!showTransition) return;
+    if (gameStatus?.status !== 'gaming') return;
+    const name = gameStatus?.game?.name || '';
+    const ready = name === 'bingo' ? Boolean(bingoCard || currentGameScore) : Boolean(currentGameScore);
+    if (ready) setShowTransition(false);
+  }, [showTransition, gameStatus?.status, gameStatus?.game?.name, bingoCard, currentGameScore]);
+
   // If no game status, show nothing or default content
   if (!gameStatus) {
     return (
@@ -78,8 +103,13 @@ export default function GameDisplay({ gameStatus, currentGameScore, voteData, bi
       }
 
       return (
-        <div className={`bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg flex flex-col h-full overflow-hidden ${className}`}>
+        <div className={`relative bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg flex flex-col h-full overflow-hidden ${className}`}>
           {renderGameContent(currentGameScore, bingoCard, runawayWarrior)}
+          {showTransition && (
+            <div className="absolute inset-0 z-50">
+              {renderFallbackCard({ title: '加载游戏数据中…' })}
+            </div>
+          )}
         </div>
       );
       

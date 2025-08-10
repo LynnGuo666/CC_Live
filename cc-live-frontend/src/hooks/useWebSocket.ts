@@ -134,8 +134,16 @@ export function useWebSocket() {
                     }
                   } catch {}
 
+                  // 合并策略：避免在新游戏数据尚未到达前清空中心展示
                   return {
+                    ...prev,
                     ...incoming,
+                    currentGameScore: (incoming as typeof prev).currentGameScore ?? prev.currentGameScore,
+                    bingoCard: Object.prototype.hasOwnProperty.call(incoming, 'bingoCard')
+                      ? ((incoming as typeof prev).bingoCard ?? prev.bingoCard)
+                      : prev.bingoCard,
+                    runawayWarrior: (incoming as typeof prev).runawayWarrior ?? prev.runawayWarrior,
+                    recentEvents: (incoming as typeof prev).recentEvents || prev.recentEvents,
                     connectionStatus: {
                       // 以现有为基，覆盖服务端提供的字段，但保留 viewer_id
                       ...previousConnection,
