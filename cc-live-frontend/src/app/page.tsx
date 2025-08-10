@@ -163,7 +163,7 @@ export default function Home() {
       <main className="min-h-[calc(100svh-64px)] max-w-[1920px] mx-auto px-4 sm:px-6 py-4 sm:py-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 min-h-0 items-stretch">
           {/* Left Column - Global Leaderboard */}
-          <div className="lg:col-span-3 flex flex-col min-h-0">
+          <div className="lg:col-span-3 flex flex-col min-h-0 self-start h-[60svh] sm:h-[70svh] lg:h-[calc(100svh-120px)]">
             <GlobalLeaderboard 
               globalScores={data.globalScores}
               className="flex-1 min-h-0"
