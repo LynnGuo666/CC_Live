@@ -109,8 +109,35 @@ export default function BingoTaskModal({ task, isOpen, onClose }: BingoTaskModal
           {/* Task Description */}
           <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
             <h5 className="font-medium text-gray-900 mb-2">任务描述</h5>
-              <p className="text-gray-700">{task.display_description || parseAdventureText(task.description)}</p>
+              <p className="text-gray-700 whitespace-pre-wrap">{task.display_description || parseAdventureText(task.description)}</p>
           </div>
+
+          {/* AI 建议/来源/难度 */}
+          {(task.advice || task.source || task.difficulty) && (
+            <div className="bg-white rounded-lg p-3 sm:p-4 border">
+              <h5 className="font-medium text-gray-900 mb-2">辅助信息</h5>
+              <div className="space-y-2 text-sm">
+                {task.advice && (
+                  <div>
+                    <span className="text-gray-500">建议：</span>
+                    <span className="text-gray-800">{task.advice}</span>
+                  </div>
+                )}
+                {task.source && (
+                  <div>
+                    <span className="text-gray-500">来源：</span>
+                    <span className="text-gray-800 break-words">{task.source}</span>
+                  </div>
+                )}
+                {task.difficulty && (
+                  <div>
+                    <span className="text-gray-500">难度：</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">{task.difficulty}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Task Details */}
           {(task.material || task.count) && (

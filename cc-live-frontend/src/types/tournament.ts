@@ -104,6 +104,10 @@ export interface BingoTask {
   display_name?: string;
   display_description?: string;
   task_kind?: string;
+  // AI 增强字段（可选）
+  advice?: string;
+  source?: string;
+  difficulty?: string;
 }
 
 export interface BingoTeamInfo {

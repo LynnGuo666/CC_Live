@@ -546,61 +546,34 @@ class DataManager:
         async def _proc(key: str, task_obj):
             async with sem:
                 try:
-                    # 物品任务：优先使用 material 查询中文名
+                    # 仅使用 OpenAI 进行本地化（若未配置则回退原解析）
                     material = getattr(task_obj, 'material', None)
                     count = getattr(task_obj, 'count', None)
-                    zh_material: Optional[str] = None
-                    if isinstance(material, str) and material:
-                        # material 如 DIAMOND_CHESTPLATE -> Diamond Chestplate
-                        pretty = material.lower().split('_')
-                        title_case = ' '.join(w.capitalize() for w in pretty)
-                        zh_material = await self.resolve_zh_title(title_case)
-                    # name/description 内若有英文关键短语，也尝试解析
+                    task_kind = getattr(task_obj, 'task_kind', None) or getattr(task_obj, 'type', None)
+
                     base_name = getattr(task_obj, 'display_name', None) or self._parse_adventure_text(getattr(task_obj, 'name', ''))
                     base_desc = getattr(task_obj, 'display_description', None) or self._parse_adventure_text(getattr(task_obj, 'description', ''))
-                    # 进一步尝试从 name 中抽取括号内关键字做查询
-                    import re
-                    candidates: List[str] = []
-                    for m in re.finditer(r"item\.minecraft\.([a-z0-9_]+)|block\.minecraft\.([a-z0-9_]+)|entity\.minecraft\.([a-z0-9_]+)", getattr(task_obj, 'name', '')):
-                        g = next((x for x in m.groups() if x), None)
-                        if g:
-                            candidates.append(' '.join(w.capitalize() for w in g.split('_')))
-                    # 加入已格式化的英文词做保底
-                    if base_name:
-                        # 取最长的英文连续片段
-                        words = re.findall(r"[A-Za-z][A-Za-z\s_-]{2,}", base_name)
-                        if words:
-                            candidates.append(max(words, key=len))
-                    zh_title: Optional[str] = None
-                    for q in candidates:
-                        zh_title = await self.resolve_zh_title(q)
-                        if zh_title:
-                            break
-                    # 组装展示：优先中文物品名
-                    if zh_material:
-                        if isinstance(count, int) and count > 0:
-                            task_obj.display_name = f"{count}个 {zh_material}"
-                        else:
-                            task_obj.display_name = zh_material
-                    elif zh_title:
-                        task_obj.display_name = zh_title
-                    else:
-                        task_obj.display_name = base_name
-                    # 描述中文：若能解析中文标题则替换，否则保留
-                    task_obj.display_description = base_desc
 
-                    # 如设置了 OpenAI，进一步润色/本地化
+                    enhanced: Optional[Dict[str, str]] = None
                     try:
                         if self.openai_base and self.openai_key:
                             enhanced = await self._openai_localize(
-                                name=task_obj.display_name or base_name,
-                                desc=task_obj.display_description or base_desc
+                                name=base_name,
+                                desc=base_desc,
+                                material=str(material) if material else None,
+                                count=int(count) if isinstance(count, int) else None,
+                                kind=str(task_kind) if task_kind else None,
                             )
-                            if enhanced and isinstance(enhanced, dict):
-                                task_obj.display_name = enhanced.get('name') or task_obj.display_name
-                                task_obj.display_description = enhanced.get('desc') or task_obj.display_description
                     except Exception as oe:
                         print(f"OpenAI 本地化失败: {oe}")
+
+                    task_obj.display_name = (enhanced.get('name') if isinstance(enhanced, dict) else None) or base_name
+                    task_obj.display_description = (enhanced.get('desc') if isinstance(enhanced, dict) else None) or base_desc
+                    # 建议信息
+                    if isinstance(enhanced, dict):
+                        task_obj.advice = enhanced.get('advice') or task_obj.advice
+                        task_obj.source = enhanced.get('source') or task_obj.source
+                        task_obj.difficulty = enhanced.get('difficulty') or task_obj.difficulty
                     # 进度
                     self.progress_bingo['localize']['done'] += 1
                     self.progress_bingo['updated_at_ms'] = int(datetime.now().timestamp() * 1000)
@@ -609,7 +582,7 @@ class DataManager:
 
         await asyncio.gather(*[_proc(k, t) for k, t in tasks.items()])
     
-    async def _openai_localize(self, *, name: str, desc: str) -> Optional[Dict[str, str]]:
+    async def _openai_localize(self, *, name: str, desc: str, material: Optional[str] = None, count: Optional[int] = None, kind: Optional[str] = None) -> Optional[Dict[str, str]]:
         """调用自定义 OpenAI 兼容接口，对名称/描述进行中文润色。"""
         try:
             import json as _json
@@ -620,8 +593,16 @@ class DataManager:
                 'Authorization': f'Bearer {self.openai_key}',
                 'Content-Type': 'application/json'
             }
-            system = '你是一个将 Minecraft 物品与成就文本本地化为简体中文的助手。保持专业、简洁，不要添加无关内容。'
-            user = f"将以下名称与描述润色为简体中文，若已是中文则优化表述：\n名称: {name}\n描述: {desc}\n只返回JSON对象，字段为 name, desc。"
+            system = '你是一个将 Minecraft 物品与成就文本本地化为简体中文的助手。请：1) 输出更自然的中文标题与描述；2) 提供简要合成/完成建议；3) 给出获取途径或位置来源；4) 评估难度为 简单/中等/困难。仅返回JSON，不要多余文本。'
+            meta = []
+            if material:
+                meta.append(f"material={material}")
+            if isinstance(count, int):
+                meta.append(f"count={count}")
+            if kind:
+                meta.append(f"kind={kind}")
+            meta_line = ("，".join(meta)) if meta else ""
+            user = f"请本地化并补充信息（{meta_line}）。\n名称: {name}\n描述: {desc}\n返回 JSON: {{name, desc, advice, source, difficulty}}"
             payload = {
                 'model': 'gpt-5-2025-08-07',
                 'messages': [

@@ -111,6 +111,10 @@ class BingoTask(BaseModel):
     display_name: Optional[str] = Field(None, description="用于展示的任务名称（后端解析）")
     display_description: Optional[str] = Field(None, description="用于展示的任务描述（后端解析）")
     task_kind: Optional[str] = Field(None, description="标准化任务类型：item/advancement/statistic/kill/craft/mine/other")
+    # OpenAI 增强信息
+    advice: Optional[str] = Field(None, description="合成或完成建议")
+    source: Optional[str] = Field(None, description="获取途径/位置来源")
+    difficulty: Optional[str] = Field(None, description="难度评估：如 简单/中等/困难")
 
 
 class BingoTeamMember(BaseModel):

@@ -230,7 +230,8 @@ export default function Home() {
           </div>
 
           {/* Right Column - Current Game Leaderboard */}
-          {!isBingoGame() && (
+          {/* Bingo 保留右侧预测分数榜 */}
+          {(
             <div className="lg:col-span-3 flex flex-col min-h-0 h-[60svh] sm:h-[70svh] lg:h-[calc(100svh-120px)]">
               <CurrentGameLeaderboard 
                 currentGameScore={data.currentGameScore}
