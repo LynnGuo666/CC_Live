@@ -14,7 +14,7 @@ export default function BingoDisplay({ currentGameScore, bingoCard }: BingoDispl
   if (bingoCard) {
     return (
       <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-        <div className="p-6">
+        <div className="p-3 sm:p-6">
           <BingoCardComponent bingoCard={bingoCard} />
         </div>
       </div>

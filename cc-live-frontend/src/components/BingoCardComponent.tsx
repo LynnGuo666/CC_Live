@@ -195,9 +195,9 @@ export default function BingoCardComponent({ bingoCard, className = '' }: BingoC
       </div>
 
       {/* Bingo Grid */}
-      <div className="p-6">
+      <div className="p-3 sm:p-6">
         <div 
-          className="grid gap-2"
+          className="grid gap-1.5 sm:gap-2"
           style={{ 
             gridTemplateColumns: `repeat(${bingoCard.width}, 1fr)`,
             aspectRatio: `${bingoCard.width} / ${bingoCard.height}`
@@ -208,29 +208,29 @@ export default function BingoCardComponent({ bingoCard, className = '' }: BingoC
               key={`${task.x}-${task.y}`}
               onClick={() => handleTaskClick(task)}
               className={`
-                relative aspect-square rounded-lg border-2 p-2 transition-all duration-200 hover:scale-105 hover:shadow-md
-                flex flex-col items-center justify-center text-center
+                relative aspect-square rounded-md sm:rounded-lg border p-1.5 sm:p-2 transition-all duration-200 active:scale-[0.98] sm:hover:scale-105 hover:shadow-md
+                flex flex-col items-center justify-center text-center select-none touch-manipulation
                 ${task.completed 
                   ? 'bg-green-100 border-green-400 text-green-800' 
-                  : 'bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100'
+                  : 'bg-gray-50 border-gray-300 text-gray-700 sm:hover:bg-gray-100'
                 }
               `}
             >
               {/* Task Icon */}
-              <div className="text-lg mb-1 h-10 flex items-center justify-center">
+              <div className="text-base sm:text-lg mb-1 h-8 sm:h-10 flex items-center justify-center">
                 {task.type.toLowerCase() === 'item' && task.material
                   ? <MaterialImage key={(task as BingoTaskWithVersion).__v ?? 0} material={task.material} />
                   : <span>{getTaskTypeIcon(task.type)}</span>}
               </div>
               
               {/* Task Name */}
-              <div className="text-xs font-medium leading-tight overflow-hidden line-clamp-2">
+              <div className="text-[10px] sm:text-xs font-medium leading-tight overflow-hidden line-clamp-2">
                 {parseAdventureText(task.name)}
               </div>
               
               {/* Count indicator */}
               {task.count && (
-                <div className="absolute top-1 right-1 bg-blue-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                <div className="absolute top-1 right-1 bg-blue-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
                   {task.count > 9 ? '9+' : task.count}
                 </div>
               )}
@@ -245,7 +245,7 @@ export default function BingoCardComponent({ bingoCard, className = '' }: BingoC
               )}
               
               {/* Position indicator */}
-              <div className="absolute bottom-0 right-0 text-xs opacity-50 font-mono">
+              <div className="absolute bottom-0 right-0 text-[10px] opacity-50 font-mono">
                 {task.x},{task.y}
               </div>
             </button>
