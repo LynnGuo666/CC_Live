@@ -33,6 +33,7 @@ export interface GameEvent {
   game_id?: string;
   timestamp?: string;
   post_time?: string; // 新增：post到服务器的时间戳
+  team_color?: string; // 新增：后端可传队伍颜色，前端使用而不需 any
 }
 
 export interface GameScore {

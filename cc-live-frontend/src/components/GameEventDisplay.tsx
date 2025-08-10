@@ -216,7 +216,7 @@ export default function GameEventDisplay({ events, maxEvents = 10, className = "
                         {event.team && (
                           <div
                             className="w-2 h-2 rounded-full border border-white shadow-sm"
-                            style={{ backgroundColor: getTeamColor(event.team, (event as any).team_color) }}
+                            style={{ backgroundColor: getTeamColor(event.team, event.team_color) }}
                           />
                         )}
                         <span className="text-xs font-medium text-gray-700 truncate max-w-20">
