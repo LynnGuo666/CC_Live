@@ -219,11 +219,66 @@ export default function Home() {
             </div>
             <div className="bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg p-4 sm:p-6">
               <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
-                <a href={appConfig.dataPageUrl} target="_blank" rel="noreferrer" className="px-3 py-2 text-sm border rounded-md hover:bg-gray-50">查看比赛数据、选手排名</a>
-                <a href={appConfig.antiCheatUrl} target="_blank" rel="noreferrer" className="px-3 py-2 text-sm border rounded-md hover:bg-gray-50">反作弊系统介绍</a>
-                <a href={appConfig.blogUrl} target="_blank" rel="noreferrer" className="px-3 py-2 text-sm border rounded-md hover:bg-gray-50">查看我的博客</a>
-                <a href={appConfig.githubUrl} target="_blank" rel="noreferrer" className="px-3 py-2 text-sm border rounded-md hover:bg-gray-50">GitHub 主页 求关注~</a>
-                <a href={appConfig.repoUrl} target="_blank" rel="noreferrer" className="px-3 py-2 text-sm border rounded-md hover:bg-gray-50">GitHub 仓库 求 Star~</a>
+                <a
+                  href={appConfig.dataPageUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M3 3v18h18"/>
+                    <rect x="7" y="10" width="3" height="8"/>
+                    <rect x="12" y="6" width="3" height="12"/>
+                    <rect x="17" y="13" width="3" height="5"/>
+                  </svg>
+                  查看比赛数据、选手排名
+                </a>
+                <a
+                  href={appConfig.antiCheatUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm bg-white text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M12 3l7 4v5c0 5-3.5 9-7 9s-7-4-7-9V7l7-4z"/>
+                  </svg>
+                  反作弊系统介绍
+                </a>
+                <a
+                  href={appConfig.blogUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm bg-white text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M4 19.5V4a2 2 0 0 1 2-2h9l5 5v12.5a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 19.5z"/>
+                    <path d="M14 2v5h5"/>
+                    <path d="M8 8h4M8 12h8M8 16h8"/>
+                  </svg>
+                  查看我的博客
+                </a>
+                <a
+                  href={appConfig.githubUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm bg-white text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.009-.868-.013-1.703-2.782.605-3.369-1.342-3.369-1.342-.455-1.158-1.11-1.468-1.11-1.468-.907-.62.069-.607.069-.607 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.087 2.91.832.092-.647.35-1.087.636-1.337-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.748-1.026 2.748-1.026.546 1.378.203 2.397.1 2.65.64.7 1.028 1.595 1.028 2.688 0 3.846-2.339 4.695-4.566 4.943.359.309.678.92.678 1.854 0 1.337-.012 2.416-.012 2.744 0 .268.18.58.688.481A10.019 10.019 0 0 0 22 12.017C22 6.484 17.523 2 12 2z"/>
+                  </svg>
+                  GitHub 主页 求关注~
+                </a>
+                <a
+                  href={appConfig.repoUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm bg-white text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9 12 2"/>
+                  </svg>
+                  GitHub 仓库 求 Star~
+                </a>
               </div>
               <div className="mt-3 text-center text-xs text-gray-500">{appConfig.developerName} · {appConfig.buildVersion}</div>
             </div>
