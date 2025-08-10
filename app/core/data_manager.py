@@ -113,7 +113,7 @@ class DataManager:
             score_data: 当前游戏积分数据
         """
         self.current_game_score = score_data
-        print("更新当前游戏积分数据")
+        # 移除冗余日志，避免刷屏
     
     def update_vote_data(self, vote_data: VoteEvent):
         """
@@ -569,6 +569,13 @@ class DataManager:
                                 count=int(count) if isinstance(count, int) else None,
                                 kind=str(task_kind) if task_kind else None,
                             )
+                            # 输出 AI 回复到日志（截断避免刷屏）
+                            try:
+                                import json as _json
+                                preview = _json.dumps(enhanced, ensure_ascii=False) if isinstance(enhanced, dict) else str(enhanced)
+                                print(f"[BINGO][AI][task={key}] {preview[:1000]}")
+                            except Exception:
+                                pass
                     except Exception as oe:
                         print(f"OpenAI 本地化失败: {oe}")
 
