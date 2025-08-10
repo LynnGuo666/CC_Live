@@ -158,8 +158,10 @@ export default function CurrentGameLeaderboard({ currentGameScore, gameStatus, c
                         <img
                           src={`https://mc-heads.net/avatar/${encodeURIComponent(player.player)}/64`}
                           alt={player.player}
-                          className="w-6 h-6 rounded-md shadow-sm border border-gray-200"
+                          className="w-6 h-6 rounded-md shadow-sm border border-gray-200 shrink-0"
                           loading="lazy"
+                          referrerPolicy="no-referrer"
+                          onError={(e) => { (e.currentTarget as HTMLImageElement).src = 'https://mc-heads.net/avatar/Steve/64'; }}
                         />
                         <div
                           className="w-3 h-3 rounded-full border border-white shadow-sm"
