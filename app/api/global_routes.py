@@ -213,3 +213,16 @@ async def get_tournament_status():
     except Exception as e:
         print(f"获取锦标赛状态时发生错误: {str(e)}")
         raise HTTPException(status_code=500, detail=f"获取锦标赛状态失败: {str(e)}")
+
+
+@router.get("/api/bingo/status")
+async def get_bingo_processing_status():
+    """返回 Bingo 本地化与图片解析的处理进度。"""
+    try:
+        return {
+            "success": True,
+            "bingo": data_manager.progress_bingo,
+            "timestamp": datetime.now().isoformat(),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取 Bingo 处理进度失败: {str(e)}")

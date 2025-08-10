@@ -45,6 +45,18 @@ class DataManager:
         
         # 物品图片缓存：mcid -> image_url
         self.item_image_cache: Dict[str, Optional[str]] = {}
+        # 中文标题缓存：query -> zh_title
+        self.zh_title_cache: Dict[str, str] = {}
+        # OpenAI 配置（可选）：通过环境变量注入
+        self.openai_base = os.environ.get("OPENAI_BASE_URL")
+        self.openai_key = os.environ.get("OPENAI_API_KEY")
+
+        # 处理进度：用于前端查询
+        self.progress_bingo: Dict[str, Dict[str, int]] = {
+            'images': { 'total': 0, 'done': 0 },
+            'localize': { 'total': 0, 'done': 0 },
+            'updated_at_ms': 0,
+        }
 
         # 观赛ID持久化文件路径（JSON Lines），可通过环境变量覆盖
         default_path = Path("data") / "viewer_ids.jsonl"
@@ -270,23 +282,31 @@ class DataManager:
 
         self.bingo_card = card
         print("更新 Bingo 卡片: {}x{} size={}".format(card.width, card.height, card.size))
-        # 预解析所有物品图片，异步触发解析，填充缓存
+        # 初始化进度，并行预热图片
         try:
-            materials = set()
-            for key, task in (card.tasks or {}).items():
-                mat = getattr(task, 'material', None)
-                if mat:
-                    materials.add(mat)
-            # 异步触发解析（不 await，逐步填充缓存）
+            mats = self._extract_bingo_materials(card)
+            total_tasks = len(card.tasks or {})
+            self.progress_bingo['images'] = { 'total': len(mats), 'done': 0 }
+            self.progress_bingo['localize'] = { 'total': total_tasks, 'done': 0 }
+            self.progress_bingo['updated_at_ms'] = int(datetime.now().timestamp() * 1000)
+
             async def _warmup():
-                for m in materials:
+                for m in mats:
                     try:
                         await self.resolve_item_image(m)
+                        self.progress_bingo['images']['done'] += 1
+                        self.progress_bingo['updated_at_ms'] = int(datetime.now().timestamp() * 1000)
                     except Exception:
                         pass
             asyncio.create_task(_warmup())
         except Exception as e:
             print(f"预解析 Bingo 物品图片失败: {e}")
+
+        # 异步本地化任务标题/描述为中文
+        try:
+            asyncio.create_task(self._localize_bingo_card_inplace())
+        except Exception as e:
+            print(f"异步本地化 Bingo 卡片失败: {e}")
 
     def _extract_bingo_materials(self, card: BingoCard) -> List[str]:
         materials: List[str] = []
@@ -485,6 +505,144 @@ class DataManager:
             f"https://static.wikia.nocookie.net/minecraft_gamepedia/images/{title_case}.png",
         ]
         return zh_urls + en_urls + ids_urls + fandom_urls
+
+    async def resolve_zh_title(self, query: str, *, timeout: float = 5.0) -> Optional[str]:
+        """通过中文 Minecraft Wiki 搜索 query，返回页面中文标题。带缓存。"""
+        if not query:
+            return None
+        if query in self.zh_title_cache:
+            return self.zh_title_cache[query]
+        api_url = "https://zh.minecraft.wiki/api.php"
+        try:
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                params = {
+                    "action": "query",
+                    "format": "json",
+                    "generator": "search",
+                    "gsrsearch": query,
+                    "gsrlimit": 1
+                }
+                resp = await client.get(api_url, params=params)
+                data = resp.json()
+                pages = data.get('query', {}).get('pages', {})
+                for _, page in pages.items():
+                    title = page.get('title')
+                    if title:
+                        self.zh_title_cache[query] = title
+                        return title
+        except Exception as e:
+            print(f"中文标题解析失败: {query} {e}")
+        return None
+
+    async def _localize_bingo_card_inplace(self):
+        """将 self.bingo_card 的 display_name/description 本地化为中文（就地修改）。"""
+        card = self.bingo_card
+        if not card:
+            return
+        tasks = card.tasks or {}
+        # 并发处理，限制并发
+        sem = asyncio.Semaphore(6)
+
+        async def _proc(key: str, task_obj):
+            async with sem:
+                try:
+                    # 物品任务：优先使用 material 查询中文名
+                    material = getattr(task_obj, 'material', None)
+                    count = getattr(task_obj, 'count', None)
+                    zh_material: Optional[str] = None
+                    if isinstance(material, str) and material:
+                        # material 如 DIAMOND_CHESTPLATE -> Diamond Chestplate
+                        pretty = material.lower().split('_')
+                        title_case = ' '.join(w.capitalize() for w in pretty)
+                        zh_material = await self.resolve_zh_title(title_case)
+                    # name/description 内若有英文关键短语，也尝试解析
+                    base_name = getattr(task_obj, 'display_name', None) or self._parse_adventure_text(getattr(task_obj, 'name', ''))
+                    base_desc = getattr(task_obj, 'display_description', None) or self._parse_adventure_text(getattr(task_obj, 'description', ''))
+                    # 进一步尝试从 name 中抽取括号内关键字做查询
+                    import re
+                    candidates: List[str] = []
+                    for m in re.finditer(r"item\.minecraft\.([a-z0-9_]+)|block\.minecraft\.([a-z0-9_]+)|entity\.minecraft\.([a-z0-9_]+)", getattr(task_obj, 'name', '')):
+                        g = next((x for x in m.groups() if x), None)
+                        if g:
+                            candidates.append(' '.join(w.capitalize() for w in g.split('_')))
+                    # 加入已格式化的英文词做保底
+                    if base_name:
+                        # 取最长的英文连续片段
+                        words = re.findall(r"[A-Za-z][A-Za-z\s_-]{2,}", base_name)
+                        if words:
+                            candidates.append(max(words, key=len))
+                    zh_title: Optional[str] = None
+                    for q in candidates:
+                        zh_title = await self.resolve_zh_title(q)
+                        if zh_title:
+                            break
+                    # 组装展示：优先中文物品名
+                    if zh_material:
+                        if isinstance(count, int) and count > 0:
+                            task_obj.display_name = f"{count}个 {zh_material}"
+                        else:
+                            task_obj.display_name = zh_material
+                    elif zh_title:
+                        task_obj.display_name = zh_title
+                    else:
+                        task_obj.display_name = base_name
+                    # 描述中文：若能解析中文标题则替换，否则保留
+                    task_obj.display_description = base_desc
+
+                    # 如设置了 OpenAI，进一步润色/本地化
+                    try:
+                        if self.openai_base and self.openai_key:
+                            enhanced = await self._openai_localize(
+                                name=task_obj.display_name or base_name,
+                                desc=task_obj.display_description or base_desc
+                            )
+                            if enhanced and isinstance(enhanced, dict):
+                                task_obj.display_name = enhanced.get('name') or task_obj.display_name
+                                task_obj.display_description = enhanced.get('desc') or task_obj.display_description
+                    except Exception as oe:
+                        print(f"OpenAI 本地化失败: {oe}")
+                    # 进度
+                    self.progress_bingo['localize']['done'] += 1
+                    self.progress_bingo['updated_at_ms'] = int(datetime.now().timestamp() * 1000)
+                except Exception as e:
+                    print(f"本地化任务失败: {e}")
+
+        await asyncio.gather(*[_proc(k, t) for k, t in tasks.items()])
+    
+    async def _openai_localize(self, *, name: str, desc: str) -> Optional[Dict[str, str]]:
+        """调用自定义 OpenAI 兼容接口，对名称/描述进行中文润色。"""
+        try:
+            import json as _json
+            if not (self.openai_base and self.openai_key):
+                return None
+            url = self.openai_base.rstrip('/') + '/v1/chat/completions'
+            headers = {
+                'Authorization': f'Bearer {self.openai_key}',
+                'Content-Type': 'application/json'
+            }
+            system = '你是一个将 Minecraft 物品与成就文本本地化为简体中文的助手。保持专业、简洁，不要添加无关内容。'
+            user = f"将以下名称与描述润色为简体中文，若已是中文则优化表述：\n名称: {name}\n描述: {desc}\n只返回JSON对象，字段为 name, desc。"
+            payload = {
+                'model': 'gpt-5-2025-08-07',
+                'messages': [
+                    { 'role': 'system', 'content': system },
+                    { 'role': 'user', 'content': user }
+                ],
+                'temperature': 0.2
+            }
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.post(url, headers=headers, json=payload)
+                data = resp.json()
+                content = data.get('choices', [{}])[0].get('message', {}).get('content', '')
+                # 尝试提取 JSON
+                start = content.find('{')
+                end = content.rfind('}')
+                if start != -1 and end != -1 and end > start:
+                    text = content[start:end+1]
+                    return _json.loads(text)
+        except Exception as e:
+            print(f"调用 OpenAI 接口失败: {e}")
+        return None
 
     def _build_runaway_warrior_summary(self) -> Dict:
         """
