@@ -64,7 +64,13 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str = Query(None))
                     }, websocket)
                 # 接收观赛ID，记录到客户端信息，便于统计
                 elif message.get("type") == "viewer_id":
-                    connection_manager.client_info[websocket]["viewer_id"] = message.get("viewer_id")
+                    vid = message.get("viewer_id")
+                    connection_manager.client_info[websocket]["viewer_id"] = vid
+                    # 持久化记录到文件
+                    try:
+                        data_manager.record_viewer_id(vid, client_id=connection_manager.client_info[websocket]["client_id"])
+                    except Exception as e:
+                        print(f"记录观赛ID失败: {e}")
                     await connection_manager.send_personal_message({
                         "type": "viewer_id_ack",
                         "viewer_id": connection_manager.client_info[websocket]["viewer_id"],

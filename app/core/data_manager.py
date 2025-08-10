@@ -6,6 +6,9 @@
 
 import asyncio
 from typing import List, Dict, Optional
+from pathlib import Path
+import os
+import json
 from datetime import datetime
 from app.models.models import TeamScore, GameEvent, VoteEvent, GlobalEvent, BingoCard
 from app.core.websocket import connection_manager
@@ -42,6 +45,16 @@ class DataManager:
         
         # 物品图片缓存：mcid -> image_url
         self.item_image_cache: Dict[str, Optional[str]] = {}
+
+        # 观赛ID持久化文件路径（JSON Lines），可通过环境变量覆盖
+        default_path = Path("data") / "viewer_ids.jsonl"
+        self.viewer_log_path: Path = Path(os.environ.get("VIEWER_LOG_PATH", str(default_path)))
+        try:
+            self.viewer_log_path.parent.mkdir(parents=True, exist_ok=True)
+            if not self.viewer_log_path.exists():
+                self.viewer_log_path.touch()
+        except Exception as e:
+            print(f"初始化观赛ID日志文件失败: {e}")
     
     def add_event(self, event: GameEvent, game_id: str):
         """
@@ -192,10 +205,53 @@ class DataManager:
         viewer_ids = [c.get("viewer_id") for c in clients if c.get("viewer_id")]
         # 去重
         unique_viewer_ids = sorted(set(viewer_ids))
+
+        # 读取持久化文件，做去重统计
+        persisted_ids: List[str] = []
+        try:
+            with self.viewer_log_path.open("r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        rec = json.loads(line)
+                        vid = rec.get("viewer_id")
+                        if vid:
+                            persisted_ids.append(vid)
+                    except Exception:
+                        continue
+        except Exception as e:
+            print(f"读取观赛ID日志失败: {e}")
+
+        unique_persisted = sorted(set(persisted_ids))
+
         return {
-            "count": len(unique_viewer_ids),
-            "viewer_ids": unique_viewer_ids
+            "online": {
+                "count": len(unique_viewer_ids),
+                "viewer_ids": unique_viewer_ids,
+            },
+            "persisted": {
+                "count": len(unique_persisted),
+                "viewer_ids": unique_persisted,
+                "file": str(self.viewer_log_path),
+            },
         }
+
+    def record_viewer_id(self, viewer_id: str, *, client_id: Optional[str] = None):
+        """将观赛ID写入本地 JSONL 文件。"""
+        if not viewer_id:
+            return
+        record = {
+            "viewer_id": viewer_id,
+            "client_id": client_id,
+            "timestamp": datetime.now().isoformat()
+        }
+        try:
+            with self.viewer_log_path.open("a", encoding="utf-8") as f:
+                f.write(json.dumps(record, ensure_ascii=False) + "\n")
+        except Exception as e:
+            print(f"写入观赛ID日志失败: {e}")
 
     def update_bingo_card(self, card: BingoCard):
         """更新 Bingo 卡片，并准备广播"""
