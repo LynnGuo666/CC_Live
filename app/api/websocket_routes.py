@@ -102,3 +102,11 @@ async def get_websocket_stats():
         "connection_count": connection_manager.get_connection_count(),
         "clients": connection_manager.get_client_list()
     }
+
+
+@router.get("/ws/viewers")
+async def get_viewers():
+    """
+    返回当前连接中已提交的观赛ID列表与数量。
+    """
+    return data_manager.get_viewer_stats()

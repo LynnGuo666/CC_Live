@@ -181,6 +181,22 @@ class DataManager:
 
         return full_data
 
+    def get_viewer_stats(self) -> Dict:
+        """汇总已提交观赛ID的统计信息。"""
+        try:
+            clients = connection_manager.get_client_list()
+        except Exception:
+            clients = []
+
+        # 收集所有非空 viewer_id
+        viewer_ids = [c.get("viewer_id") for c in clients if c.get("viewer_id")]
+        # 去重
+        unique_viewer_ids = sorted(set(viewer_ids))
+        return {
+            "count": len(unique_viewer_ids),
+            "viewer_ids": unique_viewer_ids
+        }
+
     def update_bingo_card(self, card: BingoCard):
         """更新 Bingo 卡片，并准备广播"""
         self.bingo_card = card

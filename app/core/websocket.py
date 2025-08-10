@@ -24,7 +24,9 @@ class ConnectionManager:
         self.client_info[websocket] = {
             "client_id": client_id or f"client_{len(self.active_connections)}",
             "connected_at": datetime.now().isoformat(),
-            "last_ping": datetime.now().isoformat()
+            "last_ping": datetime.now().isoformat(),
+            # 可选：观赛ID（由客户端提交后填充）
+            "viewer_id": None,
         }
         print(f"客户端连接: {self.client_info[websocket]['client_id']}, 当前连接数: {len(self.active_connections)}")
     
@@ -83,7 +85,9 @@ class ConnectionManager:
             {
                 "client_id": info["client_id"],
                 "connected_at": info["connected_at"],
-                "last_ping": info["last_ping"]
+                "last_ping": info["last_ping"],
+                # 将 viewer_id 暴露给统计接口
+                "viewer_id": info.get("viewer_id")
             }
             for info in self.client_info.values()
         ]
