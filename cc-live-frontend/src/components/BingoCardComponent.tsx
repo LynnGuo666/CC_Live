@@ -40,6 +40,15 @@ export default function BingoCardComponent({ bingoCard, className = '', itemImag
     }
   };
 
+  const getDifficultyColor = (difficulty?: string): string => {
+    if (!difficulty) return 'bg-gray-600';
+    const d = difficulty.toLowerCase();
+    if (d.includes('简') || d.includes('easy')) return 'bg-green-600';
+    if (d.includes('中') || d.includes('mid') || d.includes('medium')) return 'bg-amber-600';
+    if (d.includes('难') || d.includes('hard')) return 'bg-red-600';
+    return 'bg-gray-600';
+  };
+
   // 简单的 material -> 图片 URL 映射，可按需扩展
   const MATERIAL_IMG: Record<string, string> = {
     SOUL_SAND: 'https://zh.minecraft.wiki/images/Soul_Sand_JE2_BE2.png?f1135',
@@ -197,10 +206,12 @@ export default function BingoCardComponent({ bingoCard, className = '', itemImag
                 {task.display_name || parseAdventureText(task.name)}
               </div>
               
-              {/* Count indicator */}
-              {task.count && (
-                <div className="absolute top-1 right-1 bg-blue-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
-                  {task.count > 9 ? '9+' : task.count}
+              {/* Difficulty badge (角标) */}
+              {task.difficulty && (
+                <div className={`absolute top-1 right-1 ${getDifficultyColor(task.difficulty)} text-white text-[10px] rounded-full px-1.5 py-0.5`}
+                  title={`难度：${task.difficulty}`}
+                >
+                  {task.difficulty}
                 </div>
               )}
               
