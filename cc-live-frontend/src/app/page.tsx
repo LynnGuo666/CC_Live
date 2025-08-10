@@ -9,7 +9,6 @@ import CurrentGameLeaderboard from '@/components/CurrentGameLeaderboard';
 import { GAME_NAMES } from '@/types/tournament';
 import { appConfig } from '@/config/appConfig';
 import { useState } from 'react';
-import WaitingDisplay from '@/components/game-displays/WaitingDisplay';
 
 export default function Home() {
   const { data, isConnected, sendMessage, wsError, wsClose } = useWebSocket();
@@ -62,7 +61,7 @@ export default function Home() {
         <div className="max-w-[1920px] mx-auto px-6">
           <div className="flex items-center justify-between h-16 w-full">
             <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">S2CC 锦标赛</h1>
+              <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">联合锦标赛 Live页</h1>
             </div>
             
             {/* Center - Game Info and Round */}
@@ -212,20 +211,21 @@ export default function Home() {
           </div>
         )}
         {isStaticMode ? (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-stretch">
-            {/* 左侧：结束卡片 */}
-            <div className="lg:col-span-4">
-              <div className="bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg p-8 text-center">
-                <div className="text-3xl mb-2">🏁</div>
-                <div className="text-xl font-semibold text-gray-900 mb-1">赛事已结束</div>
-                <div className="text-sm text-gray-600">感谢关注，更多内容敬请期待。</div>
-              </div>
+          <div className="max-w-2xl mx-auto space-y-3 sm:space-y-4">
+            <div className="bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg p-8 text-center">
+              <div className="text-3xl mb-2">🏁</div>
+              <div className="text-xl font-semibold text-gray-900 mb-1">赛事已结束</div>
+              <div className="text-sm text-gray-600">感谢关注，更多内容敬请期待。</div>
             </div>
-            {/* 右侧：等待游戏状态卡片 */}
-            <div className="lg:col-span-8">
-              <div className="bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg h-full overflow-hidden">
-                <WaitingDisplay className="h-full" />
+            <div className="bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg p-4 sm:p-6">
+              <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
+                <a href={appConfig.dataPageUrl} target="_blank" rel="noreferrer" className="px-3 py-2 text-sm border rounded-md hover:bg-gray-50">查看比赛数据、选手排名</a>
+                <a href={appConfig.antiCheatUrl} target="_blank" rel="noreferrer" className="px-3 py-2 text-sm border rounded-md hover:bg-gray-50">反作弊系统介绍</a>
+                <a href={appConfig.blogUrl} target="_blank" rel="noreferrer" className="px-3 py-2 text-sm border rounded-md hover:bg-gray-50">查看我的博客</a>
+                <a href={appConfig.githubUrl} target="_blank" rel="noreferrer" className="px-3 py-2 text-sm border rounded-md hover:bg-gray-50">GitHub 主页 求关注~</a>
+                <a href={appConfig.repoUrl} target="_blank" rel="noreferrer" className="px-3 py-2 text-sm border rounded-md hover:bg-gray-50">GitHub 仓库 求 Star~</a>
               </div>
+              <div className="mt-3 text-center text-xs text-gray-500">{appConfig.developerName} · {appConfig.buildVersion}</div>
             </div>
           </div>
         ) : (
