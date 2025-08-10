@@ -45,6 +45,7 @@ export interface TeamScore {
   team: string;
   total_score: number;
   player_count: number;
+  color?: string; // 新增：后端可传队伍颜色覆盖本地映射
   scores: Array<{
     player: string;
     score: number;

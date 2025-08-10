@@ -45,6 +45,7 @@ class TeamScore(BaseModel):
     team: str = Field(..., description="队伍ID")
     total_score: int = Field(..., description="队伍当前的总分数")
     scores: List[PlayerScore] = Field(..., description="该队伍所有玩家及其个人分数")
+    color: Optional[str] = Field(None, description="队伍颜色（十六进制）")
 
 
 class GameInfo(BaseModel):

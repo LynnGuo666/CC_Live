@@ -21,7 +21,7 @@ export default function GlobalLeaderboard({ globalScores, className = "" }: Glob
       team.scores.map(player => ({
         ...player,
         team: team.team,
-        teamColor: TEAM_COLORS[team.team] || '#808080'
+        teamColor: team.color || TEAM_COLORS[team.team] || '#808080'
       }))
     )
     .sort((a, b) => b.score - a.score);
@@ -62,7 +62,7 @@ export default function GlobalLeaderboard({ globalScores, className = "" }: Glob
         {viewMode === 'team' ? (
             <div className="p-6 space-y-4">
               {sortedTeams.map((team, index) => {
-                const teamColor = TEAM_COLORS[team.team] || '#808080';
+                const teamColor = team.color || TEAM_COLORS[team.team] || '#808080';
                 const teamName = TEAM_NAMES[team.team] || team.team;
                 
                 return (

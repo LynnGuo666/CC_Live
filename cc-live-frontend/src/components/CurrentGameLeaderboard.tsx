@@ -45,6 +45,7 @@ export default function CurrentGameLeaderboard({ currentGameScore, gameStatus, c
         player: playerName,
         score,
         team: team.team_id,
+        // 当前游戏预测榜暂时没有颜色来源，回落到静态映射
         teamColor: TEAM_COLORS[team.team_id] || '#808080',
         teamRank: team.rank
       }))

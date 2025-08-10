@@ -33,6 +33,13 @@ async def handle_global_score_update(team_scores: List[TeamScore]):
             for player_score in team_score.scores:
                 print(f"    玩家: {player_score.player}, 分数: {player_score.score}")
         
+        # 补充队伍颜色（若未传入），从配置读取
+        from app.core.game_config import game_config
+        team_color_map = {t['id']: t.get('color') for t in game_config.get_teams()}
+        for ts in team_scores:
+            if not getattr(ts, 'color', None):
+                setattr(ts, 'color', team_color_map.get(ts.team))
+
         # 更新数据管理器中的全局积分数据
         data_manager.update_global_scores(team_scores)
         

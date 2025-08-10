@@ -132,6 +132,7 @@ class DataManager:
                         "team": team.team,
                         "total_score": team.total_score,
                         "player_count": len(team.scores),
+                        "color": getattr(team, 'color', None),
                         "scores": [
                             {
                                 "player": score.player,
