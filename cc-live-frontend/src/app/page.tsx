@@ -193,7 +193,7 @@ export default function Home() {
         )}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 min-h-0 items-stretch">
           {/* Left Column - Global Leaderboard */}
-          <div className="lg:col-span-3 flex flex-col min-h-0 self-start h-[60svh] sm:h-[70svh] lg:h-[calc(100svh-120px)]">
+          <div className="lg:col-span-3 flex flex-col min-h-0 h-[60svh] sm:h-[70svh] lg:h-[calc(100svh-120px)]">
             <GlobalLeaderboard 
               globalScores={data.globalScores}
               className="flex-1 min-h-0"
@@ -223,7 +223,7 @@ export default function Home() {
           </div>
 
           {/* Right Column - Current Game Leaderboard */}
-          <div className="lg:col-span-3 flex flex-col min-h-0">
+          <div className="lg:col-span-3 flex flex-col min-h-0 h-[60svh] sm:h-[70svh] lg:h-[calc(100svh-120px)]">
             <CurrentGameLeaderboard 
               currentGameScore={data.currentGameScore}
               gameStatus={data.gameStatus}
