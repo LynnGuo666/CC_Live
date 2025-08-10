@@ -7,6 +7,7 @@ import ConnectionIndicator from '@/components/ConnectionIndicator';
 import GameDisplay from '@/components/GameDisplay';
 import CurrentGameLeaderboard from '@/components/CurrentGameLeaderboard';
 import { GAME_NAMES } from '@/types/tournament';
+import { appConfig } from '@/config/appConfig';
 import { useState } from 'react';
 
 export default function Home() {
@@ -29,9 +30,12 @@ export default function Home() {
     return null;
   };
 
+  // 是否静态模式（不连接WS，仅展示“已结束”）
+  const isStaticMode = !appConfig.autoConnectWebSocket;
+
   // Get status display info
   const getStatusInfo = () => {
-    const status = data.gameStatus?.status || 'waiting';
+    const status = isStaticMode ? 'finished' : (data.gameStatus?.status || 'waiting');
     const statusConfig: { [key: string]: { color: string; text: string } } = {
       'gaming': { color: 'bg-green-500', text: '游戏中' },
       'waiting': { color: 'bg-blue-500', text: '等待中' },
@@ -65,7 +69,7 @@ export default function Home() {
               {getCurrentGameInfo() && (
                 <span className="text-lg font-medium text-blue-600">{getCurrentGameInfo()}</span>
               )}
-              {data.gameStatus?.game && (
+              {!isStaticMode && data.gameStatus?.game && (
                 <div className="flex items-center space-x-1 text-sm text-gray-600">
                   <span>🎮</span>
                   <span>第 {data.gameStatus.game.round} 轮</span>
@@ -82,26 +86,29 @@ export default function Home() {
                 </div>
                 
                 {/* Voting Time */}
-                {data.gameStatus?.status === 'voting' && data.currentVote?.time_remaining && (
+                {!isStaticMode && data.gameStatus?.status === 'voting' && data.currentVote?.time_remaining && (
                   <div className="flex items-center space-x-1">
                     <span>⏱️</span>
                     <span>剩余: {formatTime(data.currentVote.time_remaining)}</span>
                   </div>
                 )}
                 
-                <div className="flex items-center space-x-1">
-                  <span>👥</span>
-                  <span>{data.connectionStatus.connection_count || 0} 人在线</span>
-                </div>
-                {data.connectionStatus.last_ping && (
+                {!isStaticMode && (
+                  <div className="flex items-center space-x-1">
+                    <span>👥</span>
+                    <span>{data.connectionStatus.connection_count || 0} 人在线</span>
+                  </div>
+                )}
+                {!isStaticMode && data.connectionStatus.last_ping && (
                   <div className="flex items-center space-x-1">
                     <span>📡</span>
                     <span>心跳: {formatLastPing(data.connectionStatus.last_ping)}</span>
                   </div>
                 )}
               </div>
-              <div className="hidden sm:block h-4 w-px bg-gray-300"></div>
+              {!isStaticMode && <div className="hidden sm:block h-4 w-px bg-gray-300"></div>}
               {/* Viewer ID 输入，用于观赛统计（md+显示，移动在弹出层） */}
+              {!isStaticMode && (
               <div className="hidden sm:flex items-center space-x-2">
                 {data.connectionStatus.viewer_id && (
                   <span className="px-2 py-0.5 text-xs rounded-full bg-blue-50 text-blue-700 border border-blue-200">
@@ -135,19 +142,24 @@ export default function Home() {
                 </div>
                 )}
               </div>
+              )}
               <div className="flex items-center space-x-2" aria-live="polite">
-                <span className="relative flex h-3 w-3">
-                  {isConnected && (
-                    <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 animate-ping"></span>
-                  )}
-                  <span className={`relative inline-flex h-3 w-3 rounded-full ${isConnected ? 'bg-green-600' : 'bg-red-600'}`}></span>
-                </span>
-                <span className={`text-sm font-medium ${isConnected ? 'text-green-700' : 'text-red-700'}`}>
-                  {isConnected ? '已连接' : '未连接'}
-                </span>
+                {!isStaticMode && (
+                  <>
+                    <span className="relative flex h-3 w-3">
+                      {isConnected && (
+                        <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 animate-ping"></span>
+                      )}
+                      <span className={`relative inline-flex h-3 w-3 rounded-full ${isConnected ? 'bg-green-600' : 'bg-red-600'}`}></span>
+                    </span>
+                    <span className={`text-sm font-medium ${isConnected ? 'text-green-700' : 'text-red-700'}`}>
+                      {isConnected ? '已连接' : '未连接'}
+                    </span>
+                  </>
+                )}
               </div>
               {/* 移动端观赛ID快速提交 */}
-              {!data.connectionStatus.viewer_id && (
+              {!isStaticMode && !data.connectionStatus.viewer_id && (
               <button
                 className="sm:hidden px-2 py-1 rounded-md border bg-white text-gray-700"
                 aria-label="快捷提交观赛ID"
@@ -178,8 +190,8 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="min-h-[calc(100svh-64px)] max-w-[1920px] mx-auto px-4 sm:px-6 py-4 sm:py-6">
-        {/* Connection errors overlay */}
-        {!isConnected && (wsError || wsClose) && (
+        {/* Connection errors overlay (dynamic mode only) */}
+        {!isStaticMode && !isConnected && (wsError || wsClose) && (
           <div className="fixed inset-0 z-40 flex items-center justify-center pointer-events-none">
             <div className="pointer-events-auto max-w-md w-[90vw] bg-white/90 backdrop-blur-md border border-red-200 shadow-2xl rounded-2xl p-4">
               <div className="flex items-start gap-3">
@@ -198,40 +210,43 @@ export default function Home() {
             </div>
           </div>
         )}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 min-h-0 items-stretch">
-          {/* Left Column - Global Leaderboard */}
-          <div className="lg:col-span-3 flex flex-col min-h-0 h-[60svh] sm:h-[70svh] lg:h-[calc(100svh-120px)]">
-            <GlobalLeaderboard 
-              globalScores={data.globalScores}
-              className="flex-1 min-h-0"
-            />
+        {isStaticMode ? (
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg p-8 text-center">
+              <div className="text-3xl mb-2">🏁</div>
+              <div className="text-xl font-semibold text-gray-900 mb-1">赛事已结束</div>
+              <div className="text-sm text-gray-600">感谢关注，更多内容敬请期待。</div>
+            </div>
           </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 min-h-0 items-stretch">
+            {/* Left Column - Global Leaderboard */}
+            <div className="lg:col-span-3 flex flex-col min-h-0 h-[60svh] sm:h-[70svh] lg:h-[calc(100svh-120px)]">
+              <GlobalLeaderboard 
+                globalScores={data.globalScores}
+                className="flex-1 min-h-0"
+              />
+            </div>
 
-          {/* Center Column - Game Display */}
-          <div className="lg:col-span-6 min-h-0 flex flex-col space-y-4 sm:space-y-6">
-            {/* Game Display */}
-            {/* 将 runawayWarrior 汇总通过 context 下发到 RunawayWarriorDisplay */}
-            <GameDisplay 
-              gameStatus={data.gameStatus}
-              currentGameScore={data.currentGameScore}
-              voteData={data.currentVote}
-              bingoCard={data.bingoCard}
-              runawayWarrior={data.runawayWarrior}
-              className="flex-1 min-h-0"
-            />
-            
-            {/* Events */}
-            <GameEventDisplay 
-              events={data.recentEvents} 
-              maxEvents={8}
-              enableFilter
-              className="max-h-[40svh] sm:h-48"
-            />
-          </div>
+            {/* Center Column - Game Display */}
+            <div className="lg:col-span-6 min-h-0 flex flex-col space-y-4 sm:space-y-6">
+              <GameDisplay 
+                gameStatus={data.gameStatus}
+                currentGameScore={data.currentGameScore}
+                voteData={data.currentVote}
+                bingoCard={data.bingoCard}
+                runawayWarrior={data.runawayWarrior}
+                className="flex-1 min-h-0"
+              />
+              <GameEventDisplay 
+                events={data.recentEvents} 
+                maxEvents={8}
+                enableFilter
+                className="max-h-[40svh] sm:h-48"
+              />
+            </div>
 
-          {/* Right Column - Current Game Leaderboard */}
-          {/* Bingo 保留右侧预测分数榜 */}
-          {(
+            {/* Right Column - Current Game Leaderboard */}
             <div className="lg:col-span-3 flex flex-col min-h-0 h-[60svh] sm:h-[70svh] lg:h-[calc(100svh-120px)]">
               <CurrentGameLeaderboard 
                 currentGameScore={data.currentGameScore}
@@ -239,8 +254,8 @@ export default function Home() {
                 className="flex-1 min-h-0"
               />
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </main>
     </div>
   );

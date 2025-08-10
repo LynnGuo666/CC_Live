@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { WSMessage, TournamentData } from '@/types/tournament';
+import { appConfig } from '@/config/appConfig';
 
 export function useWebSocket() {
   const [data, setData] = useState<TournamentData>({
@@ -320,11 +321,12 @@ export function useWebSocket() {
   }, []);
 
   useEffect(() => {
-    connect();
-    
-    return () => {
-      disconnect();
-    };
+    if (appConfig.autoConnectWebSocket) {
+      connect();
+      return () => { disconnect(); };
+    }
+    // 若不自动连接，不做任何操作
+    return () => {};
   }, [connect, disconnect]);
 
   return {
