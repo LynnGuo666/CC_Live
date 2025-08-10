@@ -35,13 +35,24 @@ async def handle_global_score_update(team_scores: List[TeamScore]):
         
         # 补充队伍颜色（若未传入），从配置读取
         from app.core.game_config import game_config
-        team_color_map = {t['id']: t.get('color') for t in game_config.get_teams()}
+        teams_cfg = game_config.get_teams()
+        id_to_color = {t['id']: t.get('color') for t in teams_cfg}
+        name_to_id = {t['name']: t['id'] for t in teams_cfg}
+        valid_ids = set(id_to_color.keys())
+
+        normalized_scores: List[TeamScore] = []
         for ts in team_scores:
+            team_key = ts.team
+            # 兼容：如果传入的是中文队名，转换为标准ID
+            if team_key not in valid_ids and team_key in name_to_id:
+                ts.team = name_to_id[team_key]
+            # 补充颜色
             if not getattr(ts, 'color', None):
-                setattr(ts, 'color', team_color_map.get(ts.team))
+                setattr(ts, 'color', id_to_color.get(ts.team))
+            normalized_scores.append(ts)
 
         # 更新数据管理器中的全局积分数据
-        data_manager.update_global_scores(team_scores)
+        data_manager.update_global_scores(normalized_scores)
         
         # 准备响应数据
         response_data = {

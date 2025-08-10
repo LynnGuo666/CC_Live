@@ -14,15 +14,26 @@ export default function GlobalLeaderboard({ globalScores, className = "" }: Glob
   const [viewMode, setViewMode] = useState<'team' | 'player'>('team');
 
   // Sort teams by total score
-  const sortedTeams = [...globalScores].sort((a, b) => b.total_score - a.total_score);
+  // 归一化 team/color，允许后端传中文队名或缺色
+  const normalizeTeamId = (id: string) => {
+    if (TEAM_NAMES[id]) return id;
+    const entry = Object.entries(TEAM_NAMES).find(([, cn]) => cn === id);
+    return entry ? entry[0] : id;
+  };
+
+  const sortedTeams = [...globalScores].map(t => ({
+    ...t,
+    team: normalizeTeamId(t.team),
+    color: t.color || TEAM_COLORS[normalizeTeamId(t.team)] || '#808080'
+  })).sort((a, b) => b.total_score - a.total_score);
 
   // Get all players sorted by score
-  const allPlayers = globalScores
+  const allPlayers = sortedTeams
     .flatMap(team => 
       team.scores.map(player => ({
         ...player,
         team: team.team,
-        teamColor: team.color || TEAM_COLORS[team.team] || '#808080'
+        teamColor: team.color as string
       }))
     )
     .sort((a, b) => b.score - a.score);

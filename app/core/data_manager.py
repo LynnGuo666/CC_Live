@@ -129,17 +129,17 @@ class DataManager:
             "data": {
                 "globalScores": [
                     {
-                        "team": team.team,
-                        "total_score": team.total_score,
-                        "player_count": len(team.scores),
+                        "team": getattr(team, 'team', None),
+                        "total_score": getattr(team, 'total_score', 0),
+                        "player_count": len(getattr(team, 'scores', []) or []),
                         "color": getattr(team, 'color', None),
                         "scores": [
                             {
                                 "player": score.player,
                                 "score": score.score
-                            } for score in team.scores
+                            } for score in (getattr(team, 'scores', []) or [])
                         ]
-                    } for team in self.global_scores
+                    } for team in (self.global_scores or [])
                 ],
                 "currentGameScore": self.current_game_score,
                 "bingoCard": self._serialize_bingo_card() if self.bingo_card else None,
