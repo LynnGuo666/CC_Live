@@ -10,7 +10,7 @@ import { GAME_NAMES } from '@/types/tournament';
 import { useState } from 'react';
 
 export default function Home() {
-  const { data, isConnected, sendMessage } = useWebSocket();
+  const { data, isConnected, sendMessage, wsError, wsClose } = useWebSocket();
   const [viewerId, setViewerId] = useState('');
   const [toast, setToast] = useState<string | null>(null);
 
@@ -139,12 +139,22 @@ export default function Home() {
                   {isConnected ? '已连接' : '未连接'}
                 </span>
               </div>
-              {/* 移动端观赛ID弹出按钮 */}
+              {/* 移动端观赛ID快速提交 */}
               {!data.connectionStatus.viewer_id && (
               <button
                 className="sm:hidden px-2 py-1 rounded-md border bg-white text-gray-700"
-                aria-label="填写观赛ID"
-                onClick={() => setToast('请在弹窗中填写观赛ID（待实现）')}
+                aria-label="快捷提交观赛ID"
+                onClick={() => {
+                  const id = prompt('请输入观赛ID');
+                  if (id && id.trim()) {
+                    sendMessage({ type: 'viewer_id', viewer_id: id.trim() });
+                    const expires = new Date();
+                    expires.setDate(expires.getDate() + 180);
+                    document.cookie = `viewer_id=${encodeURIComponent(id.trim())}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+                    setToast('观赛ID 已提交');
+                    setTimeout(() => setToast(null), 1500);
+                  }
+                }}
               >🪪</button>
               )}
             </div>
@@ -161,6 +171,26 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="min-h-[calc(100svh-64px)] max-w-[1920px] mx-auto px-4 sm:px-6 py-4 sm:py-6">
+        {/* Connection errors overlay */}
+        {!isConnected && (wsError || wsClose) && (
+          <div className="fixed inset-0 z-40 flex items-center justify-center pointer-events-none">
+            <div className="pointer-events-auto max-w-md w-[90vw] bg-white/90 backdrop-blur-md border border-red-200 shadow-2xl rounded-2xl p-4">
+              <div className="flex items-start gap-3">
+                <div className="mt-1 h-2.5 w-2.5 rounded-full bg-red-600 animate-pulse" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-red-700 mb-1">连接失败</div>
+                  <div className="text-xs text-gray-700 break-words">
+                    {wsError || (wsClose ? `关闭代码 ${wsClose.code}：${wsClose.reason || '未知原因'}` : '')}
+                  </div>
+                </div>
+                <button
+                  className="text-xs px-2 py-1 rounded-md bg-red-600 text-white hover:bg-red-700"
+                  onClick={() => window.location.reload()}
+                >重试</button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 min-h-0 items-stretch">
           {/* Left Column - Global Leaderboard */}
           <div className="lg:col-span-3 flex flex-col min-h-0 self-start h-[60svh] sm:h-[70svh] lg:h-[calc(100svh-120px)]">

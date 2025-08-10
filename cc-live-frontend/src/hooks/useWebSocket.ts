@@ -24,6 +24,8 @@ export function useWebSocket() {
   const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
   const maxReconnectAttempts = 5;
+  const [wsError, setWsError] = useState<string | null>(null);
+  const [wsClose, setWsClose] = useState<{ code: number; reason: string } | null>(null);
 
   // WebSocket 地址：优先使用环境变量，其次尝试与页面同源，最后回退到生产地址
   const effectiveUrl =
@@ -44,6 +46,8 @@ export function useWebSocket() {
 
       wsRef.current.onopen = () => {
         console.log('WebSocket connected');
+        setWsError(null);
+        setWsClose(null);
         setData(prev => ({
           ...prev,
           connectionStatus: { 
@@ -208,10 +212,16 @@ export function useWebSocket() {
 
       wsRef.current.onerror = (error) => {
         console.error('WebSocket error:', error);
+        try {
+          setWsError(typeof error === 'string' ? error : (error as unknown as { message?: string }).message || 'WebSocket 发生错误');
+        } catch {
+          setWsError('WebSocket 发生错误');
+        }
       };
 
       wsRef.current.onclose = (event) => {
         console.log('WebSocket closed:', event.code, event.reason);
+        setWsClose({ code: event.code, reason: event.reason });
         setData(prev => ({
           ...prev,
           connectionStatus: { 
@@ -287,6 +297,8 @@ export function useWebSocket() {
     isConnected: data.connectionStatus.connected,
     sendMessage,
     connect,
-    disconnect
+    disconnect,
+    wsError,
+    wsClose
   };
 }
