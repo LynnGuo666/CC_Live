@@ -9,6 +9,7 @@ import CurrentGameLeaderboard from '@/components/CurrentGameLeaderboard';
 import { GAME_NAMES } from '@/types/tournament';
 import { appConfig } from '@/config/appConfig';
 import { useState } from 'react';
+import WaitingDisplay from '@/components/game-displays/WaitingDisplay';
 
 export default function Home() {
   const { data, isConnected, sendMessage, wsError, wsClose } = useWebSocket();
@@ -211,11 +212,20 @@ export default function Home() {
           </div>
         )}
         {isStaticMode ? (
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg p-8 text-center">
-              <div className="text-3xl mb-2">🏁</div>
-              <div className="text-xl font-semibold text-gray-900 mb-1">赛事已结束</div>
-              <div className="text-sm text-gray-600">感谢关注，更多内容敬请期待。</div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-stretch">
+            {/* 左侧：结束卡片 */}
+            <div className="lg:col-span-4">
+              <div className="bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg p-8 text-center">
+                <div className="text-3xl mb-2">🏁</div>
+                <div className="text-xl font-semibold text-gray-900 mb-1">赛事已结束</div>
+                <div className="text-sm text-gray-600">感谢关注，更多内容敬请期待。</div>
+              </div>
+            </div>
+            {/* 右侧：等待游戏状态卡片 */}
+            <div className="lg:col-span-8">
+              <div className="bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg h-full overflow-hidden">
+                <WaitingDisplay className="h-full" />
+              </div>
             </div>
           </div>
         ) : (
