@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ScorePrediction, GameStatus } from '@/types/tournament';
 import { TEAM_COLORS, TEAM_NAMES, GAME_NAMES } from '@/types/tournament';
 import Image from 'next/image';
@@ -13,6 +13,16 @@ interface CurrentGameLeaderboardProps {
 
 export default function CurrentGameLeaderboard({ currentGameScore, gameStatus, className = "" }: CurrentGameLeaderboardProps) {
   const [viewMode, setViewMode] = useState<'team' | 'player'>('team');
+  const [collapsed, setCollapsed] = useState(false);
+
+  // 在移动端默认折叠
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && window.innerWidth < 640) {
+        setCollapsed(true);
+      }
+    } catch {}
+  }, []);
 
   if (!currentGameScore) {
     return (
@@ -55,9 +65,17 @@ export default function CurrentGameLeaderboard({ currentGameScore, gameStatus, c
 
   return (
     <div className={`bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg flex flex-col h-full ${className}`}>
-      <div className="p-4 sm:p-6 border-b border-gray-200/50 flex-shrink-0">
+      <div className="p-3 sm:p-6 border-b border-gray-200/50 flex-shrink-0">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xl font-semibold text-gray-900">当前游戏积分榜</h2>
+          <button
+            className="flex items-center gap-2 text-left"
+            onClick={() => setCollapsed(c => !c)}
+            aria-expanded={!collapsed}
+            aria-controls="current-leaderboard-body"
+          >
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">当前游戏积分榜</h2>
+            <svg className={`w-4 h-4 text-gray-500 transition-transform ${collapsed ? '-rotate-90' : 'rotate-0'}`} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd"/></svg>
+          </button>
           
           {/* View Mode Toggle */}
           <div className="flex bg-gray-100 rounded-xl p-1">
@@ -85,9 +103,10 @@ export default function CurrentGameLeaderboard({ currentGameScore, gameStatus, c
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+      {!collapsed && (
+      <div id="current-leaderboard-body" className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
         {viewMode === 'team' ? (
-            <div className="p-6 space-y-4">
+            <div className="p-4 sm:p-6 space-y-4">
               {sortedTeams.map((team) => {
                 const teamColor = TEAM_COLORS[team.team_id] || '#808080';
                 const teamName = TEAM_NAMES[team.team_id] || team.team_id;
@@ -134,7 +153,7 @@ export default function CurrentGameLeaderboard({ currentGameScore, gameStatus, c
               })}
             </div>
           ) : (
-            <div className="p-6 space-y-3">
+            <div className="p-4 sm:p-6 space-y-3">
               {allPlayers.map((player, index) => (
                 <div
                   key={`${player.team}-${player.player}`}
@@ -187,6 +206,7 @@ export default function CurrentGameLeaderboard({ currentGameScore, gameStatus, c
             </div>
           )}
       </div>
+      )}
     </div>
   );
 }
