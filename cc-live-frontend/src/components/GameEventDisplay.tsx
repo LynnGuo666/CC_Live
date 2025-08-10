@@ -1,18 +1,25 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { GameEvent } from '@/types/tournament';
-import { TEAM_COLORS, GAME_NAMES } from '@/types/tournament';
+import { TEAM_COLORS, TEAM_NAMES, GAME_NAMES } from '@/types/tournament';
 
 interface GameEventDisplayProps {
   events: GameEvent[];
   maxEvents?: number;
   className?: string;
+  enableFilter?: boolean; // 是否显示队伍过滤开关
 }
 
-export default function GameEventDisplay({ events, maxEvents = 10, className = "" }: GameEventDisplayProps) {
+export default function GameEventDisplay({ events, maxEvents = 10, className = "", enableFilter = false }: GameEventDisplayProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const displayEvents = events.slice(0, maxEvents);
+  const [teamFilter, setTeamFilter] = useState<string>(''); // 队伍ID，空为全部
+
+  const filtered = useMemo(() => {
+    if (!teamFilter) return events;
+    return events.filter(e => e.team === teamFilter);
+  }, [events, teamFilter]);
+  const displayEvents = filtered.slice(0, maxEvents);
 
   // Auto scroll to top when new events come in
   useEffect(() => {
@@ -117,7 +124,8 @@ export default function GameEventDisplay({ events, maxEvents = 10, className = "
     });
   };
 
-  const getTeamColor = (teamId: string) => {
+  const getTeamColor = (teamId: string, fallback?: string) => {
+    if (fallback) return fallback;
     return TEAM_COLORS[teamId] || '#666666';
   };
 
@@ -129,8 +137,28 @@ export default function GameEventDisplay({ events, maxEvents = 10, className = "
 
   return (
     <div className={`bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg flex flex-col ${className}`}>
-      <div className="p-4 border-b border-gray-200/50">
+      <div className="p-4 border-b border-gray-200/50 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900">实时事件</h2>
+        {enableFilter && (
+          <div className="flex items-center gap-2">
+            {teamFilter && (
+              <span
+                className="inline-block w-2 h-2 rounded-full"
+                style={{ backgroundColor: TEAM_COLORS[teamFilter] || '#666' }}
+              />
+            )}
+            <select
+              value={teamFilter}
+              onChange={(e) => setTeamFilter(e.target.value)}
+              className="text-sm border rounded-md px-2 py-1 bg-white"
+            >
+              <option value="">全部队伍</option>
+              {Object.keys(TEAM_NAMES).map((tid) => (
+                <option key={tid} value={tid}>{TEAM_NAMES[tid]}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
       
       <div className="flex-1 overflow-hidden">
@@ -188,7 +216,7 @@ export default function GameEventDisplay({ events, maxEvents = 10, className = "
                         {event.team && (
                           <div
                             className="w-2 h-2 rounded-full border border-white shadow-sm"
-                            style={{ backgroundColor: getTeamColor(event.team) }}
+                            style={{ backgroundColor: getTeamColor(event.team, (event as any).team_color) }}
                           />
                         )}
                         <span className="text-xs font-medium text-gray-700 truncate max-w-20">

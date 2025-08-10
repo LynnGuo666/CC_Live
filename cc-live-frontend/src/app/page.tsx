@@ -7,9 +7,11 @@ import ConnectionIndicator from '@/components/ConnectionIndicator';
 import GameDisplay from '@/components/GameDisplay';
 import CurrentGameLeaderboard from '@/components/CurrentGameLeaderboard';
 import { GAME_NAMES } from '@/types/tournament';
+import { useState } from 'react';
 
 export default function Home() {
-  const { data, isConnected } = useWebSocket();
+  const { data, isConnected, sendMessage } = useWebSocket();
+  const [viewerId, setViewerId] = useState('');
 
   // Get current game name for header
   const getCurrentGameInfo = () => {
@@ -91,6 +93,24 @@ export default function Home() {
                 )}
               </div>
               <div className="h-4 w-px bg-gray-300"></div>
+              {/* Viewer ID 输入，用于观赛统计 */}
+              <div className="flex items-center space-x-2">
+                <input
+                  value={viewerId}
+                  onChange={(e) => setViewerId(e.target.value)}
+                  placeholder="观赛ID"
+                  className="px-2 py-1 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  onClick={() => {
+                    if (viewerId.trim()) {
+                      // 通过 WS 发送一个标识消息，后端可在统计中使用
+                      sendMessage({ type: 'viewer_id', viewer_id: viewerId.trim() });
+                    }
+                  }}
+                  className="px-2 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >提交</button>
+              </div>
               <div className="flex items-center space-x-2">
                 <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'} ${isConnected ? 'animate-pulse' : ''}`}></div>
                 <span className={`text-sm font-medium ${isConnected ? 'text-green-700' : 'text-red-700'}`}>
@@ -130,6 +150,7 @@ export default function Home() {
             <GameEventDisplay 
               events={data.recentEvents} 
               maxEvents={8}
+              enableFilter
               className="h-48"
             />
           </div>

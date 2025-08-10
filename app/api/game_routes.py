@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException
 from typing import List
 from app.models.models import GameEvent, ScoreUpdate, BingoCard
 from app.core.websocket import connection_manager
+from app.core.game_config import game_config
 from app.core.score_engine import score_engine
 from app.core.data_manager import data_manager
 from datetime import datetime
@@ -52,6 +53,10 @@ async def handle_game_event(game_id: str, event: GameEvent):
         
         # 通过WebSocket广播单条事件（含分数预测），便于前端即时更新
         try:
+            # 取队伍颜色
+            teams_cfg = game_config.get_teams()
+            id_to_color = {t['id']: t.get('color') for t in teams_cfg}
+            team_color = id_to_color.get(event.team)
             websocket_message = {
                 "type": "game_event",
                 "game_id": game_id,
@@ -60,6 +65,7 @@ async def handle_game_event(game_id: str, event: GameEvent):
                     "team": event.team,
                     "event": event.event,
                     "lore": event.lore,
+                    "team_color": team_color,
                     "game_id": game_id,
                     "timestamp": datetime.now().isoformat()
                 },
